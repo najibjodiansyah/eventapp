@@ -157,16 +157,27 @@ func (r *queryResolver) UsersByID(ctx context.Context, id int) (*model.User, err
 
 func (r *queryResolver) AuthLogin(ctx context.Context, email string, password string) (*model.LoginResponse, error) {
 	// password = hash 
-	user, token, err := r.authRepo.Login(email, password)
+	user, err := r.authRepo.Login(email, password)
 	if err != nil {
 		return nil, err
 	}
+
+	//bandingin hash password
+
+	if user.Email != email && user.Password != password {
+		return nil,fmt.Errorf("user tidak ditemukan")
+	}
+
+	authToken, err := middlewares.CreateToken((int(*user.ID)))
+		if err != nil {
+			return  nil,fmt.Errorf("create token gagal")
+		}
 
 	response := model.LoginResponse{
 		Message: "Success",
 		Name: user.Name,
 		Email: user.Email,
-		Token:   token,
+		Token:   authToken,
 	}
 
 	return &response, nil
