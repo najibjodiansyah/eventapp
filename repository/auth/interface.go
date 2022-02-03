@@ -1,7 +1,9 @@
 package auth
 
-import "eventapp/entities/graph/model"
+import (
+	"eventapp/entities/graph/model"
+)
 
 type Auth interface {
-	Login(email string, password string)(model.User,error)
+	Login(email string)(model.User,error)
 }

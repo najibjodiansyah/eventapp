@@ -5,7 +5,8 @@ type User struct {
 	Name     string
 	Email    string
 	Password string
-	Organization string
 	PhoneNumber string
 	Avatar string
+	Created_at string
+	Deleted_at string
 }

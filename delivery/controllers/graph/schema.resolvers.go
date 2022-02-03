@@ -10,14 +10,16 @@ import (
 	"eventapp/entities/graph/model"
 	"eventapp/utils/graph/generated"
 	"fmt"
+
+	"golang.org/x/crypto/bcrypt"
 )
 
 func (r *mutationResolver) CreateUser(ctx context.Context, input model.NewUser) (*model.User, error) {
-	// passwordHash, _ := bcrypt.GenerateFromPassword([]byte(input.Password), bcrypt.MinCost)
+	passwordHash, _ := bcrypt.GenerateFromPassword([]byte(input.Password), bcrypt.MinCost)
 	userData := model.User{
 		Name:     input.Name,
-		Password: input.Password,
-		// Password: string(passwordHash),
+		// Password: input.Password,
+		Password: string(passwordHash),
 		Email:    input.Email,
 		Organization: input.Organization,
 		PhoneNumber: input.PhoneNumber,
@@ -69,7 +71,9 @@ func (r *mutationResolver) UpdateUser(ctx context.Context, id int, set model.Upd
 	}
 	
 	if set.Password != nil {
-		user.Password = *set.Password
+		// user.Password = *set.Password
+		passwordHash, _ := bcrypt.GenerateFromPassword([]byte(*set.Password), bcrypt.MinCost)
+		user.Password = string(passwordHash)
 	}
 	if set.Organization != nil {
 		user.Organization = set.Organization
@@ -104,9 +108,6 @@ func (r *mutationResolver) DeleteUser(ctx context.Context, id int) (*model.Messa
 	} else {
 		convData := ctx.Value("EchoContextKey").(*middlewares.User)
 		fmt.Println("id user", convData.Id)
-	}
-	if id != dataLogin.(int) {
-		return nil, errors.New("unauthorized")
 	}
 	
 	err := r.userRepo.Delete(id)
@@ -157,14 +158,14 @@ func (r *queryResolver) UsersByID(ctx context.Context, id int) (*model.User, err
 
 func (r *queryResolver) AuthLogin(ctx context.Context, email string, password string) (*model.LoginResponse, error) {
 	// password = hash 
-	user, err := r.authRepo.Login(email, password)
+	user, err := r.authRepo.Login(email)
 	if err != nil {
 		return nil, err
 	}
 
-	//bandingin hash password
+	errBcy := bcrypt.CompareHashAndPassword([]byte(user.Password), []byte(password))
 
-	if user.Email != email && user.Password != password {
+	if user.Email != email && errBcy == nil {
 		return nil,fmt.Errorf("user tidak ditemukan")
 	}
 
