@@ -52,3 +52,8 @@ type Mutation {
 	updateUser(id: Int!, set: UpdateUser!): User!
 	deleteUser(id: Int!): Message!
 }
+
+# buat di controller update biar rapih (pake entities.user)
+# token biar ngirim data nama dan email (v)
+# schema harus ganti ga kalo repo ditambah soft delete (repo:delete,get,getid,update)
+# kalo soft delete apa aja yang harus diganti //didiskusikan

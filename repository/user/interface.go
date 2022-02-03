@@ -10,5 +10,4 @@ type User interface {
 	Create(model.User) (model.User, error)
 	Update(id int, user model.User) (model.User, error)
 	Delete(id int) error
-	
 }

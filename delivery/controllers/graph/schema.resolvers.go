@@ -46,27 +46,28 @@ func (r *mutationResolver) UpdateUser(ctx context.Context, id int, set model.Upd
 		convData := ctx.Value("EchoContextKey").(*middlewares.User)
 		fmt.Println("id user", convData.Id)
 	}
-	if dataLogin.(int) != id {
+	if id != dataLogin.(int) {
 		return nil, errors.New("unauthorized")
 	}
 	user, err := r.userRepo.GetbyId(id)
 	if err != nil {
 		return nil, errors.New("not found")
 	}
-	fmt.Println("ini user",user)
-	fmt.Println("masuk")
 	// user.Name = *set.Name //-----invalid memory address
+	// user.Email = *set.Email
+	// passwordHash, _ := bcrypt.GenerateFromPassword([]byte(*set.Password), bcrypt.MinCost)
+	// user.Password = string(passwordHash)
+	// user.Password = *set.Password
+	
 	if set.Name != nil {
 		user.Name = *set.Name
 	}
 	fmt.Println("ga masuk")
-	// user.Email = *set.Email
+	
 	if set.Email != nil {
 		user.Email = *set.Email
 	}
-	// passwordHash, _ := bcrypt.GenerateFromPassword([]byte(*set.Password), bcrypt.MinCost)
-	// user.Password = string(passwordHash)
-	// user.Password = *set.Password
+	
 	if set.Password != nil {
 		user.Password = *set.Password
 	}
@@ -103,6 +104,9 @@ func (r *mutationResolver) DeleteUser(ctx context.Context, id int) (*model.Messa
 	} else {
 		convData := ctx.Value("EchoContextKey").(*middlewares.User)
 		fmt.Println("id user", convData.Id)
+	}
+	if id != dataLogin.(int) {
+		return nil, errors.New("unauthorized")
 	}
 	
 	err := r.userRepo.Delete(id)
@@ -152,6 +156,7 @@ func (r *queryResolver) UsersByID(ctx context.Context, id int) (*model.User, err
 }
 
 func (r *queryResolver) AuthLogin(ctx context.Context, email string, password string) (*model.LoginResponse, error) {
+	// password = hash 
 	user, token, err := r.authRepo.Login(email, password)
 	if err != nil {
 		return nil, err
