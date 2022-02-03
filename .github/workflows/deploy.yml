@@ -1,0 +1,28 @@
+name: Deploy
+on:
+  push:
+    branches:
+      - main
+jobs:
+
+  build:
+    name: Build
+    runs-on: ubuntu-latest
+    steps:
+    - name: pull-deploy
+      uses: appleboy/ssh-action@master
+      with:
+        host: ${{ secrets.HOST }}
+        username: ${{ secrets.USERNAME }}
+        key: ${{ secrets.KEY }}
+        port: ${{ secrets.PORT }}
+        script:
+          ssh-agent /bin/bash
+          ssh-add .ssh/bagusbpg
+          cd app
+          git pull origin main
+          docker container stop app
+          docker container rm app
+          docker rmi group3/app
+          docker build -t group3/app .
+          docker run -p 3000:3000 --name app -d group3/app
