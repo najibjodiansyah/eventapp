@@ -17,7 +17,7 @@ func New(db *sql.DB) *UserRepository {
 
 func (r *UserRepository) Get() ([]model.User, error) {
 
-	stmt, err := r.db.Prepare("select id, name, email, organization, phone, avatar from users")
+	stmt, err := r.db.Prepare("select id, name, email, phone, avatar from users")
 	if err != nil {
 		log.Fatal(err)
 	} 
@@ -33,7 +33,7 @@ func (r *UserRepository) Get() ([]model.User, error) {
 	
 	for result.Next() {
 		var user model.User
-		err := result.Scan(&user.ID,&user.Name,&user.Email,&user.Organization,&user.PhoneNumber,&user.Avatar)
+		err := result.Scan(&user.ID,&user.Name,&user.Email,&user.PhoneNumber,&user.Avatar)
 		if err != nil {
 			log.Fatal("error di scan getUser")
 		}
@@ -45,7 +45,7 @@ func (r *UserRepository) Get() ([]model.User, error) {
 
 func (r *UserRepository) GetbyId(id int) (model.User, error) {
 	var user model.User
-	stmt, err := r.db.Prepare("select id, name, email,password, organization, phone, avatar from users where id = ?")
+	stmt, err := r.db.Prepare("select id, name, email, password, phone, avatar from users where id = ?")
 	if err != nil {
 		//log.Fatal(err)
 		return user, fmt.Errorf("gagal prepare db")
@@ -59,7 +59,7 @@ func (r *UserRepository) GetbyId(id int) (model.User, error) {
 	defer result.Close()
 
 	for result.Next() {
-		err := result.Scan(&user.ID,&user.Name,&user.Email,&user.Password,&user.Organization,&user.PhoneNumber,&user.Avatar)
+		err := result.Scan(&user.ID,&user.Name,&user.Email,&user.Password,&user.PhoneNumber,&user.Avatar)
 		if err != nil {
 			return user, err
 		}
@@ -70,12 +70,12 @@ func (r *UserRepository) GetbyId(id int) (model.User, error) {
 }
 
 func (r *UserRepository) Create(user model.User) (model.User,error) {
-	stmt, err := r.db.Prepare("INSERT INTO users(name, email, password, organization, phone, avatar) VALUES(?,?,?,?,?,?)")
+	stmt, err := r.db.Prepare("INSERT INTO users(name, email, password, phone, avatar) VALUES(?,?,?,?,?)")
 	if err != nil {
 		log.Fatal(err)
 	}
 
-	result, err := stmt.Exec(user.Name, user.Email, user.Password, user.Organization, user.PhoneNumber, user.Avatar)
+	result, err := stmt.Exec(user.Name, user.Email, user.Password, user.PhoneNumber, user.Avatar)
 	if err != nil {
 		return user,fmt.Errorf("gagal exec")
 	}
@@ -91,13 +91,13 @@ func (r *UserRepository) Create(user model.User) (model.User,error) {
 }
 
 func (r *UserRepository) Update(id int, user model.User) (model.User, error) {
-	stmt, err := r.db.Prepare("UPDATE users SET name= ?, email= ?, password= ?, organization= ?, phone= ?, avatar= ? WHERE id = ?")
+	stmt, err := r.db.Prepare("UPDATE users SET name= ?, email= ?, password= ?, phone= ?, avatar= ? WHERE id = ?")
 	if err != nil {
 		// log.Fatal(err)
 		return user, fmt.Errorf("gagal prepare update")
 	}
 
-	result, error := stmt.Exec(user.Name, user.Email, user.Password, user.Organization, user.PhoneNumber, user.Avatar, id)
+	result, error := stmt.Exec(user.Name, user.Email, user.Password, user.PhoneNumber, user.Avatar, id)
 	if error != nil {
 		return user, fmt.Errorf("gagal exec update")
 	}
