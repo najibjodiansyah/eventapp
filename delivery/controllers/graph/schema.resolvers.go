@@ -7,6 +7,7 @@ import (
 	"context"
 	"errors"
 	"eventapp/delivery/middlewares"
+	"eventapp/entities"
 	"eventapp/entities/graph/model"
 	"eventapp/utils/graph/generated"
 	"fmt"
@@ -124,7 +125,30 @@ func (r *mutationResolver) DeleteUser(ctx context.Context, id int) (*model.Messa
 }
 
 func (r *mutationResolver) CreateEvent(ctx context.Context, input model.NewEvent) (*model.Event, error) {
-	panic(fmt.Errorf("not implemented"))
+	// passwordHash, _ := bcrypt.GenerateFromPassword([]byte(input.Password), bcrypt.MinCost)
+	eventData := entities.Event{
+		Name:        input.Name,
+		Category:    input.Category,
+		Host:        input.Host,
+		Description: input.Description,
+		Datetime:    input.Datetime,
+		Location:    input.Location,
+		Photo:       input.Photo,
+	}
+	res, err := r.eventRepo.CreateEvent(eventData)
+	if err != nil {
+		return nil, errors.New("failed Create User")
+	}
+	responseMessage := model.Event{
+		Name:        res.Name,
+		Category:    res.Category,
+		Host:        res.Host,
+		Description: res.Description,
+		Datetime:    res.Datetime,
+		Location:    res.Location,
+		Photo:       res.Photo,
+	}
+	return &responseMessage, nil
 }
 
 func (r *mutationResolver) UpdateEvent(ctx context.Context, id int, set model.NewEvent) (*model.Event, error) {
@@ -139,7 +163,15 @@ func (r *mutationResolver) CreateComment(ctx context.Context, eventID int, input
 	panic(fmt.Errorf("not implemented"))
 }
 
-func (r *mutationResolver) CreateParticipant(ctx context.Context, eventID int) (*model.SuccessResponse, error) {
+func (r *mutationResolver) DeleteComment(ctx context.Context, eventID int) (*model.SuccessResponse, error) {
+	panic(fmt.Errorf("not implemented"))
+}
+
+func (r *mutationResolver) JoinEvent(ctx context.Context, eventID int) (*model.SuccessResponse, error) {
+	panic(fmt.Errorf("not implemented"))
+}
+
+func (r *mutationResolver) UnjoinEvent(ctx context.Context, eventID int) (*model.SuccessResponse, error) {
 	panic(fmt.Errorf("not implemented"))
 }
 
@@ -209,15 +241,58 @@ func (r *queryResolver) AuthLogin(ctx context.Context, email string, password st
 }
 
 func (r *queryResolver) Events(ctx context.Context, page int) ([]*model.Event, error) {
-	panic(fmt.Errorf("not implemented"))
+	responseData, err := r.eventRepo.GetAllEvent(page)
+	fmt.Println(responseData)
+
+	if err != nil {
+		return nil, errors.New("not found")
+	}
+
+	eventResponseData := []*model.Event{}
+
+	for _, v := range responseData {
+		var event model.Event
+		event.ID = &v.ID
+		event.Name = v.Name
+		event.Category = v.Category
+		event.Host = v.Host
+		event.Description = v.Description
+		event.Datetime = v.Datetime
+		event.Location = v.Location
+		event.Photo = v.Photo
+
+		eventResponseData = append(eventResponseData, &event)
+	}
+
+	return eventResponseData, nil
 }
 
-func (r *queryResolver) EventByUserID(ctx context.Context, userID int) ([]*model.Event, error) {
+func (r *queryResolver) EventByHostID(ctx context.Context, userID int) ([]*model.Event, error) {
 	panic(fmt.Errorf("not implemented"))
 }
 
 func (r *queryResolver) EventByLocation(ctx context.Context, location string, page int) ([]*model.Event, error) {
-	panic(fmt.Errorf("not implemented"))
+	responseData, err := r.eventRepo.GetEventByLocation(location, page)
+	fmt.Println(responseData)
+
+	if err != nil {
+		return nil, errors.New("not found")
+	}
+	eventResponseData := []*model.Event{}
+
+	for _, v := range responseData {
+		var event model.Event
+		event.ID = &v.ID
+		event.Name = v.Name
+		event.Category = v.Category
+		event.Datetime = v.Datetime
+		event.Location = v.Location
+		event.Description = v.Description
+		event.Photo = v.Photo
+		eventResponseData = append(eventResponseData, &event)
+	}
+
+	return eventResponseData, nil
 }
 
 func (r *queryResolver) EventByKeyword(ctx context.Context, keyword string, page int) ([]*model.Event, error) {
@@ -228,24 +303,11 @@ func (r *queryResolver) EventByCategory(ctx context.Context, category string, pa
 	panic(fmt.Errorf("not implemented"))
 }
 
-// bagus
-func (r *queryResolver) Participants(ctx context.Context, eventID int) ([]*model.Partcipant, error) {
-	responseData, err := r.participantRepo.GetParticipantsByEventId(eventID)
-
-	if err != nil {
-		return nil, errors.New("participant not found")
-	}
-
-	participantResponseData := []*model.Partcipant{}
-
-	for _, participant := range responseData {
-		participantResponseData = append(participantResponseData, &model.Partcipant{Name: participant.Name, Photo: participant.Photo})
-	}
-
-	return participantResponseData, nil
+func (r *queryResolver) EventByParticipantID(ctx context.Context, userID int) ([]*model.Event, error) {
+	panic(fmt.Errorf("not implemented"))
 }
 
-func (r *queryResolver) ParticipantsByUserID(ctx context.Context, userID int) ([]*model.Event, error) {
+func (r *queryResolver) Participants(ctx context.Context, eventID int) ([]*model.Partcipant, error) {
 	panic(fmt.Errorf("not implemented"))
 }
 
@@ -268,29 +330,14 @@ type queryResolver struct{ *Resolver }
 //  - When renaming or deleting a resolver the old code will be put in here. You can safely delete
 //    it when you're done.
 //  - You have helper methods in this file. Move them out to keep these resolver files clean.
-func (r *queryResolver) Event(ctx context.Context) ([]*model.Event, error) {
-	responseData, err := r.eventRepo.Get()
-	fmt.Println(responseData)
-
-	if err != nil {
-		return nil, errors.New("not found")
-	}
-
-	eventResponseData := []*model.Event{}
-
-	for _, v := range responseData {
-		var event model.Event
-		event.ID = &v.ID
-		event.Name = v.Name
-		event.Category = v.Category
-		event.Datetime = v.Datetime
-		event.Location = v.Location
-		event.Description = v.Description
-		event.Photo = v.Photo
-		eventResponseData = append(eventResponseData, &event)
-	}
-
-	return eventResponseData, nil
+func (r *mutationResolver) CreateParticipant(ctx context.Context, eventID int) (*model.SuccessResponse, error) {
+	panic(fmt.Errorf("not implemented"))
+}
+func (r *queryResolver) EventByUserID(ctx context.Context, userID int) ([]*model.Event, error) {
+	panic(fmt.Errorf("not implemented"))
+}
+func (r *queryResolver) ParticipantsByUserID(ctx context.Context, userID int) ([]*model.Event, error) {
+	panic(fmt.Errorf("not implemented"))
 }
 func (r *queryResolver) EventByID(ctx context.Context, id int) (*model.Event, error) {
 	panic(fmt.Errorf("not implemented"))
