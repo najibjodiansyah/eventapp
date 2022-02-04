@@ -19,9 +19,9 @@ func New(db *sql.DB) *EventRepositeory {
 func (r *EventRepositeory) GetAllEvent(page int) ([]entities.Event, error) {
 	var events []entities.Event
 	result, err := r.db.Query(`	select events.id, events.name, events.category, events.host, 
-							   	events.description, events.datetime,events.location,events.photo 
+								events.description, events.datetime,events.location,events.photo 
 							   	from events 
-								where location = ? and deleted_at IS NULL limit ?`, page)
+								where deleted_at IS NULL limit ?`, page)
 	if err != nil {
 		return events, err
 	}
@@ -68,18 +68,19 @@ func (r *EventRepositeory) GetEventByLocation(location string, page int) ([]enti
 	return eventsLocation, nil
 }
 
-func (r *EventRepositeory) CreateEvent(event entities.Event) (entities.Event, error) {
-	stmt, err := r.db.Prepare(`insert into events 
-							   (name,category,host,location,description,datetime,location,photo) 
-							   VALUES(?,?,?,?,?,?,,?,?)`)
+func (r *EventRepositeory) GetCreateEvent(event entities.Event) (entities.Event, error) {
+	stmt, err := r.db.Prepare("insert into events (name,category,host,description,datetime,location,photo) VALUES(?,?,?,?,?,?,?)")
 	if err != nil {
 		return event, err
 	}
-	result, err := stmt.Exec(event.Name, event.Category, event.Host, event.Location,
-		event.Description, event.Datetime, event.Location, event.Photo, event.CreatedAt)
+	result, err := stmt.Exec(event.Name, event.Category, event.Host,
+		event.Description, event.Datetime, event.Location, event.Photo)
 	if err != nil {
+		fmt.Println("eror ya", err)
 		return event, fmt.Errorf("gagal exec")
+
 	}
+	fmt.Println(result)
 	RowsAffected, _ := result.RowsAffected()
 	if RowsAffected == 0 {
 		return event, fmt.Errorf("event not created")
@@ -105,3 +106,54 @@ func (r *EventRepositeory) Delete(id int) error {
 
 	return nil
 }
+func (r *EventRepositeory) GetEventByKeyword(keyword string, page int) ([]entities.Event, error) {
+	var event []entities.Event
+
+	return event, nil
+}
+
+func (r *EventRepositeory) GetEventByCategory(category string, page int) ([]entities.Event, error) {
+	var event []entities.Event
+
+	return event, nil
+}
+
+// func (r *EventRepositeory) GetEventByCategory(category string, page int) ([]entities.Event, error) {
+// 	var event []entities.Event
+
+// 	return event, nil
+// }
+func (r *EventRepositeory) GetbyId(id int) (entities.Event, error) {
+	var event entities.Event
+
+	return event, nil
+}
+func (r *EventRepositeory) GetUpdateEvent(id int, event entities.Event) (entities.Event, error) {
+	stmt, err := r.db.Prepare("UPDATE events SET name= ?, category= ?, host= ?, location= ?,description= ?, datetime=?,photo=? WHERE id = ? AND deleted_at is NULL")
+	if err != nil {
+		// log.Fatal(err)
+		return event, fmt.Errorf("gagal prepare update")
+	}
+
+	result, error := stmt.Exec(event.Name, event.Category, event.Host, event.Location,
+		event.Description, event.Datetime, event.Photo, id)
+	if error != nil {
+		return event, fmt.Errorf("gagal exec update")
+	}
+
+	notAffected, _ := result.RowsAffected()
+	if notAffected == 0 {
+		return event, fmt.Errorf("row not affected")
+	}
+	return event, nil
+}
+
+// GetAllEvent(page int) ([]entities.Event, error)
+// 	GetEventByLocation(location string, page int) ([]entities.Event, error)
+// 	GetEventByKeyword(keyword string, page int) (entities.Event, error)
+// 	GetEventByCategory(category string, page int) (entities.Event, error)
+// 	GetbyId(id int) (entities.Event, error)
+// 	CreateEvent(entities.Event) (entities.Event, error)
+// 	Update(id int, event entities.Event) (entities.Event, error)
+// 	Delete(id int) error
+// }

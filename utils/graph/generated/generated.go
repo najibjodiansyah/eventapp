@@ -744,7 +744,7 @@ type Event {
 }
 input NewEvent{
 	name: String!
-	userid: Int!
+	userid: Int
 	host: String!
 	description: String!
 	datetime: String!
@@ -4326,7 +4326,7 @@ func (ec *executionContext) unmarshalInputNewEvent(ctx context.Context, obj inte
 			var err error
 
 			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("userid"))
-			it.Userid, err = ec.unmarshalNInt2int(ctx, v)
+			it.Userid, err = ec.unmarshalOInt2ᚖint(ctx, v)
 			if err != nil {
 				return it, err
 			}
