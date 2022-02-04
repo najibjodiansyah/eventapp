@@ -18,4 +18,4 @@ jobs:
         port: ${{ secrets.PORT }}
         script:
           cd eventapp
-          
+          git pull origin main
