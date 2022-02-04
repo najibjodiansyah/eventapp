@@ -802,11 +802,7 @@ type Mutation {
 
 # buat di controller update biar rapih (pake entities.user)
 # token biar ngirim data nama dan email (v)
-<<<<<<< HEAD
-# schema harus ganti ga kalo repo ditambah soft delete (repo:delete,get,getid,update)
-=======
 # schema harus ganti ga kalo repo ditambah soft delete (repo:delete)
->>>>>>> 409fc823bca37154a073681ad0bea2fa30723389
 # kalo soft delete apa aja yang harus diganti //didiskusikan
 `, BuiltIn: false},
 }

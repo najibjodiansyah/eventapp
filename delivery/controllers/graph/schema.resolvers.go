@@ -225,7 +225,20 @@ func (r *queryResolver) EventByKeyword(ctx context.Context, keyword string, page
 }
 
 func (r *queryResolver) EventByCategory(ctx context.Context, category string, page int) ([]*model.Event, error) {
-	panic(fmt.Errorf("not implemented"))
+	responseData, err := r.eventRepo.GetEventByCategory(category, page)
+
+	if err != nil {
+		return nil, errors.New("not found")
+	}
+
+	eventResponseData := []*model.Event{}
+
+	for _, v := range responseData {
+		convertID := int(v.ID)
+		eventResponseData = append(eventResponseData, &model.Event{ID: &convertID, Name: v.Name})
+	}
+
+	return eventResponseData, nil
 }
 
 func (r *queryResolver) Participants(ctx context.Context, eventID int) ([]*model.Partcipant, error) {
