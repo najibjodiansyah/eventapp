@@ -69,6 +69,7 @@ type ComplexityRoot struct {
 
 	LoginResponse struct {
 		Email   func(childComplexity int) int
+		ID      func(childComplexity int) int
 		Message func(childComplexity int) int
 		Name    func(childComplexity int) int
 		Token   func(childComplexity int) int
@@ -274,6 +275,13 @@ func (e *executableSchema) Complexity(typeName, field string, childComplexity in
 		}
 
 		return e.complexity.LoginResponse.Email(childComplexity), true
+
+	case "LoginResponse.id":
+		if e.complexity.LoginResponse.ID == nil {
+			break
+		}
+
+		return e.complexity.LoginResponse.ID(childComplexity), true
 
 	case "LoginResponse.message":
 		if e.complexity.LoginResponse.Message == nil {
@@ -705,6 +713,7 @@ type Message {
 
 type LoginResponse {
 	message: String!
+	id: Int!
 	name: String!
 	email: String!
 	token: String!
@@ -793,7 +802,11 @@ type Mutation {
 
 # buat di controller update biar rapih (pake entities.user)
 # token biar ngirim data nama dan email (v)
+<<<<<<< HEAD
 # schema harus ganti ga kalo repo ditambah soft delete (repo:delete,get,getid,update)
+=======
+# schema harus ganti ga kalo repo ditambah soft delete (repo:delete)
+>>>>>>> 409fc823bca37154a073681ad0bea2fa30723389
 # kalo soft delete apa aja yang harus diganti //didiskusikan
 `, BuiltIn: false},
 }
@@ -1744,6 +1757,41 @@ func (ec *executionContext) _LoginResponse_message(ctx context.Context, field gr
 	res := resTmp.(string)
 	fc.Result = res
 	return ec.marshalNString2string(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) _LoginResponse_id(ctx context.Context, field graphql.CollectedField, obj *model.LoginResponse) (ret graphql.Marshaler) {
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	fc := &graphql.FieldContext{
+		Object:     "LoginResponse",
+		Field:      field,
+		Args:       nil,
+		IsMethod:   false,
+		IsResolver: false,
+	}
+
+	ctx = graphql.WithFieldContext(ctx, fc)
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return obj.ID, nil
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		if !graphql.HasFieldError(ctx, fc) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.(int)
+	fc.Result = res
+	return ec.marshalNInt2int(ctx, field.Selections, res)
 }
 
 func (ec *executionContext) _LoginResponse_name(ctx context.Context, field graphql.CollectedField, obj *model.LoginResponse) (ret graphql.Marshaler) {
@@ -4649,6 +4697,16 @@ func (ec *executionContext) _LoginResponse(ctx context.Context, sel ast.Selectio
 		case "message":
 			innerFunc := func(ctx context.Context) (res graphql.Marshaler) {
 				return ec._LoginResponse_message(ctx, field, obj)
+			}
+
+			out.Values[i] = innerFunc(ctx)
+
+			if out.Values[i] == graphql.Null {
+				invalids++
+			}
+		case "id":
+			innerFunc := func(ctx context.Context) (res graphql.Marshaler) {
+				return ec._LoginResponse_id(ctx, field, obj)
 			}
 
 			out.Values[i] = innerFunc(ctx)

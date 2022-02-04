@@ -5,6 +5,7 @@ import (
 	"eventapp/entities/graph/model"
 	"fmt"
 	"log"
+	"time"
 )
 
 type UserRepository struct {
@@ -17,7 +18,7 @@ func New(db *sql.DB) *UserRepository {
 
 func (r *UserRepository) Get() ([]model.User, error) {
 
-	stmt, err := r.db.Prepare("select id, name, email, phone, avatar from users")
+	stmt, err := r.db.Prepare("select id, name, email, phone, avatar from users where deleted_at is NULL")
 	if err != nil {
 		log.Fatal(err)
 	}
@@ -45,7 +46,7 @@ func (r *UserRepository) Get() ([]model.User, error) {
 
 func (r *UserRepository) GetbyId(id int) (model.User, error) {
 	var user model.User
-	stmt, err := r.db.Prepare("select id, name, email,password, organization, phone, avatar from users where id = ?")
+	stmt, err := r.db.Prepare("select id, name, email, phone, avatar from users where id = ? and deleted_at is NULL")
 	if err != nil {
 		//log.Fatal(err)
 		return user, fmt.Errorf("gagal prepare db")
@@ -59,7 +60,7 @@ func (r *UserRepository) GetbyId(id int) (model.User, error) {
 	defer result.Close()
 
 	for result.Next() {
-		err := result.Scan(&user.ID, &user.Name, &user.Email, &user.Password, &user.Organization, &user.PhoneNumber, &user.Avatar)
+		err := result.Scan(&user.ID, &user.Name, &user.Email, &user.PhoneNumber, &user.Avatar)
 		if err != nil {
 			return user, err
 		}
@@ -70,12 +71,12 @@ func (r *UserRepository) GetbyId(id int) (model.User, error) {
 }
 
 func (r *UserRepository) Create(user model.User) (model.User, error) {
-	stmt, err := r.db.Prepare("INSERT INTO users(name, email, password, organization, phone, avatar) VALUES(?,?,?,?,?,?)")
+	stmt, err := r.db.Prepare("INSERT INTO users(name, email, password, phone, avatar) VALUES(?,?,?,?,?)")
 	if err != nil {
 		log.Fatal(err)
 	}
 
-	result, err := stmt.Exec(user.Name, user.Email, user.Password, user.Organization, user.PhoneNumber, user.Avatar)
+	result, err := stmt.Exec(user.Name, user.Email, user.Password, user.PhoneNumber, user.Avatar)
 	if err != nil {
 		return user, fmt.Errorf("gagal exec")
 	}
@@ -89,13 +90,13 @@ func (r *UserRepository) Create(user model.User) (model.User, error) {
 }
 
 func (r *UserRepository) Update(id int, user model.User) (model.User, error) {
-	stmt, err := r.db.Prepare("UPDATE users SET name= ?, email= ?, password= ?, organization= ?, phone= ?, avatar= ? WHERE id = ?")
+	stmt, err := r.db.Prepare("UPDATE users SET name= ?, email= ?, password= ?, phone= ?, avatar= ? WHERE id = ? AND deleted_at is NULL")
 	if err != nil {
 		// log.Fatal(err)
 		return user, fmt.Errorf("gagal prepare update")
 	}
 
-	result, error := stmt.Exec(user.Name, user.Email, user.Password, user.Organization, user.PhoneNumber, user.Avatar, id)
+	result, error := stmt.Exec(user.Name, user.Email, user.Password, user.PhoneNumber, user.Avatar, id)
 	if error != nil {
 		return user, fmt.Errorf("gagal exec update")
 	}
@@ -109,19 +110,20 @@ func (r *UserRepository) Update(id int, user model.User) (model.User, error) {
 }
 
 func (r *UserRepository) Delete(id int) error {
-	stmt, err := r.db.Prepare("DELETE from users where id = ?")
+	// stmt, err := r.db.Prepare("DELETE from users where id = ?")
+	stmt, err := r.db.Prepare("UPDATE users SET deleted_at= ? where id = ?")
 	if err != nil {
 		log.Fatal(err)
 	}
 
-	result, err := stmt.Exec(id)
+	result, err := stmt.Exec(time.Now(), id)
 	if err != nil {
-		return err
+		return fmt.Errorf("salah user")
 	}
 
 	notAffected, _ := result.RowsAffected()
 	if notAffected == 0 {
-		return fmt.Errorf("user not found")
+		return fmt.Errorf("delete error")
 	}
 
 	return nil

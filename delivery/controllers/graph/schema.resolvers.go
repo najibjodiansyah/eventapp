@@ -10,14 +10,16 @@ import (
 	"eventapp/entities/graph/model"
 	"eventapp/utils/graph/generated"
 	"fmt"
+
+	"golang.org/x/crypto/bcrypt"
 )
 
 func (r *mutationResolver) CreateUser(ctx context.Context, input model.NewUser) (*model.User, error) {
-	// passwordHash, _ := bcrypt.GenerateFromPassword([]byte(input.Password), bcrypt.MinCost)
+	passwordHash, _ := bcrypt.GenerateFromPassword([]byte(input.Password), bcrypt.MinCost)
 	userData := model.User{
-		Name:     input.Name,
-		Password: input.Password,
-		// Password: string(passwordHash),
+		Name: input.Name,
+		// Password: input.Password,
+		Password:     string(passwordHash),
 		Email:        input.Email,
 		Organization: input.Organization,
 		PhoneNumber:  input.PhoneNumber,
@@ -42,11 +44,11 @@ func (r *mutationResolver) UpdateUser(ctx context.Context, id int, set model.Upd
 	dataLogin := ctx.Value("EchoContextKey") // auth jwt
 	if dataLogin == nil {
 		return nil, errors.New("unauthorized")
-	} else {
-		convData := ctx.Value("EchoContextKey").(*middlewares.User)
-		fmt.Println("id user", convData.Id)
 	}
-	if id != dataLogin.(int) {
+	convData := ctx.Value("EchoContextKey").(*middlewares.User)
+	fmt.Println("id user", convData.Id)
+
+	if id != convData.Id {
 		return nil, errors.New("unauthorized")
 	}
 	user, err := r.userRepo.GetbyId(id)
@@ -69,7 +71,9 @@ func (r *mutationResolver) UpdateUser(ctx context.Context, id int, set model.Upd
 	}
 
 	if set.Password != nil {
-		user.Password = *set.Password
+		// user.Password = *set.Password
+		passwordHash, _ := bcrypt.GenerateFromPassword([]byte(*set.Password), bcrypt.MinCost)
+		user.Password = string(passwordHash)
 	}
 	if set.Organization != nil {
 		user.Organization = set.Organization
@@ -101,11 +105,11 @@ func (r *mutationResolver) DeleteUser(ctx context.Context, id int) (*model.Messa
 	dataLogin := ctx.Value("EchoContextKey") // auth jwt
 	if dataLogin == nil {
 		return nil, errors.New("unauthorized")
-	} else {
-		convData := ctx.Value("EchoContextKey").(*middlewares.User)
-		fmt.Println("id user", convData.Id)
 	}
-	if id != dataLogin.(int) {
+	convData := ctx.Value("EchoContextKey").(*middlewares.User)
+	fmt.Println("id user", convData.Id)
+
+	if id != convData.Id {
 		return nil, errors.New("unauthorized")
 	}
 
@@ -177,16 +181,28 @@ func (r *queryResolver) UsersByID(ctx context.Context, id int) (*model.User, err
 
 func (r *queryResolver) AuthLogin(ctx context.Context, email string, password string) (*model.LoginResponse, error) {
 	// password = hash
-	user, token, err := r.authRepo.Login(email, password)
+	user, err := r.authRepo.Login(email)
 	if err != nil {
 		return nil, err
 	}
 
+	errBcy := bcrypt.CompareHashAndPassword([]byte(user.Password), []byte(password))
+
+	if user.Email != email && errBcy == nil {
+		return nil, fmt.Errorf("user tidak ditemukan")
+	}
+
+	authToken, err := middlewares.CreateToken((int(*user.ID)))
+	if err != nil {
+		return nil, fmt.Errorf("create token gagal")
+	}
+
 	response := model.LoginResponse{
 		Message: "Success",
+		ID:      *user.ID,
 		Name:    user.Name,
 		Email:   user.Email,
-		Token:   token,
+		Token:   authToken,
 	}
 
 	return &response, nil

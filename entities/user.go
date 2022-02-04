@@ -1,11 +1,12 @@
 package entities
 
 type User struct {
-	Id           int `json:"id" form:"id"`
-	Name         string
-	Email        string
-	Password     string
-	Organization string
-	PhoneNumber  string
-	Avatar       string
+	Id          int
+	Name        string
+	Email       string
+	Password    string
+	PhoneNumber string
+	Avatar      string
+	Created_at  string
+	Deleted_at  string
 }
