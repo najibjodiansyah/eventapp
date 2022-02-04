@@ -36,6 +36,7 @@ type Message {
 
 type LoginResponse {
 	message: String!
+	id: Int!
 	name: String!
 	email: String!
 	token: String!
@@ -55,5 +56,5 @@ type Mutation {
 
 # buat di controller update biar rapih (pake entities.user)
 # token biar ngirim data nama dan email (v)
-# schema harus ganti ga kalo repo ditambah soft delete (repo:delete,get,getid,update)
+# schema harus ganti ga kalo repo ditambah soft delete (repo:delete)
 # kalo soft delete apa aja yang harus diganti //didiskusikan

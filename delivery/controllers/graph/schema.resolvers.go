@@ -44,11 +44,11 @@ func (r *mutationResolver) UpdateUser(ctx context.Context, id int, set model.Upd
 	dataLogin := ctx.Value("EchoContextKey") // auth jwt
 	if dataLogin == nil {
 		return nil, errors.New("unauthorized")
-	} else {
+	}
 		convData := ctx.Value("EchoContextKey").(*middlewares.User)
 		fmt.Println("id user", convData.Id)
-	}
-	if id != dataLogin.(int) {
+
+	if id != convData.Id {
 		return nil, errors.New("unauthorized")
 	}
 	user, err := r.userRepo.GetbyId(id)
@@ -105,9 +105,12 @@ func (r *mutationResolver) DeleteUser(ctx context.Context, id int) (*model.Messa
 	dataLogin := ctx.Value("EchoContextKey") // auth jwt
 	if dataLogin == nil {
 		return nil, errors.New("unauthorized")
-	} else {
-		convData := ctx.Value("EchoContextKey").(*middlewares.User)
-		fmt.Println("id user", convData.Id)
+	}
+	convData := ctx.Value("EchoContextKey").(*middlewares.User)
+	fmt.Println("id user", convData.Id)
+
+	if id != convData.Id {
+		return nil, errors.New("unauthorized")
 	}
 	
 	err := r.userRepo.Delete(id)
@@ -176,6 +179,7 @@ func (r *queryResolver) AuthLogin(ctx context.Context, email string, password st
 
 	response := model.LoginResponse{
 		Message: "Success",
+		ID: *user.ID,
 		Name: user.Name,
 		Email: user.Email,
 		Token:   authToken,

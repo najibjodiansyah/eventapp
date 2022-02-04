@@ -4,6 +4,7 @@ package model
 
 type LoginResponse struct {
 	Message string `json:"message"`
+	ID      int    `json:"id"`
 	Name    string `json:"name"`
 	Email   string `json:"email"`
 	Token   string `json:"token"`
