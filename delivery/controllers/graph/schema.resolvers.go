@@ -228,8 +228,21 @@ func (r *queryResolver) EventByCategory(ctx context.Context, category string, pa
 	panic(fmt.Errorf("not implemented"))
 }
 
+// bagus
 func (r *queryResolver) Participants(ctx context.Context, eventID int) ([]*model.Partcipant, error) {
-	panic(fmt.Errorf("not implemented"))
+	responseData, err := r.participantRepo.GetParticipantsByEventId(eventID)
+
+	if err != nil {
+		return nil, errors.New("participant not found")
+	}
+
+	participantResponseData := []*model.Partcipant{}
+
+	for _, participant := range responseData {
+		participantResponseData = append(participantResponseData, &model.Partcipant{Name: participant.Name, Photo: participant.Photo})
+	}
+
+	return participantResponseData, nil
 }
 
 func (r *queryResolver) ParticipantsByUserID(ctx context.Context, userID int) ([]*model.Event, error) {
