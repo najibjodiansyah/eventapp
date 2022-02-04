@@ -95,13 +95,13 @@ type Query {
 	authLogin(email: String!, password: String!): LoginResponse!
 
 	events(page: Int!): [Event!]
-	eventByUserId(userId: Int!): [Event!] # event yang diebuat oleh user id
+	eventByHostId(userId: Int!): [Event!] # event yang diebuat oleh user id
 	eventByLocation(location: String!, page: Int!): [Event!]	
 	eventByKeyword(keyword: String!, page: Int! ): [Event!]	
 	eventByCategory(Category: String!, page: Int!): [Event!]	
+	eventByParticipantId(userId: Int!): [Event] # gett semua event yang diikuti oleh user id
 
 	participants(eventId: Int!): [Partcipant]
-	participantsByUserId(userId: Int!): [Event] # event yang diikuti oleh user id
 
 	comments(eventId: Int!):[Comment]
 }
