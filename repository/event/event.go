@@ -18,14 +18,21 @@ func New(db *sql.DB) *EventRepositeory {
 
 func (r *EventRepositeory) GetAllEvent(page int) ([]entities.Event, error) {
 	var events []entities.Event
-	result, err := r.db.Query(`	select events.id, events.name, events.category, events.host, 
-								events.description, events.datetime,events.location,events.photo 
-							   	from events 
-								where deleted_at IS NULL limit ?`, page)
+	stmt, err := r.db.Prepare(` select events.id, events.name, events.category, events.host, 
+								events.description, events.datetime,events.location, events.photo 
+								from events 
+								where deleted_at IS NULL limit ? offset ?`)
 	if err != nil {
+		log.Fatal(err)
+	}
+	limit := 5
+
+	offset := (page - 1) * limit
+
+	result, errr := stmt.Query(limit, offset)
+	if errr != nil {
 		return events, err
 	}
-
 	defer result.Close()
 
 	for result.Next() {
@@ -33,27 +40,37 @@ func (r *EventRepositeory) GetAllEvent(page int) ([]entities.Event, error) {
 		err := result.Scan(&event.ID, &event.Name, &event.Category, &event.Host,
 			&event.Description, &event.Datetime, &event.Location, &event.Photo)
 		if err != nil {
-			return events, fmt.Errorf("event not found")
+			return events, err
 		}
 		events = append(events, event)
 	}
 	return events, nil
 }
+
 func (r *EventRepositeory) GetEventByLocation(location string, page int) ([]entities.Event, error) {
 	var eventsLocation []entities.Event
-	eventByLocation, err := r.db.Query(`select events.id, events.name, events.category, events.host, 
-									events.description, events.datetime,events.location,events.photo 
-									from events 
-									where location = ? and deleted_at IS NULL limit ?`, location, page)
+	stmt, err := r.db.Prepare(`	select events.id, events.name, events.category, events.host, 
+								events.description, events.datetime,events.location,events.photo 
+								from events 
+								where location = ? and deleted_at IS NULL limit ? offset ?`)
+
 	if err != nil {
+		log.Fatal(err)
+	}
+	limit := 5
+
+	offset := (page - 1) * limit
+
+	result, errr := stmt.Query(location, limit, offset)
+	if errr != nil {
 		return eventsLocation, err
 	}
-	defer eventByLocation.Close()
+	defer result.Close()
 
-	for eventByLocation.Next() {
+	for result.Next() {
 		var eventLocation entities.Event
 
-		err := eventByLocation.Scan(&eventLocation.ID, &eventLocation.Name,
+		err := result.Scan(&eventLocation.ID, &eventLocation.Name,
 			&eventLocation.Category, &eventLocation.Host,
 			&eventLocation.Description, &eventLocation.Datetime,
 			&eventLocation.Location, &eventLocation.Photo)
