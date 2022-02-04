@@ -17,7 +17,7 @@ jobs:
         key: ${{ secrets.KEY }}
         port: ${{ secrets.PORT }}
         script:
-          cd app
+          cd eventapp
           git pull origin main
           docker container stop app
           docker container rm app
