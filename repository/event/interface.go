@@ -3,7 +3,7 @@ package event
 import "eventapp/entities"
 
 type Event interface {
-	GetAllEvent() ([]entities.Event, error)
+	GetAllEvent(page int) ([]entities.Event, error)
 	GetEventByLocation(location string, page int) ([]entities.Event, error)
 	GetEventByKeyword(keyword string, page int) (entities.Event, error)
 	GetEventByCategory(category string, page int) (entities.Event, error)

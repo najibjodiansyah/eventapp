@@ -12,18 +12,13 @@ type Comment struct {
 type Event struct {
 	ID          *int   `json:"id"`
 	Name        string `json:"name"`
-	Userid      int    `json:"userid"`
+	Username    string `json:"username"`
 	Host        string `json:"host"`
 	Description string `json:"description"`
 	Datetime    string `json:"datetime"`
 	Location    string `json:"location"`
 	Category    string `json:"category"`
 	Photo       string `json:"photo"`
-}
-
-type EventResponse struct {
-	Message string `json:"message"`
-	Name    string `json:"name"`
 }
 
 type LoginResponse struct {
@@ -59,8 +54,8 @@ type NewUser struct {
 }
 
 type Partcipant struct {
-	Name  string `json:"name"`
-	Photo string `json:"photo"`
+	Name   string `json:"name"`
+	Avatar string `json:"avatar"`
 }
 
 type SuccessResponse struct {

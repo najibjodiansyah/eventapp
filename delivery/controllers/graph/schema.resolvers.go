@@ -163,7 +163,15 @@ func (r *mutationResolver) CreateComment(ctx context.Context, eventID int, input
 	panic(fmt.Errorf("not implemented"))
 }
 
-func (r *mutationResolver) CreateParticipant(ctx context.Context, eventID int) (*model.SuccessResponse, error) {
+func (r *mutationResolver) DeleteComment(ctx context.Context, eventID int) (*model.SuccessResponse, error) {
+	panic(fmt.Errorf("not implemented"))
+}
+
+func (r *mutationResolver) JoinEvent(ctx context.Context, eventID int) (*model.SuccessResponse, error) {
+	panic(fmt.Errorf("not implemented"))
+}
+
+func (r *mutationResolver) UnjoinEvent(ctx context.Context, eventID int) (*model.SuccessResponse, error) {
 	panic(fmt.Errorf("not implemented"))
 }
 
@@ -233,7 +241,7 @@ func (r *queryResolver) AuthLogin(ctx context.Context, email string, password st
 }
 
 func (r *queryResolver) Events(ctx context.Context, page int) ([]*model.Event, error) {
-	responseData, err := r.eventRepo.GetAllEvent()
+	responseData, err := r.eventRepo.GetAllEvent(page)
 	fmt.Println(responseData)
 
 	if err != nil {
@@ -322,6 +330,9 @@ type queryResolver struct{ *Resolver }
 //  - When renaming or deleting a resolver the old code will be put in here. You can safely delete
 //    it when you're done.
 //  - You have helper methods in this file. Move them out to keep these resolver files clean.
+func (r *mutationResolver) CreateParticipant(ctx context.Context, eventID int) (*model.SuccessResponse, error) {
+	panic(fmt.Errorf("not implemented"))
+}
 func (r *queryResolver) EventByUserID(ctx context.Context, userID int) ([]*model.Event, error) {
 	panic(fmt.Errorf("not implemented"))
 }
