@@ -179,6 +179,7 @@ func (r *queryResolver) AuthLogin(ctx context.Context, email string, password st
 
 	response := model.LoginResponse{
 		Message: "Success",
+		ID: *user.ID,
 		Name: user.Name,
 		Email: user.Email,
 		Token:   authToken,

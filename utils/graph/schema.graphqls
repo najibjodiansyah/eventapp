@@ -36,6 +36,7 @@ type Message {
 
 type LoginResponse {
 	message: String!
+	id: Int!
 	name: String!
 	email: String!
 	token: String!
