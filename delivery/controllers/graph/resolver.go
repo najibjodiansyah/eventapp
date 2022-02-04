@@ -7,16 +7,20 @@ package graph
 
 import (
 	_authRepo "eventapp/repository/auth"
+	_eventRepo "eventapp/repository/event"
 	_userRepo "eventapp/repository/user"
 )
-type Resolver struct{
-	userRepo _userRepo.User
-	authRepo _authRepo.Auth
+
+type Resolver struct {
+	userRepo  _userRepo.User
+	authRepo  _authRepo.Auth
+	eventRepo _eventRepo.Event
 }
 
-func NewResolver(ar _authRepo.Auth, ur _userRepo.User) *Resolver {
+func NewResolver(ar _authRepo.Auth, ur _userRepo.User, er _eventRepo.Event) *Resolver {
 	return &Resolver{
-		userRepo: ur,
-		authRepo: ar,
+		userRepo:  ur,
+		authRepo:  ar,
+		eventRepo: er,
 	}
 }

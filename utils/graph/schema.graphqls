@@ -41,16 +41,85 @@ type LoginResponse {
 	token: String!
 }
 
+type Event {
+	id: Int
+	name: String!
+	userid: Int!
+	host: String!
+	description: String!
+	datetime: String!
+	location: String!
+	category: String!
+	photo: String!
+	# createdAt: String
+	# deletedAt: String
+	# user: User!
+}
+input NewEvent{
+	name: String!
+	userid: Int!
+	host: String!
+	description: String!
+	datetime: String!
+	location: String!
+	category: String!
+	photo: String!
+}
+
+type EventResponse {
+	message:String!
+	name: String!
+}
+
+type SuccessResponse {
+  code: Int!
+  message: String!
+}
+
+type Partcipant{
+	name: String!
+	photo: String!
+}
+
+type Comment{
+	nama: String!
+	avatar: String!
+	content: String!
+	created_at: String!
+}
+
 type Query {
 	users: [User!]
 	usersByID(id: Int!): User
 	authLogin(email: String!, password: String!): LoginResponse!
+
+	events(page: Int!): [Event!]
+	eventByUserId(userId: Int!): [Event!] # event yang diebuat oleh user id
+	eventByLocation(location: String!, page: Int!): [Event!]	
+	eventByKeyword(keyword: String!, page: Int! ): [Event!]	
+	eventByCategory(Category: String!, page: Int!): [Event!]	
+
+	participants(eventId: Int!): [Partcipant]
+	participantsByUserId(userId: Int!): [Event] # event yang diikuti oleh user id
+
+	comments(eventId: Int!):[Comment]
 }
+
 
 type Mutation {
 	createUser(input: NewUser!): User!
 	updateUser(id: Int!, set: UpdateUser!): User!
 	deleteUser(id: Int!): Message!
+
+	createEvent(input: NewEvent!): Event!
+	updateEvent(id: Int!, set: NewEvent!): Event!
+	deleteEvent(id: Int!): SuccessResponse!
+
+	createComment(eventId: Int!, input: String!): SuccessResponse!
+	# deleteComment(commentId: Int!): SuccessResponse!
+
+	createParticipant(eventId: Int!): SuccessResponse!
+	# deleteParticipant(participantId: Int!): 
 }
 
 # buat di controller update biar rapih (pake entities.user)

@@ -2,6 +2,30 @@
 
 package model
 
+type Comment struct {
+	Nama      string `json:"nama"`
+	Avatar    string `json:"avatar"`
+	Content   string `json:"content"`
+	CreatedAt string `json:"created_at"`
+}
+
+type Event struct {
+	ID          *int   `json:"id"`
+	Name        string `json:"name"`
+	Userid      int    `json:"userid"`
+	Host        string `json:"host"`
+	Description string `json:"description"`
+	Datetime    string `json:"datetime"`
+	Location    string `json:"location"`
+	Category    string `json:"category"`
+	Photo       string `json:"photo"`
+}
+
+type EventResponse struct {
+	Message string `json:"message"`
+	Name    string `json:"name"`
+}
+
 type LoginResponse struct {
 	Message string `json:"message"`
 	Name    string `json:"name"`
@@ -13,6 +37,17 @@ type Message struct {
 	Message string `json:"message"`
 }
 
+type NewEvent struct {
+	Name        string `json:"name"`
+	Userid      int    `json:"userid"`
+	Host        string `json:"host"`
+	Description string `json:"description"`
+	Datetime    string `json:"datetime"`
+	Location    string `json:"location"`
+	Category    string `json:"category"`
+	Photo       string `json:"photo"`
+}
+
 type NewUser struct {
 	Name         string  `json:"name"`
 	Email        string  `json:"email"`
@@ -20,6 +55,16 @@ type NewUser struct {
 	Organization *string `json:"organization"`
 	PhoneNumber  *string `json:"phoneNumber"`
 	Avatar       *string `json:"avatar"`
+}
+
+type Partcipant struct {
+	Name  string `json:"name"`
+	Photo string `json:"photo"`
+}
+
+type SuccessResponse struct {
+	Code    int    `json:"code"`
+	Message string `json:"message"`
 }
 
 type UpdateUser struct {

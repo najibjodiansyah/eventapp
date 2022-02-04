@@ -17,23 +17,23 @@ func New(db *sql.DB) *UserRepository {
 
 func (r *UserRepository) Get() ([]model.User, error) {
 
-	stmt, err := r.db.Prepare("select id, name, email, organization, phone, avatar from users")
+	stmt, err := r.db.Prepare("select id, name, email, phone, avatar from users")
 	if err != nil {
 		log.Fatal(err)
-	} 
+	}
 
 	var users []model.User
-	
+
 	result, err := stmt.Query()
 	if err != nil {
 		return users, err
 	}
 
 	defer result.Close()
-	
+
 	for result.Next() {
 		var user model.User
-		err := result.Scan(&user.ID,&user.Name,&user.Email,&user.Organization,&user.PhoneNumber,&user.Avatar)
+		err := result.Scan(&user.ID, &user.Name, &user.Email, &user.PhoneNumber, &user.Avatar)
 		if err != nil {
 			log.Fatal("error di scan getUser")
 		}
@@ -59,17 +59,17 @@ func (r *UserRepository) GetbyId(id int) (model.User, error) {
 	defer result.Close()
 
 	for result.Next() {
-		err := result.Scan(&user.ID,&user.Name,&user.Email,&user.Password,&user.Organization,&user.PhoneNumber,&user.Avatar)
+		err := result.Scan(&user.ID, &user.Name, &user.Email, &user.Password, &user.Organization, &user.PhoneNumber, &user.Avatar)
 		if err != nil {
 			return user, err
 		}
 		return user, nil
 	}
-	
+
 	return user, fmt.Errorf("user not found")
 }
 
-func (r *UserRepository) Create(user model.User) (model.User,error) {
+func (r *UserRepository) Create(user model.User) (model.User, error) {
 	stmt, err := r.db.Prepare("INSERT INTO users(name, email, password, organization, phone, avatar) VALUES(?,?,?,?,?,?)")
 	if err != nil {
 		log.Fatal(err)
@@ -77,14 +77,12 @@ func (r *UserRepository) Create(user model.User) (model.User,error) {
 
 	result, err := stmt.Exec(user.Name, user.Email, user.Password, user.Organization, user.PhoneNumber, user.Avatar)
 	if err != nil {
-		return user,fmt.Errorf("gagal exec")
+		return user, fmt.Errorf("gagal exec")
 	}
-
-	
 
 	notAffected, _ := result.RowsAffected()
 	if notAffected == 0 {
-		return user,fmt.Errorf("user not created")
+		return user, fmt.Errorf("user not created")
 	}
 
 	return user, nil
