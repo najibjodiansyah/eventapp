@@ -7,7 +7,6 @@ type User {
 	name: String!
 	email: String!
 	password: String!
-	organization: String
 	phoneNumber: String
 	avatar: String
 }
@@ -16,7 +15,6 @@ input NewUser {
 	name: String!
 	email: String!
 	password: String!
-	organization: String
 	phoneNumber: String
 	avatar: String
 }
@@ -25,7 +23,6 @@ input UpdateUser {
 	name: String
 	email: String
 	password: String
-	organization: String
 	phoneNumber: String
 	avatar: String
 }
@@ -42,16 +39,81 @@ type LoginResponse {
 	token: String!
 }
 
+type Event {
+	id: Int
+	name: String!
+	username: String!
+	host: String!
+	description: String!
+	datetime: String!
+	location: String!
+	category: String!
+	photo: String!
+	# createdAt: String
+	# deletedAt: String
+	# user: User!
+}
+input NewEvent{
+	name: String!
+	userid: Int
+	host: String!
+	description: String!
+	datetime: String!
+	location: String!
+	category: String!
+	photo: String!
+}
+
+type SuccessResponse {
+  	code: Int!
+  	message: String!
+}
+
+type Participant{
+	name: String!
+	avatar: String!
+}
+
+type Comment{
+	userId: Int!
+	name: String!
+	avatar: String!
+	content: String!
+	createdAt: String!
+}
+
 type Query {
 	users: [User!]
 	usersByID(id: Int!): User
 	authLogin(email: String!, password: String!): LoginResponse!
+
+	events(page: Int!): [Event!]
+	eventByHostId(userId: Int!): [Event!] # event yang diebuat oleh user id
+	eventByLocation(location: String!, page: Int!): [Event!]	
+	eventByKeyword(keyword: String!, page: Int! ): [Event!]	
+	eventByCategory(Category: String!, page: Int!): [Event!]	
+	eventByParticipantId(userId: Int!): [Event] # get semua event yang diikuti oleh user id
+
+	participants(eventId: Int!): [Participant]
+
+	comments(eventId: Int!):[Comment]
 }
+
 
 type Mutation {
 	createUser(input: NewUser!): User!
 	updateUser(id: Int!, set: UpdateUser!): User!
 	deleteUser(id: Int!): Message!
+
+	createEvent(input: NewEvent!): Event!
+	updateEvent(id: Int!, set: NewEvent!): Event!
+	deleteEvent(id: Int!): SuccessResponse!
+
+	createComment(eventId: Int!, input: String!): SuccessResponse!
+	deleteComment(eventId: Int!): SuccessResponse!
+
+	joinEvent(eventId: Int!): SuccessResponse!
+	unjoinEvent(eventId: Int!): SuccessResponse!
 }
 
 # buat di controller update biar rapih (pake entities.user)

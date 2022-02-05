@@ -2,6 +2,26 @@
 
 package model
 
+type Comment struct {
+	UserID    int    `json:"userId"`
+	Name      string `json:"name"`
+	Avatar    string `json:"avatar"`
+	Content   string `json:"content"`
+	CreatedAt string `json:"createdAt"`
+}
+
+type Event struct {
+	ID          *int   `json:"id"`
+	Name        string `json:"name"`
+	Username    string `json:"username"`
+	Host        string `json:"host"`
+	Description string `json:"description"`
+	Datetime    string `json:"datetime"`
+	Location    string `json:"location"`
+	Category    string `json:"category"`
+	Photo       string `json:"photo"`
+}
+
 type LoginResponse struct {
 	Message string `json:"message"`
 	ID      int    `json:"id"`
@@ -14,30 +34,48 @@ type Message struct {
 	Message string `json:"message"`
 }
 
+type NewEvent struct {
+	Name        string `json:"name"`
+	Userid      *int   `json:"userid"`
+	Host        string `json:"host"`
+	Description string `json:"description"`
+	Datetime    string `json:"datetime"`
+	Location    string `json:"location"`
+	Category    string `json:"category"`
+	Photo       string `json:"photo"`
+}
+
 type NewUser struct {
-	Name         string  `json:"name"`
-	Email        string  `json:"email"`
-	Password     string  `json:"password"`
-	Organization *string `json:"organization"`
-	PhoneNumber  *string `json:"phoneNumber"`
-	Avatar       *string `json:"avatar"`
+	Name        string  `json:"name"`
+	Email       string  `json:"email"`
+	Password    string  `json:"password"`
+	PhoneNumber *string `json:"phoneNumber"`
+	Avatar      *string `json:"avatar"`
+}
+
+type Participant struct {
+	Name   string `json:"name"`
+	Avatar string `json:"avatar"`
+}
+
+type SuccessResponse struct {
+	Code    int    `json:"code"`
+	Message string `json:"message"`
 }
 
 type UpdateUser struct {
-	Name         *string `json:"name"`
-	Email        *string `json:"email"`
-	Password     *string `json:"password"`
-	Organization *string `json:"organization"`
-	PhoneNumber  *string `json:"phoneNumber"`
-	Avatar       *string `json:"avatar"`
+	Name        *string `json:"name"`
+	Email       *string `json:"email"`
+	Password    *string `json:"password"`
+	PhoneNumber *string `json:"phoneNumber"`
+	Avatar      *string `json:"avatar"`
 }
 
 type User struct {
-	ID           *int    `json:"id"`
-	Name         string  `json:"name"`
-	Email        string  `json:"email"`
-	Password     string  `json:"password"`
-	Organization *string `json:"organization"`
-	PhoneNumber  *string `json:"phoneNumber"`
-	Avatar       *string `json:"avatar"`
+	ID          *int    `json:"id"`
+	Name        string  `json:"name"`
+	Email       string  `json:"email"`
+	Password    string  `json:"password"`
+	PhoneNumber *string `json:"phoneNumber"`
+	Avatar      *string `json:"avatar"`
 }

@@ -6,7 +6,11 @@ import (
 
 	_router "eventapp/delivery/routers"
 	_authRepo "eventapp/repository/auth"
+	_commentRepo "eventapp/repository/comment"
+	_eventRepo "eventapp/repository/event"
+	_participantRepo "eventapp/repository/participant"
 	_userRepo "eventapp/repository/user"
+
 	_util "eventapp/utils"
 
 	"fmt"
@@ -26,10 +30,13 @@ func main() {
 	// authRepo := auth.New()``
 	userRepo := _userRepo.New(db)
 	authRepo := _authRepo.New(db)
+	eventRepo := _eventRepo.New(db)
+	commentRepo := _commentRepo.New(db)
+	participantRepo := _participantRepo.New(db)
 
 	//create echo http
 	e := echo.New()
-	client := _graph.NewResolver(authRepo,userRepo)
+	client := _graph.NewResolver(authRepo, userRepo, eventRepo, participantRepo, commentRepo)
 	srv := _router.NewGraphQLServer(client)
 	//register API path and controller
 	_router.RegisterPath(e, srv)
