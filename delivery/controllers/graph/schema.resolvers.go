@@ -132,7 +132,8 @@ func (r *mutationResolver) CreateEvent(ctx context.Context, input model.NewEvent
 	}
 	res, err := r.eventRepo.CreateEvent(eventData)
 	if err != nil {
-		return nil, errors.New("failed Create User")
+		fmt.Println("cekk", err)
+		return nil, errors.New("failed Create Event")
 	}
 	responseMessage := model.Event{
 		Name:        res.Name,
@@ -147,7 +148,29 @@ func (r *mutationResolver) CreateEvent(ctx context.Context, input model.NewEvent
 }
 
 func (r *mutationResolver) UpdateEvent(ctx context.Context, id int, set model.NewEvent) (*model.Event, error) {
-	panic(fmt.Errorf("not implemented"))
+	var event entities.Event
+	event.Name = set.Name
+	event.Category = set.Category
+	event.Host = set.Host
+	event.Description = set.Description
+	event.Datetime = set.Datetime
+	event.Location = set.Location
+	event.Photo = set.Photo
+	res, err := r.eventRepo.GetUpdateEvent(id, event)
+	if err != nil {
+		fmt.Println("cekk", err)
+		return nil, errors.New("failed Create User")
+	}
+	responseMessage := model.Event{
+		Name:        res.Name,
+		Category:    res.Category,
+		Host:        res.Host,
+		Description: res.Description,
+		Datetime:    res.Datetime,
+		Location:    res.Location,
+		Photo:       res.Photo,
+	}
+	return &responseMessage, nil
 }
 
 func (r *mutationResolver) DeleteEvent(ctx context.Context, id int) (*model.SuccessResponse, error) {
@@ -312,7 +335,7 @@ func (r *queryResolver) Events(ctx context.Context, page int) ([]*model.Event, e
 	fmt.Println(responseData)
 
 	if err != nil {
-		return nil, errors.New("not found")
+		return nil, err
 	}
 
 	eventResponseData := []*model.Event{}

@@ -36,7 +36,7 @@ type Message struct {
 
 type NewEvent struct {
 	Name        string `json:"name"`
-	Userid      int    `json:"userid"`
+	Userid      *int   `json:"userid"`
 	Host        string `json:"host"`
 	Description string `json:"description"`
 	Datetime    string `json:"datetime"`

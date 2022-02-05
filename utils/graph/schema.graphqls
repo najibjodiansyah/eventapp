@@ -55,7 +55,7 @@ type Event {
 }
 input NewEvent{
 	name: String!
-	userid: Int!
+	userid: Int
 	host: String!
 	description: String!
 	datetime: String!
