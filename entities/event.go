@@ -12,5 +12,5 @@ type Event struct {
 	CreatedAt   string `json:"createdAt"`
 	UpdateAt    string `json:"updateAt"`
 	UserId      int    `json:"userid" form:"userid"`
-	// User User `json:"user" form:"user"`
+	Username 	string 	`json:"username"`
 }

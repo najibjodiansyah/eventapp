@@ -16,9 +16,12 @@ func New(db *sql.DB) *EventRepositeory {
 	return &EventRepositeory{db: db}
 }
 
-func (r *EventRepositeory) Get() ([]entities.Event, error) {
+func (r *EventRepositeory) GetAllEvent(page int) ([]entities.Event, error) {
 	var events []entities.Event
-	result, err := r.db.Query("select events.id, events.name, events.category, events.location, events.description, events.photo from events join users on events.userid = users.id")
+	result, err := r.db.Query(`	select events.id, events.name, events.category, events.host, 
+							   	events.description, events.datetime,events.location,events.photo 
+							   	from events 
+								where location = ? and deleted_at IS NULL limit ?`, page)
 	if err != nil {
 		return events, err
 	}
@@ -27,7 +30,8 @@ func (r *EventRepositeory) Get() ([]entities.Event, error) {
 
 	for result.Next() {
 		var event entities.Event
-		err := result.Scan(&event.ID, &event.Name, &event.ID, &event.Name, &event.Category, &event.Location, &event.Description, &event.Photo)
+		err := result.Scan(&event.ID, &event.Name, &event.Category, &event.Host,
+			&event.Description, &event.Datetime, &event.Location, &event.Photo)
 		if err != nil {
 			return events, fmt.Errorf("event not found")
 		}
@@ -35,42 +39,52 @@ func (r *EventRepositeory) Get() ([]entities.Event, error) {
 	}
 	return events, nil
 }
-
-func (r *EventRepositeory) GetbyId(id int) (entities.Event, error) {
-	var event entities.Event
-		stmt, err := r.db.Prepare("select id, name, userid, host, category, date, location, description, photo from events where id = ? deleted_at is null ")
-		if err != nil {
-			//log.Fatal(err)
-			return event, fmt.Errorf("gagal prepare db")
-		}
-	
-		result, err := stmt.Query(id)
-		if err != nil {
-			return event, fmt.Errorf("gagal query event")
-		}
-	
-		defer result.Close()
-	
-		for result.Next() {
-			err := result.Scan(&event.ID, &event.Name, &event.UserId, &event.Host, &event.Category, &event.Datetime, &event.Location, &event.Description, &event.Photo)
-			if err != nil {
-				return event, err
-			}
-			return event, nil
-		}
-	
-		return event, fmt.Errorf("event not found")
+func (r *EventRepositeory) GetEventByLocation(location string, page int) ([]entities.Event, error) {
+	var eventsLocation []entities.Event
+	eventByLocation, err := r.db.Query(`select events.id, events.name, events.category, events.host, 
+									events.description, events.datetime,events.location,events.photo 
+									from events 
+									where location = ? and deleted_at IS NULL limit ?`, location, page)
+	if err != nil {
+		return eventsLocation, err
 	}
+	defer eventByLocation.Close()
 
-func (r *EventRepositeory) Create(user entities.Event) (entities.Event, error) {
-	
-	return user, nil
+	for eventByLocation.Next() {
+		var eventLocation entities.Event
+
+		err := eventByLocation.Scan(&eventLocation.ID, &eventLocation.Name,
+			&eventLocation.Category, &eventLocation.Host,
+			&eventLocation.Description, &eventLocation.Datetime,
+			&eventLocation.Location, &eventLocation.Photo)
+		if err != nil {
+			return eventsLocation, err
+		}
+		eventsLocation = append(eventsLocation, eventLocation)
+	}
+	if location == "" {
+		return eventsLocation, fmt.Errorf("lokasi tidak ada")
+	}
+	return eventsLocation, nil
 }
 
-func (r *EventRepositeory) Update(id int, user entities.Event) (entities.Event, error) {
-	
-
-	return user, nil
+func (r *EventRepositeory) CreateEvent(event entities.Event) (entities.Event, error) {
+	stmt, err := r.db.Prepare(`insert into events 
+							   (name,category,host,location,description,datetime,location,photo) 
+							   VALUES(?,?,?,?,?,?,,?,?)`)
+	if err != nil {
+		return event, err
+	}
+	result, err := stmt.Exec(event.Name, event.Category, event.Host, event.Location,
+		event.Description, event.Datetime, event.Location, event.Photo, event.CreatedAt)
+	if err != nil {
+		return event, fmt.Errorf("gagal exec")
+	}
+	RowsAffected, _ := result.RowsAffected()
+	if RowsAffected == 0 {
+		return event, fmt.Errorf("event not created")
+	}
+	return event, nil
 }
 
 func (r *EventRepositeory) Delete(id int) error {
@@ -93,14 +107,16 @@ func (r *EventRepositeory) Delete(id int) error {
 }
 
 func (r *EventRepositeory) GetEventByKeyword(keyword string, page int) ([]entities.Event, error) {
-	stmt, err := r.db.Prepare("select id, name, userid, host, category, date, location, description, photo from events where deleted_at is null and keyword like %?% limit ? offset ? ")
+	stmt, err := r.db.Prepare("select id, name, userid, host, category, date, location, description, photo from events where deleted_at is null and name like ? limit ? offset ?")
 	if err != nil {
 		log.Fatal(err)
 	}
 
 	var events []entities.Event
-
-	result, errr := stmt.Query()
+	like := "%"+keyword+"%"
+	limit := 10
+	offset := (page - 1) * limit
+	result, errr := stmt.Query(like, limit, offset)
 	if errr != nil {
 		return events, err
 	}
@@ -109,12 +125,12 @@ func (r *EventRepositeory) GetEventByKeyword(keyword string, page int) ([]entiti
 
 	for result.Next() {
 		var event entities.Event
-		limit := 10
-		offset := (page - 1) * limit
-		err := result.Scan(&event.ID, &event.Name, &event.UserId, &event.Host, &event.Category, &event.Datetime, &event.Location, &event.Description, &event.Photo, keyword, limit, offset)
+	
+		err := result.Scan(&event.ID, &event.Name, &event.UserId, &event.Host, &event.Category, &event.Datetime, &event.Location, &event.Description, &event.Photo)
 		if err != nil {
 			log.Fatal("error di scan getEvent")
 		}
+
 		events = append(events, event)
 	}
 	return events, nil
@@ -152,7 +168,35 @@ func (r *EventRepositeory) GetEventByCategory(category string, page int) ([]enti
 	return events, nil
 }
 
-func (r *EventRepositeory) GetEventByLocation(location string, page int) ([]entities.Event, error) {
-	
-	return nil, nil
+
+func (r *EventRepositeory) GetbyHostId(userid int) ([]entities.Event, error)  {
+	stmt, err := r.db.Prepare("select events.id, events.name, events.userid, events.host, events.category, events.date, events.location, events.description, events.photo, users.name from events join users where events.userid = users.id and events.deleted_at is null and events.userid = ?")
+	if err != nil {
+		log.Fatal(err)
+	}
+
+	var events []entities.Event
+
+	result, errr := stmt.Query(userid)
+	if errr != nil {
+		return events, err
+	}
+
+	defer result.Close()
+
+	for result.Next() {
+		var event entities.Event
+		err := result.Scan(&event.ID, &event.Name, &event.UserId, &event.Host, &event.Category, &event.Datetime, &event.Location, &event.Description, &event.Photo, &event.Username)
+		if err != nil {
+			log.Fatal("error di scan getEvent")
+		}
+		
+		events = append(events, event)
+	}
+	fmt.Println(events)
+	return events, nil
+}
+
+func (r *EventRepositeory) Update(id int, event entities.Event) (entities.Event, error){
+	return entities.Event{},nil
 }
