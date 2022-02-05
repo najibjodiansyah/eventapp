@@ -39,6 +39,7 @@ func (r *EventRepositeory) GetAllEvent(page int) ([]entities.Event, error) {
 	}
 	return events, nil
 }
+
 func (r *EventRepositeory) GetEventByLocation(location string, page int) ([]entities.Event, error) {
 	var eventsLocation []entities.Event
 	eventByLocation, err := r.db.Query(`select events.id, events.name, events.category, events.host, 
@@ -66,6 +67,10 @@ func (r *EventRepositeory) GetEventByLocation(location string, page int) ([]enti
 		return eventsLocation, fmt.Errorf("lokasi tidak ada")
 	}
 	return eventsLocation, nil
+}
+
+func (r *EventRepositeory) GetEventByCategory(category string, page int) ([]entities.Event, error) {
+	return nil, nil
 }
 
 func (r *EventRepositeory) CreateEvent(event entities.Event) (entities.Event, error) {

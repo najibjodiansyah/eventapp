@@ -16,7 +16,7 @@ func New(db *sql.DB) *CommentRepository {
 }
 
 func (r *CommentRepository) GetCommentsByEventId(eventId int) ([]entities.Comment, error) {
-	stmt, err := r.db.Prepare("select u.name, u.avatar, c.comment, c.created_at from users u left join comments c on c.userid = u.id where c.deleted_at is NULL and c.eventid = ?")
+	stmt, err := r.db.Prepare("select u.id, u.name, u.avatar, c.comment, c.created_at from users u left join comments c on c.userid = u.id where c.deleted_at is NULL and c.eventid = ?")
 
 	if err != nil {
 		log.Fatal(err)
@@ -37,7 +37,7 @@ func (r *CommentRepository) GetCommentsByEventId(eventId int) ([]entities.Commen
 	for result.Next() {
 		var comment entities.Comment
 
-		err := result.Scan(&comment.UserName, &comment.Avatar, &comment.Content, &comment.CreatedAt) // ada baiknya dibuat istilah yang konsisten, photo atau avatar atau image
+		err := result.Scan(&comment.UserId, &comment.UserName, &comment.Avatar, &comment.Content, &comment.CreatedAt) // ada baiknya dibuat istilah yang konsisten, photo atau avatar atau image
 
 		if err != nil {
 			log.Fatal(err)
@@ -55,20 +55,20 @@ func (r *CommentRepository) CreateComment(eventId int, userId int, comment strin
 
 	if err != nil {
 		log.Fatal(err)
-		return err
+		return errors.New("failed create comment")
 	}
 
 	result, err := stmt.Exec(eventId, userId, comment)
 
 	if err != nil {
 		log.Fatal(err)
-		return err
+		return errors.New("failed create comment")
 	}
 
 	row, _ := result.RowsAffected()
 
 	if row == 0 {
-		return errors.New("failed creating comment")
+		return errors.New("failed create comment")
 	}
 
 	return nil
@@ -79,7 +79,7 @@ func (r *CommentRepository) DeleteComment(eventId int, userId int) error {
 
 	if err != nil {
 		log.Fatal(err)
-		return err
+		return errors.New("failed delete comment")
 	}
 
 	result, err := stmt.Exec(eventId, userId)
@@ -92,7 +92,7 @@ func (r *CommentRepository) DeleteComment(eventId int, userId int) error {
 	row, _ := result.RowsAffected()
 
 	if row == 0 {
-		return errors.New("failed deleting comment")
+		return errors.New("failed delete comment")
 	}
 
 	return nil

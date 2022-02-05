@@ -7,7 +7,6 @@ type User {
 	name: String!
 	email: String!
 	password: String!
-	organization: String
 	phoneNumber: String
 	avatar: String
 }
@@ -16,7 +15,6 @@ input NewUser {
 	name: String!
 	email: String!
 	password: String!
-	organization: String
 	phoneNumber: String
 	avatar: String
 }
@@ -25,7 +23,6 @@ input UpdateUser {
 	name: String
 	email: String
 	password: String
-	organization: String
 	phoneNumber: String
 	avatar: String
 }
@@ -72,16 +69,17 @@ type SuccessResponse {
   	message: String!
 }
 
-type Partcipant{
+type Participant{
 	name: String!
 	avatar: String!
 }
 
 type Comment{
-	nama: String!
+	userId: Int!
+	name: String!
 	avatar: String!
 	content: String!
-	created_at: String!
+	createdAt: String!
 }
 
 type Query {
@@ -96,7 +94,7 @@ type Query {
 	eventByCategory(Category: String!, page: Int!): [Event!]	
 	eventByParticipantId(userId: Int!): [Event] # get semua event yang diikuti oleh user id
 
-	participants(eventId: Int!): [Partcipant]
+	participants(eventId: Int!): [Participant]
 
 	comments(eventId: Int!):[Comment]
 }

@@ -98,38 +98,38 @@ func (r *ParticipantRepository) UnjoinEvent(eventId int, userId int) error {
 	return nil
 }
 
-// ini seharusnya muncul di event repository
-// func (r *EventRepositeory) GetEventsByParticipantId(userId int) ([]entities.Event, error) {
-// 	stmt, err := r.db.Prepare("select e.id, e.name, e.host, u.name, e.description, e.date, e.location, e.category, e.photo from events e left join users u on e.userid = u.id where e.deleted_at is NULL and e.hostid = ?")
+// ini seharusnya muncul di event repository, tetapi daripada conflic ya sudah ditaruh di participant repository
+func (r *ParticipantRepository) GetEventsByParticipantId(userId int) ([]entities.Event, error) {
+	stmt, err := r.db.Prepare("select e.id, e.name, e.host, u.name, e.description, e.date, e.location, e.category, e.photo from events e left join users u on e.userid = u.id where e.deleted_at is NULL and e.hostid = ?")
 
-// 	if err != nil {
-// 		log.Fatal(err)
-// 		return nil, err
-// 	}
+	if err != nil {
+		log.Fatal(err)
+		return nil, err
+	}
 
-// 	result, err := stmt.Query(userId)
+	result, err := stmt.Query(userId)
 
-// 	if err != nil {
-// 		log.Fatal(err)
-// 		return nil, err
-// 	}
+	if err != nil {
+		log.Fatal(err)
+		return nil, err
+	}
 
-// 	defer result.Close()
+	defer result.Close()
 
-// 	var events []entities.Event
+	var events []entities.Event
 
-// 	for result.Next() {
-// 		var event entities.Event
+	for result.Next() {
+		var event entities.Event
 
-// 		err := result.Scan(&event.ID, &event.Name, &event.Host, &event.UserName, &event.Description, &event.Datetime, &event.Location, &event.Category, &event.Photo)
+		err := result.Scan(&event.ID, &event.Name, &event.Host, &event.UserName, &event.Description, &event.Datetime, &event.Location, &event.Category, &event.Photo)
 
-// 		if err != nil {
-// 			log.Fatal(err)
-// 			return nil, err
-// 		}
+		if err != nil {
+			log.Fatal(err)
+			return nil, err
+		}
 
-// 		events = append(events, event)
-// 	}
+		events = append(events, event)
+	}
 
-// 	return events, nil
-// }
+	return events, nil
+}

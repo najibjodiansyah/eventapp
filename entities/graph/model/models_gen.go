@@ -3,10 +3,11 @@
 package model
 
 type Comment struct {
-	Nama      string `json:"nama"`
+	UserID    int    `json:"userId"`
+	Name      string `json:"name"`
 	Avatar    string `json:"avatar"`
 	Content   string `json:"content"`
-	CreatedAt string `json:"created_at"`
+	CreatedAt string `json:"createdAt"`
 }
 
 type Event struct {
@@ -45,15 +46,14 @@ type NewEvent struct {
 }
 
 type NewUser struct {
-	Name         string  `json:"name"`
-	Email        string  `json:"email"`
-	Password     string  `json:"password"`
-	Organization *string `json:"organization"`
-	PhoneNumber  *string `json:"phoneNumber"`
-	Avatar       *string `json:"avatar"`
+	Name        string  `json:"name"`
+	Email       string  `json:"email"`
+	Password    string  `json:"password"`
+	PhoneNumber *string `json:"phoneNumber"`
+	Avatar      *string `json:"avatar"`
 }
 
-type Partcipant struct {
+type Participant struct {
 	Name   string `json:"name"`
 	Avatar string `json:"avatar"`
 }
@@ -64,20 +64,18 @@ type SuccessResponse struct {
 }
 
 type UpdateUser struct {
-	Name         *string `json:"name"`
-	Email        *string `json:"email"`
-	Password     *string `json:"password"`
-	Organization *string `json:"organization"`
-	PhoneNumber  *string `json:"phoneNumber"`
-	Avatar       *string `json:"avatar"`
+	Name        *string `json:"name"`
+	Email       *string `json:"email"`
+	Password    *string `json:"password"`
+	PhoneNumber *string `json:"phoneNumber"`
+	Avatar      *string `json:"avatar"`
 }
 
 type User struct {
-	ID           *int    `json:"id"`
-	Name         string  `json:"name"`
-	Email        string  `json:"email"`
-	Password     string  `json:"password"`
-	Organization *string `json:"organization"`
-	PhoneNumber  *string `json:"phoneNumber"`
-	Avatar       *string `json:"avatar"`
+	ID          *int    `json:"id"`
+	Name        string  `json:"name"`
+	Email       string  `json:"email"`
+	Password    string  `json:"password"`
+	PhoneNumber *string `json:"phoneNumber"`
+	Avatar      *string `json:"avatar"`
 }
