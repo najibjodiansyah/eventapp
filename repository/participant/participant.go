@@ -92,11 +92,17 @@ func (r *ParticipantRepository) UnjoinEvent(eventId int, userId int) error {
 		return err
 	}
 
-	_, err = stmt.Exec(eventId, userId)
+	res, err := stmt.Exec(eventId, userId)
 
 	if err != nil {
 		log.Println(err)
 		return err
+	}
+
+	rowsAffected, _ := res.RowsAffected()
+
+	if rowsAffected == 0 {
+		return errors.New("failed joining event")
 	}
 
 	return nil

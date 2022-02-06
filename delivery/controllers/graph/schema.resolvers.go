@@ -233,6 +233,10 @@ func (r *mutationResolver) UpdateEvent(ctx context.Context, id int, set model.Up
 
 	event, _ := r.eventRepo.GetEventByEventId(id)
 
+	if event.HostId == 0 {
+		return nil, errors.New("not found")
+	}
+
 	if event.HostId != convData.Id {
 		fmt.Println(event.HostId, convData.Id)
 		return nil, errors.New("unauthorized")
@@ -300,6 +304,10 @@ func (r *mutationResolver) DeleteEvent(ctx context.Context, id int) (*model.Succ
 	fmt.Println("id user ", convData.Id)
 
 	event, _ := r.eventRepo.GetEventByEventId(id)
+
+	if event.HostId == 0 {
+		return nil, errors.New("not found")
+	}
 
 	if event.HostId != convData.Id {
 		fmt.Println(event.HostId, convData.Id)
