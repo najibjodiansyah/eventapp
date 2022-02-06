@@ -27,7 +27,6 @@ func main() {
 	db := _util.MysqlDriver(config)
 
 	//initiate user model
-	// authRepo := auth.New()``
 	userRepo := _userRepo.New(db)
 	authRepo := _authRepo.New(db)
 	eventRepo := _eventRepo.New(db)
