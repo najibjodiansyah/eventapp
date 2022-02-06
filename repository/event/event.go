@@ -237,7 +237,7 @@ func (r *EventRepositeory) GetEventByCategory(category string, page int) ([]enti
 func (r *EventRepositeory) GetEventByHostId(hostId int) ([]entities.Event, error) {
 	stmt, err := r.db.Prepare(`select e.id, e.name, e.category, u.name, e.host, e.description, e.datetime, e.location, e.photo 
 								from events e join users u on e.hostid = u.id
-								where e.hostid = u.id and e.deleted_at is null and e.hostid = ?`)
+								where e.deleted_at is null and e.hostid = ?`)
 
 	if err != nil {
 		log.Println(err)
