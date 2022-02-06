@@ -55,7 +55,7 @@ func (r *CommentRepository) GetCommentsByEventId(eventId int) ([]entities.Commen
 }
 
 func (r *CommentRepository) CreateComment(eventId int, userId int, content string) (entities.Comment, error) {
-	stmt, err := r.db.Prepare("insert into comments(userid, eventid, comment, created_at) values(?, ?, ?, ?)")
+	stmt, err := r.db.Prepare("insert into comments(userid, eventid, comment, created_at) values(?, ?, ?, CURRENT_TIMESTAMP)")
 
 	if err != nil {
 		log.Fatal(err)
@@ -64,16 +64,16 @@ func (r *CommentRepository) CreateComment(eventId int, userId int, content strin
 
 	created_at := time.Now()
 
-	res, err := stmt.Exec(eventId, userId, content, created_at)
+	res, err := stmt.Exec(eventId, userId, content)
 
 	if err != nil {
 		log.Fatal(err)
 		return entities.Comment{}, err
 	}
 
-	affected, _ := res.RowsAffected()
+	rowsAffected, _ := res.RowsAffected()
 
-	if affected == 0 {
+	if rowsAffected == 0 {
 		return entities.Comment{}, errors.New("failed create comment")
 	}
 
@@ -109,7 +109,7 @@ func (r *CommentRepository) DeleteComment(commentId int, userId int) error {
 
 	if err != nil {
 		log.Fatal(err)
-		return errors.New("failed delete comment")
+		return err
 	}
 
 	_, err = stmt.Exec(commentId, userId)
@@ -127,7 +127,7 @@ func (r *CommentRepository) DeleteAllCommentByUserId(userId int) error {
 
 	if err != nil {
 		log.Fatal(err)
-		return errors.New("failed delete comment")
+		return err
 	}
 
 	_, err = stmt.Exec(userId)
@@ -145,7 +145,7 @@ func (r *CommentRepository) DeleteAllCommentByEventId(eventId int) error {
 
 	if err != nil {
 		log.Fatal(err)
-		return errors.New("failed delete comment")
+		return err
 	}
 
 	_, err = stmt.Exec(eventId)

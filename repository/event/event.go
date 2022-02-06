@@ -5,7 +5,6 @@ import (
 	"eventapp/entities"
 	"fmt"
 	"log"
-	"time"
 )
 
 type EventRepositeory struct {
@@ -18,9 +17,7 @@ func New(db *sql.DB) *EventRepositeory {
 
 // sudah dicek
 func (r *EventRepositeory) GetAllEvent(page int) ([]entities.Event, error) {
-	var events []entities.Event
-
-	stmt, err := r.db.Prepare(` select e.id, e.name, e.category, u.name, e.host, e.description, e.datetime, e.location, e.photo 
+	stmt, err := r.db.Prepare(`select e.id, e.name, e.category, u.name, e.host, e.description, e.datetime, e.location, e.photo 
 								from events e join users u on e.hostid = u.id 
 								where e.deleted_at IS NULL limit ? offset ?`)
 
@@ -41,6 +38,8 @@ func (r *EventRepositeory) GetAllEvent(page int) ([]entities.Event, error) {
 
 	defer res.Close()
 
+	var events []entities.Event
+
 	for res.Next() {
 		var event entities.Event
 
@@ -59,9 +58,7 @@ func (r *EventRepositeory) GetAllEvent(page int) ([]entities.Event, error) {
 
 // sudah dicek
 func (r *EventRepositeory) GetEventByLocation(location string, page int) ([]entities.Event, error) {
-	var events []entities.Event
-
-	stmt, err := r.db.Prepare(`	select e.id, e.name, e.category, u.name, e.host, e.description, e.datetime, e.location, e.photo 
+	stmt, err := r.db.Prepare(`select e.id, e.name, e.category, u.name, e.host, e.description, e.datetime, e.location, e.photo 
 								from events e join users u on e.hostid = u.id
 								where e.location = ? and e.deleted_at IS NULL limit ? offset ?`)
 
@@ -82,6 +79,8 @@ func (r *EventRepositeory) GetEventByLocation(location string, page int) ([]enti
 
 	defer res.Close()
 
+	var events []entities.Event
+
 	for res.Next() {
 		var event entities.Event
 
@@ -100,22 +99,22 @@ func (r *EventRepositeory) GetEventByLocation(location string, page int) ([]enti
 
 // edit by bagus, return ditambah event id dan user name
 func (r *EventRepositeory) CreateEvent(hostId int, event entities.Event) (entities.Event, error) {
-	stmt, err := r.db.Prepare("insert into events (name, category, hostid, host, description, datetime, location, photo) VALUES(?,?,?,?,?,?,?,?)")
+	stmt, err := r.db.Prepare("insert into events (name, category, hostid, host, description, datetime, location, photo, created_at) VALUES(?,?,?,?,?,?,?,?, CURRENT_TIMESTAMP)")
 
 	if err != nil {
-		return event, err
+		return entities.Event{}, err
 	}
 
 	res, err := stmt.Exec(event.Name, event.Category, hostId, event.Host, event.Description, event.Datetime, event.Location, event.Photo)
 
 	if err != nil {
-		return event, fmt.Errorf("event not created")
+		return entities.Event{}, err
 	}
 
-	RowsAffected, _ := res.RowsAffected()
+	rowsAffected, _ := res.RowsAffected()
 
-	if RowsAffected == 0 {
-		return event, fmt.Errorf("event not created")
+	if rowsAffected == 0 {
+		return entities.Event{}, fmt.Errorf("event not created")
 	}
 
 	id, _ := res.LastInsertId()
@@ -138,13 +137,13 @@ func (r *EventRepositeory) CreateEvent(hostId int, event entities.Event) (entiti
 	return event, nil
 }
 
-func (r *EventRepositeory) DeleteEvent(id int) error {
-	stmt, err := r.db.Prepare("UPDATE events SET deleted_at= ? where id = ?")
+func (r *EventRepositeory) DeleteEvent(eventid int) error {
+	stmt, err := r.db.Prepare("update events set deleted_at = CURRENT_TIMESTAMP where id = ?")
 	if err != nil {
 		log.Fatal(err)
 	}
 
-	_, err = stmt.Exec(time.Now(), id)
+	_, err = stmt.Exec(eventid)
 	if err != nil {
 		return err
 	}
@@ -154,8 +153,6 @@ func (r *EventRepositeory) DeleteEvent(id int) error {
 
 // sudah diceck, return ditambah user name
 func (r *EventRepositeory) GetEventByKeyword(keyword string, page int) ([]entities.Event, error) {
-	var events []entities.Event
-
 	stmt, err := r.db.Prepare(`select e.id, e.name, e.category, u.name, e.host, e.description, e.datetime, e.location, e.photo 
 								from events e join users u on e.hostid = u.id
 								where e.deleted_at is null and e.name like ? limit ? offset ?`)
@@ -172,10 +169,13 @@ func (r *EventRepositeory) GetEventByKeyword(keyword string, page int) ([]entiti
 	res, err := stmt.Query(like, limit, offset)
 
 	if err != nil {
+		log.Fatal(err)
 		return nil, err
 	}
 
 	defer res.Close()
+
+	var events []entities.Event
 
 	for res.Next() {
 		var event entities.Event
@@ -204,8 +204,6 @@ func (r *EventRepositeory) GetEventByCategory(category string, page int) ([]enti
 		return nil, err
 	}
 
-	var events []entities.Event
-
 	limit := 5
 	offset := (page - 1) * limit
 
@@ -217,6 +215,8 @@ func (r *EventRepositeory) GetEventByCategory(category string, page int) ([]enti
 	}
 
 	defer res.Close()
+
+	var events []entities.Event
 
 	for res.Next() {
 		var event entities.Event
@@ -236,14 +236,14 @@ func (r *EventRepositeory) GetEventByCategory(category string, page int) ([]enti
 
 // sudah dicek
 func (r *EventRepositeory) GetEventByHostId(hostId int) ([]entities.Event, error) {
-	stmt, err := r.db.Prepare("select events.id, events.name, events.userid, events.host, events.category, events.datetime, events.location, events.description, events.photo, users.name from events join users where events.hostid = users.id and events.deleted_at is null and events.hostid = ?")
+	stmt, err := r.db.Prepare(`select e.id, e.name, e.category, u.name, e.host, e.description, e.datetime, e.location, e.photo 
+								from events e join users u on e.hostid = u.id
+								where e.hostid = u.id and e.deleted_at is null and e.hostid = ?`)
 
 	if err != nil {
 		log.Fatal(err)
 		return nil, err
 	}
-
-	var events []entities.Event
 
 	res, err := stmt.Query(hostId)
 
@@ -253,6 +253,8 @@ func (r *EventRepositeory) GetEventByHostId(hostId int) ([]entities.Event, error
 	}
 
 	defer res.Close()
+
+	var events []entities.Event
 
 	for res.Next() {
 		var event entities.Event
@@ -270,54 +272,57 @@ func (r *EventRepositeory) GetEventByHostId(hostId int) ([]entities.Event, error
 	return events, nil
 }
 
-func (r *EventRepositeory) UpdateEvent(eventid int, event entities.Event) (entities.Event, error) {
-	stmt, err := r.db.Prepare("UPDATE events SET name= ?, category= ?, host= ?, location= ?,description= ?, datetime=?,photo=? WHERE id = ? AND deleted_at is NULL")
+func (r *EventRepositeory) UpdateEvent(event entities.Event) (entities.Event, error) {
+	stmt, err := r.db.Prepare("update events set name= ?, category= ?, host= ?, location= ?, description= ?, datetime= ?, photo= ? where id = ? and deleted_at is NULL")
 
 	if err != nil {
 		log.Fatal(err)
-		return event, fmt.Errorf("update event failed")
+		return entities.Event{}, err
 	}
 
-	result, error := stmt.Exec(event.Name, event.Category, event.Host, event.Location, event.Description, event.Datetime, event.Photo, eventid)
+	result, error := stmt.Exec(event.Name, event.Category, event.Host, event.Location, event.Description, event.Datetime, event.Photo, event.Id)
 
 	if error != nil {
-		return event, fmt.Errorf("update event failed")
+		log.Fatal(err)
+		return entities.Event{}, err
 	}
 
-	RowsAffected, _ := result.RowsAffected()
+	rowsAffected, _ := result.RowsAffected()
 
-	if RowsAffected == 0 {
-		return event, fmt.Errorf("update event failed")
+	if rowsAffected == 0 {
+		return entities.Event{}, fmt.Errorf("update event failed")
 	}
 
 	return event, nil
 }
 
-func (r *EventRepositeory) GetById(eventId int) (entities.Event, error) {
-	var event entities.Event
-
-	stmt, err := r.db.Prepare(` select name, hostid, category, host, description, datetime, location, photo 
-								from events
-								where deleted_at IS NULL and id = ?`)
+func (r *EventRepositeory) GetEventByEventId(eventId int) (entities.Event, error) {
+	stmt, err := r.db.Prepare(`select e.id, e.name, e.category, u.name, e.host, e.description, e.datetime, e.location, e.photo 
+								from events e join users u on e.hostid = u.id
+								where e.deleted_at IS NULL and e.id = ?`)
 
 	if err != nil {
 		log.Fatal(err)
-		return event, err
+		return entities.Event{}, err
 	}
 
 	res, err := stmt.Query(eventId)
 
 	if err != nil {
-		return event, err
+		log.Fatal(err)
+		return entities.Event{}, err
 	}
 
 	defer res.Close()
+
+	var event entities.Event
 
 	if res.Next() {
 		err := res.Scan(&event.Name, &event.HostId, &event.Category, &event.Host, &event.Description, &event.Datetime, &event.Location, &event.Photo)
 
 		if err != nil {
-			return event, err
+			log.Fatal(err)
+			return entities.Event{}, err
 		}
 	}
 

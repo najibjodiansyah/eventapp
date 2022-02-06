@@ -123,7 +123,15 @@ func (r *UserRepository) Create(user entities.User) (entities.User, error) {
 }
 
 // edit by Bagus, parameter dan return repository memakai entity saja
+// email harus unik, dicek dengan checkEmailExistence
 func (r *UserRepository) Update(id int, user entities.User) (entities.User, error) {
+	err := r.checkEmailExistence(user.Email)
+
+	if err != nil {
+		log.Fatal(err)
+		return entities.User{}, err
+	}
+
 	stmt, err := r.db.Prepare("update users set name= ?, email= ?, password= ?, phone= ?, avatar= ? where id = ? and deleted_at is null")
 
 	if err != nil {

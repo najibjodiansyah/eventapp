@@ -219,7 +219,7 @@ func (r *mutationResolver) UpdateEvent(ctx context.Context, id int, set model.Up
 	convData := ctx.Value("EchoContextKey").(*middlewares.User)
 	fmt.Println("id user ", convData.Id)
 
-	event, _ := r.eventRepo.GetById(id)
+	event, _ := r.eventRepo.GetEventByEventId(id)
 
 	if event.HostId != convData.Id {
 		return nil, errors.New("unauthorized")
@@ -253,7 +253,9 @@ func (r *mutationResolver) UpdateEvent(ctx context.Context, id int, set model.Up
 		event.Photo = *set.Photo
 	}
 
-	res, err := r.eventRepo.UpdateEvent(id, event)
+	event.Id = id
+
+	res, err := r.eventRepo.UpdateEvent(event)
 
 	if err != nil {
 		return nil, errors.New("failed update event")
@@ -283,7 +285,7 @@ func (r *mutationResolver) DeleteEvent(ctx context.Context, id int) (*model.Succ
 	convData := ctx.Value("EchoContextKey").(*middlewares.User)
 	fmt.Println("id user ", convData.Id)
 
-	event, _ := r.eventRepo.GetById(id)
+	event, _ := r.eventRepo.GetEventByEventId(id)
 
 	if event.HostId != convData.Id {
 		return nil, errors.New("unauthorized")

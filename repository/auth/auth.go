@@ -26,6 +26,7 @@ func (r *AuthRepository) Login(email string) (entities.User, error) {
 	res, err := stmt.Query(email)
 
 	if err != nil {
+		log.Fatal(err)
 		return entities.User{}, err
 	}
 
@@ -37,6 +38,7 @@ func (r *AuthRepository) Login(email string) (entities.User, error) {
 		err := res.Scan(&user.Id, &user.Name, &user.Email, &user.Password)
 
 		if err != nil {
+			log.Fatal(err)
 			return entities.User{}, err
 		}
 	}
