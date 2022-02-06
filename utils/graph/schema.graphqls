@@ -27,10 +27,6 @@ input UpdateUser {
 	avatar: String
 }
 
-type Message {
-	message: String!
-}
-
 type LoginResponse {
 	message: String!
 	id: Int!
@@ -53,6 +49,7 @@ type Event {
 	# deletedAt: String
 	# user: User!
 }
+
 input NewEvent{
 	name: String!
 	userid: Int
@@ -62,6 +59,16 @@ input NewEvent{
 	location: String!
 	category: String!
 	photo: String!
+}
+
+input UpdateEvent{
+	name: String
+	host: String
+	description: String
+	datetime: String
+	location: String
+	category: String
+	photo: String
 }
 
 type SuccessResponse {
@@ -75,6 +82,7 @@ type Participant{
 }
 
 type Comment{
+	id: Int
 	userId: Int!
 	name: String!
 	avatar: String!
@@ -92,7 +100,7 @@ type Query {
 	eventByLocation(location: String!, page: Int!): [Event!]	
 	eventByKeyword(keyword: String!, page: Int! ): [Event!]	
 	eventByCategory(Category: String!, page: Int!): [Event!]	
-	eventByParticipantId(userId: Int!): [Event] # get semua event yang diikuti oleh user id
+	eventByParticipantId(userId: Int!): [Event!] # get semua event yang diikuti oleh user id
 
 	participants(eventId: Int!): [Participant]
 
@@ -103,14 +111,14 @@ type Query {
 type Mutation {
 	createUser(input: NewUser!): User!
 	updateUser(id: Int!, set: UpdateUser!): User!
-	deleteUser(id: Int!): Message!
+	deleteUser(id: Int!): SuccessResponse!
 
 	createEvent(input: NewEvent!): Event!
-	updateEvent(id: Int!, set: NewEvent!): Event!
+	updateEvent(id: Int!, set: UpdateEvent!): Event!
 	deleteEvent(id: Int!): SuccessResponse!
 
-	createComment(eventId: Int!, input: String!): SuccessResponse!
-	deleteComment(eventId: Int!): SuccessResponse!
+	createComment(eventId: Int!, input: String!): Comment!
+	deleteComment(commentId: Int!): SuccessResponse!
 
 	joinEvent(eventId: Int!): SuccessResponse!
 	unjoinEvent(eventId: Int!): SuccessResponse!

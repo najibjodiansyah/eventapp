@@ -19,3 +19,8 @@ jobs:
         script: |
           cd eventapp
           git pull origin main
+          docker container stop app
+          docker container rm app
+          docker rmi group3/app
+          docker build -t group3/app .
+          docker run -p 3000:3000 --name app -d group3/app

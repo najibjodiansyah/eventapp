@@ -82,25 +82,21 @@ func (r *ParticipantRepository) UnjoinEvent(eventId int, userId int) error {
 		return err
 	}
 
-	result, err := stmt.Exec(eventId, userId)
+	_, err = stmt.Exec(eventId, userId)
 
 	if err != nil {
 		log.Fatal(err)
 		return err
 	}
 
-	row, _ := result.RowsAffected()
-
-	if row == 0 {
-		return errors.New("failed unjoining event")
-	}
-
 	return nil
 }
 
-// ini seharusnya muncul di event repository, tetapi daripada conflic ya sudah ditaruh di participant repository
+// ini seharusnya muncul di event repository, tetapi daripada conflict ya sudah ditaruh di participant repository
 func (r *ParticipantRepository) GetEventsByParticipantId(userId int) ([]entities.Event, error) {
-	stmt, err := r.db.Prepare("select e.id, e.name, e.host, u.name, e.description, e.date, e.location, e.category, e.photo from events e left join users u on e.userid = u.id where e.deleted_at is NULL and e.hostid = ?")
+	stmt, err := r.db.Prepare(`select e.id, e.name, e.host, u.name, e.description, e.datetime, e.location, e.category, e.photo
+								from events e left join users u on e.userid = u.id
+								where e.deleted_at is NULL and e.hostid = ?`)
 
 	if err != nil {
 		log.Fatal(err)
@@ -121,7 +117,7 @@ func (r *ParticipantRepository) GetEventsByParticipantId(userId int) ([]entities
 	for result.Next() {
 		var event entities.Event
 
-		err := result.Scan(&event.ID, &event.Name, &event.Host, &event.UserName, &event.Description, &event.Datetime, &event.Location, &event.Category, &event.Photo)
+		err := result.Scan(&event.Id, &event.Name, &event.Host, &event.UserName, &event.Description, &event.Datetime, &event.Location, &event.Category, &event.Photo)
 
 		if err != nil {
 			log.Fatal(err)
@@ -132,4 +128,40 @@ func (r *ParticipantRepository) GetEventsByParticipantId(userId int) ([]entities
 	}
 
 	return events, nil
+}
+
+func (r *ParticipantRepository) UnjoinAllEvent(userId int) error {
+	stmt, err := r.db.Prepare("update participants set deleted_at = CURRENT_TIMESTAMP where deleted_at is NULL and participantid = ?")
+
+	if err != nil {
+		log.Fatal(err)
+		return err
+	}
+
+	_, err = stmt.Exec(userId)
+
+	if err != nil {
+		log.Fatal(err)
+		return err
+	}
+
+	return nil
+}
+
+func (r *ParticipantRepository) DeleteAllParticipantByEventId(eventId int) error {
+	stmt, err := r.db.Prepare("update participants set deleted_at = CURRENT_TIMESTAMP where deleted_at is NULL and eventid = ?")
+
+	if err != nil {
+		log.Fatal(err)
+		return err
+	}
+
+	_, err = stmt.Exec(eventId)
+
+	if err != nil {
+		log.Fatal(err)
+		return err
+	}
+
+	return nil
 }
