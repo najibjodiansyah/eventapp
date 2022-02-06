@@ -9,4 +9,6 @@ type Participant interface {
 	GetEventsByParticipantId(userId int) ([]entities.Event, error)
 	JoinEvent(eventId int, userId int) error
 	UnjoinEvent(eventId int, userId int) error
+	UnjoinAllEvent(userId int) error
+	DeleteAllParticipantByEventId(eventId int) error
 }

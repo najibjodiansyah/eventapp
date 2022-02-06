@@ -2,8 +2,8 @@ package auth
 
 import (
 	"database/sql"
-	"eventapp/entities/graph/model"
-	"fmt"
+	"eventapp/entities"
+	"log"
 )
 
 type AuthRepository struct {
@@ -14,22 +14,34 @@ func New(db *sql.DB) *AuthRepository {
 	return &AuthRepository{db: db}
 }
 
-func (r *AuthRepository) Login(email string) (model.User, error) {
-	var err error
-	var user model.User
+// return repository berbentuk entity saja
+func (r *AuthRepository) Login(email string) (entities.User, error) {
+	stmt, err := r.db.Prepare(`select id, name, email, password from users where email = ?`)
 
-	res, err := r.db.Query("select id,name,email,password from users where email = ? ", email)
 	if err != nil {
-		return user, fmt.Errorf("query sql salah")
+		log.Fatal(err)
+		return entities.User{}, err
 	}
-	// defer res.Close()
-	for res.Next() {
-		err := res.Scan(&user.ID, &user.Name, &user.Email, &user.Password)
+
+	res, err := stmt.Query(email)
+
+	if err != nil {
+		log.Fatal(err)
+		return entities.User{}, err
+	}
+
+	defer res.Close()
+
+	var user entities.User
+
+	if res.Next() {
+		err := res.Scan(&user.Id, &user.Name, &user.Email, &user.Password)
+
 		if err != nil {
-			fmt.Println()
-			return user, err
+			log.Fatal(err)
+			return entities.User{}, err
 		}
 	}
-	fmt.Println(user)
+
 	return user, nil
 }

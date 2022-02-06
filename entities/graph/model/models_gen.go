@@ -3,6 +3,7 @@
 package model
 
 type Comment struct {
+	ID        *int   `json:"id"`
 	UserID    int    `json:"userId"`
 	Name      string `json:"name"`
 	Avatar    string `json:"avatar"`
@@ -28,10 +29,6 @@ type LoginResponse struct {
 	Name    string `json:"name"`
 	Email   string `json:"email"`
 	Token   string `json:"token"`
-}
-
-type Message struct {
-	Message string `json:"message"`
 }
 
 type NewEvent struct {
@@ -61,6 +58,16 @@ type Participant struct {
 type SuccessResponse struct {
 	Code    int    `json:"code"`
 	Message string `json:"message"`
+}
+
+type UpdateEvent struct {
+	Name        *string `json:"name"`
+	Host        *string `json:"host"`
+	Description *string `json:"description"`
+	Datetime    *string `json:"datetime"`
+	Location    *string `json:"location"`
+	Category    *string `json:"category"`
+	Photo       *string `json:"photo"`
 }
 
 type UpdateUser struct {

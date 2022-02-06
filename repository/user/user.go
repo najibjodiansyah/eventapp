@@ -2,10 +2,9 @@ package user
 
 import (
 	"database/sql"
-	"eventapp/entities/graph/model"
-	"fmt"
+	"errors"
+	"eventapp/entities"
 	"log"
-	"time"
 )
 
 type UserRepository struct {
@@ -16,94 +15,141 @@ func New(db *sql.DB) *UserRepository {
 	return &UserRepository{db: db}
 }
 
-func (r *UserRepository) Get() ([]model.User, error) {
-
+// edit by Bagus, return repository memakai entity saja
+func (r *UserRepository) Get() ([]entities.User, error) {
 	stmt, err := r.db.Prepare("select id, name, email, phone, avatar from users where deleted_at is NULL")
+
 	if err != nil {
 		log.Fatal(err)
+		return nil, err
 	}
 
-	var users []model.User
+	var users []entities.User
 
 	result, err := stmt.Query()
+
 	if err != nil {
-		return users, err
+		return nil, err
 	}
 
 	defer result.Close()
 
 	for result.Next() {
-		var user model.User
-		err := result.Scan(&user.ID, &user.Name, &user.Email, &user.PhoneNumber, &user.Avatar)
+		var user entities.User
+
+		err := result.Scan(&user.Id, &user.Name, &user.Email, &user.PhoneNumber, &user.Avatar)
+
 		if err != nil {
-			log.Fatal("error di scan getUser")
+			log.Fatal(err)
+			return nil, err
 		}
+
 		users = append(users, user)
 	}
+
 	return users, nil
-
 }
 
-func (r *UserRepository) GetbyId(id int) (model.User, error) {
-	var user model.User
-	stmt, err := r.db.Prepare("select id, name, password, email, phone, avatar from users where id = ? and deleted_at is NULL")
-	if err != nil {
-		//log.Fatal(err)
-		return user, fmt.Errorf("gagal prepare db")
-	}
+// edit by Bagus, return repository memakai entity saja
+func (r *UserRepository) GetById(id int) (entities.User, error) {
+	stmt, err := r.db.Prepare("select id, name, email, password, phone, avatar from users where id = ? and deleted_at is NULL")
 
-	result, err := stmt.Query(id)
-	if err != nil {
-		return user, fmt.Errorf("gagal query user")
-	}
-
-	defer result.Close()
-
-	for result.Next() {
-		err := result.Scan(&user.ID, &user.Name,&user.Password, &user.Email, &user.PhoneNumber, &user.Avatar)
-		if err != nil {
-			return user, err
-		}
-		return user, nil
-	}
-
-	return user, fmt.Errorf("user not found")
-}
-
-func (r *UserRepository) Create(user model.User) (model.User, error) {
-	stmt, err := r.db.Prepare("INSERT INTO users(name, email, password, phone, avatar) VALUES(?,?,?,?,?)")
 	if err != nil {
 		log.Fatal(err)
+		return entities.User{}, err
 	}
 
-	result, err := stmt.Exec(user.Name, user.Email, user.Password, user.PhoneNumber, user.Avatar)
+	res, err := stmt.Query(id)
+
 	if err != nil {
-		return user, fmt.Errorf("gagal exec")
+		log.Fatal(err)
+		return entities.User{}, err
 	}
 
-	notAffected, _ := result.RowsAffected()
-	if notAffected == 0 {
-		return user, fmt.Errorf("user not created")
+	defer res.Close()
+
+	var user entities.User
+
+	if res.Next() {
+		err := res.Scan(&user.Id, &user.Name, &user.Email, &user.Password, &user.PhoneNumber, &user.Avatar)
+
+		if err != nil {
+			log.Fatal(err)
+			return entities.User{}, err
+		}
+	}
+
+	if user == (entities.User{}) {
+		return entities.User{}, errors.New("user not found")
 	}
 
 	return user, nil
 }
 
-func (r *UserRepository) Update(id int, user model.User) (model.User, error) {
-	stmt, err := r.db.Prepare("UPDATE users SET name= ?, email= ?, password= ?, phone= ?, avatar= ? WHERE id = ? AND deleted_at is NULL")
+// edit by Bagus, return repository memakai entity saja
+// ditambah user id
+// email harus unik, dicek dengan checkEmailExistence
+func (r *UserRepository) Create(user entities.User) (entities.User, error) {
+	err := r.checkEmailExistence(user.Email)
+
 	if err != nil {
-		// log.Fatal(err)
-		return user, fmt.Errorf("gagal prepare update")
+		log.Fatal(err)
+		return entities.User{}, err
 	}
 
-	result, error := stmt.Exec(user.Name, user.Email, user.Password, user.PhoneNumber, user.Avatar, id)
+	stmt, err := r.db.Prepare("insert into users(name, email, password, phone, avatar) values(?,?,?,?,?)")
+
+	if err != nil {
+		log.Fatal(err)
+		return entities.User{}, err
+	}
+
+	res, err := stmt.Exec(user.Name, user.Email, user.Password, user.PhoneNumber, user.Avatar)
+
+	if err != nil {
+		log.Fatal(err)
+		return entities.User{}, err
+	}
+
+	rows, _ := res.RowsAffected()
+	if rows == 0 {
+		return entities.User{}, errors.New("user not created")
+	}
+
+	id, _ := res.LastInsertId()
+	user.Id = int(id)
+
+	return user, nil
+}
+
+// edit by Bagus, parameter dan return repository memakai entity saja
+// email harus unik, dicek dengan checkEmailExistence
+func (r *UserRepository) Update(id int, user entities.User) (entities.User, error) {
+	err := r.checkEmailExistence(user.Email)
+
+	if err != nil {
+		log.Fatal(err)
+		return entities.User{}, err
+	}
+
+	stmt, err := r.db.Prepare("update users set name= ?, email= ?, password= ?, phone= ?, avatar= ? where id = ? and deleted_at is null")
+
+	if err != nil {
+		log.Fatal(err)
+		return entities.User{}, err
+	}
+
+	res, error := stmt.Exec(user.Name, user.Email, user.Password, user.PhoneNumber, user.Avatar, id)
+
 	if error != nil {
-		return user, fmt.Errorf("gagal exec update")
+		log.Fatal(err)
+		return entities.User{}, err
 	}
 
-	notAffected, _ := result.RowsAffected()
+	notAffected, _ := res.RowsAffected()
+
 	if notAffected == 0 {
-		return user, fmt.Errorf("row not affected")
+		return entities.User{}, errors.New("user not updated")
 	}
 
 	return user, nil
@@ -111,19 +157,50 @@ func (r *UserRepository) Update(id int, user model.User) (model.User, error) {
 
 func (r *UserRepository) Delete(id int) error {
 	// stmt, err := r.db.Prepare("DELETE from users where id = ?")
-	stmt, err := r.db.Prepare("UPDATE users SET deleted_at= ? where id = ?")
+	stmt, err := r.db.Prepare("update users set deleted_at = CURRENT_TIMESTAMP where id = ?")
+
 	if err != nil {
 		log.Fatal(err)
+		return err
 	}
 
-	result, err := stmt.Exec(time.Now(), id)
+	_, err = stmt.Exec(id)
+
 	if err != nil {
-		return fmt.Errorf("salah user")
+		return err
 	}
 
-	notAffected, _ := result.RowsAffected()
-	if notAffected == 0 {
-		return fmt.Errorf("delete error")
+	return nil
+}
+
+func (r *UserRepository) checkEmailExistence(email string) error {
+	stmt, err := r.db.Prepare("select count(id) from users where email = ?")
+
+	if err != nil {
+		log.Fatal(err)
+		return err
+	}
+
+	res, err := stmt.Query(email)
+
+	if err != nil {
+		log.Fatal(err)
+		return err
+	}
+
+	defer res.Close()
+
+	count := 0
+
+	if res.Next() {
+		if err = res.Scan(&count); err != nil {
+			return err
+		}
+	}
+
+	// Detect email duplicate
+	if count != 0 {
+		return errors.New("email already exists")
 	}
 
 	return nil

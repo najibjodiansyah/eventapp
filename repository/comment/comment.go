@@ -5,6 +5,7 @@ import (
 	"errors"
 	"eventapp/entities"
 	"log"
+	"time"
 )
 
 type CommentRepository struct {
@@ -15,29 +16,32 @@ func New(db *sql.DB) *CommentRepository {
 	return &CommentRepository{db: db}
 }
 
+// ditambah comment id
 func (r *CommentRepository) GetCommentsByEventId(eventId int) ([]entities.Comment, error) {
-	stmt, err := r.db.Prepare("select u.id, u.name, u.avatar, c.comment, c.created_at from users u left join comments c on c.userid = u.id where c.deleted_at is NULL and c.eventid = ?")
+	stmt, err := r.db.Prepare(`select c.id, u.id, u.name, u.avatar, c.comment, c.created_at
+								from users u left join comments c on c.userid = u.id
+								where c.deleted_at is NULL and c.eventid = ?`)
 
 	if err != nil {
 		log.Fatal(err)
 		return nil, err
 	}
 
-	result, err := stmt.Query(eventId)
+	res, err := stmt.Query(eventId)
 
 	if err != nil {
 		log.Fatal(err)
 		return nil, err
 	}
 
-	defer result.Close()
+	defer res.Close()
 
 	var comments []entities.Comment
 
-	for result.Next() {
+	for res.Next() {
 		var comment entities.Comment
 
-		err := result.Scan(&comment.UserId, &comment.UserName, &comment.Avatar, &comment.Content, &comment.CreatedAt) // ada baiknya dibuat istilah yang konsisten, photo atau avatar atau image
+		err := res.Scan(&comment.Id, &comment.UserId, &comment.UserName, &comment.Avatar, &comment.Content, &comment.CreatedAt)
 
 		if err != nil {
 			log.Fatal(err)
@@ -50,49 +54,105 @@ func (r *CommentRepository) GetCommentsByEventId(eventId int) ([]entities.Commen
 	return comments, nil
 }
 
-func (r *CommentRepository) CreateComment(eventId int, userId int, comment string) error {
+func (r *CommentRepository) CreateComment(eventId int, userId int, content string) (entities.Comment, error) {
 	stmt, err := r.db.Prepare("insert into comments(userid, eventid, comment, created_at) values(?, ?, ?, CURRENT_TIMESTAMP)")
 
 	if err != nil {
 		log.Fatal(err)
-		return errors.New("failed create comment")
+		return entities.Comment{}, err
 	}
 
-	result, err := stmt.Exec(eventId, userId, comment)
+	created_at := time.Now()
+
+	res, err := stmt.Exec(eventId, userId, content)
 
 	if err != nil {
 		log.Fatal(err)
-		return errors.New("failed create comment")
+		return entities.Comment{}, err
 	}
 
-	row, _ := result.RowsAffected()
+	rowsAffected, _ := res.RowsAffected()
 
-	if row == 0 {
-		return errors.New("failed create comment")
+	if rowsAffected == 0 {
+		return entities.Comment{}, errors.New("failed create comment")
 	}
 
-	return nil
+	id, _ := res.LastInsertId()
+
+	stmt, _ = r.db.Prepare("select name, avatar from users where id = ?")
+
+	row, _ := stmt.Query(userId)
+
+	defer row.Close()
+
+	comment := entities.Comment{
+		Id:        int(id),
+		UserId:    userId,
+		Content:   content,
+		CreatedAt: created_at.String(),
+	}
+
+	if row.Next() {
+		var name, avatar string
+
+		row.Scan(&name, &avatar)
+
+		comment.UserName = name
+		comment.Avatar = avatar
+	}
+
+	return comment, nil
 }
 
-func (r *CommentRepository) DeleteComment(eventId int, userId int) error {
-	stmt, err := r.db.Prepare("update comments set deleted_at = CURRENT_TIMESTAMP where eventid = ? and userid = ?")
-
-	if err != nil {
-		log.Fatal(err)
-		return errors.New("failed delete comment")
-	}
-
-	result, err := stmt.Exec(eventId, userId)
+func (r *CommentRepository) DeleteComment(commentId int, userId int) error {
+	stmt, err := r.db.Prepare("update comments set deleted_at = CURRENT_TIMESTAMP where id = ? and userid = ?")
 
 	if err != nil {
 		log.Fatal(err)
 		return err
 	}
 
-	row, _ := result.RowsAffected()
+	_, err = stmt.Exec(commentId, userId)
 
-	if row == 0 {
-		return errors.New("failed delete comment")
+	if err != nil {
+		log.Fatal(err)
+		return err
+	}
+
+	return nil
+}
+
+func (r *CommentRepository) DeleteAllCommentByUserId(userId int) error {
+	stmt, err := r.db.Prepare("update comments set deleted_at = CURRENT_TIMESTAMP where deleted_at is NULL and userid = ?")
+
+	if err != nil {
+		log.Fatal(err)
+		return err
+	}
+
+	_, err = stmt.Exec(userId)
+
+	if err != nil {
+		log.Fatal(err)
+		return err
+	}
+
+	return nil
+}
+
+func (r *CommentRepository) DeleteAllCommentByEventId(eventId int) error {
+	stmt, err := r.db.Prepare("update comments set deleted_at = CURRENT_TIMESTAMP where deleted_at is NULL and eventid = ?")
+
+	if err != nil {
+		log.Fatal(err)
+		return err
+	}
+
+	_, err = stmt.Exec(eventId)
+
+	if err != nil {
+		log.Fatal(err)
+		return err
 	}
 
 	return nil

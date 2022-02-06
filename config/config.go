@@ -7,7 +7,7 @@ import (
 	"github.com/spf13/viper"
 )
 
-//AppConfig Application configuration
+// Application configuration
 type AppConfig struct {
 	Port     int `yaml:"port"`
 	Database struct {
@@ -23,7 +23,7 @@ type AppConfig struct {
 var lock = &sync.Mutex{}
 var appConfig *AppConfig
 
-//GetConfig Initiatilize config in singleton way
+// Initiatilize config in singleton way
 func GetConfig() *AppConfig {
 	lock.Lock()
 	defer lock.Unlock()
@@ -37,25 +37,25 @@ func GetConfig() *AppConfig {
 
 func initConfig() *AppConfig {
 	var defaultConfig AppConfig
-	defaultConfig.Port = 8080
+	defaultConfig.Port = 3000 // ganti 8080
 	defaultConfig.Database.Driver = "mysql"
 	defaultConfig.Database.Name = "event_db"
-	defaultConfig.Database.Address = "127.0.0.1"
+	defaultConfig.Database.Address = "172.17.0.1" // ganti 127
 	defaultConfig.Database.Port = 3306
 	defaultConfig.Database.Username = "root"
-	defaultConfig.Database.Password = ""
+	defaultConfig.Database.Password = "group3" // ganti ""
 
 	viper.SetConfigType("yaml")
 	viper.SetConfigName("config")
 	viper.AddConfigPath("./config/")
 
 	if err := viper.ReadInConfig(); err != nil {
-		// log.Info("error to load config file, will use default value ", err)
 		return &defaultConfig
 	}
 
 	var finalConfig AppConfig
 	err := viper.Unmarshal(&finalConfig)
+
 	if err != nil {
 		log.Info("failed to extract config, will use default value")
 		return &defaultConfig

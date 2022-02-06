@@ -16,7 +16,9 @@ func New(db *sql.DB) *ParticipantRepository {
 }
 
 func (r *ParticipantRepository) GetParticipantsByEventId(eventId int) ([]entities.Participant, error) {
-	stmt, err := r.db.Prepare("select u.name, u.avatar from users u left join participants p on p.participantid = u.id where p.deleted_at is NULL and p.eventid = ?")
+	stmt, err := r.db.Prepare(`select u.name, u.avatar
+								from users u left join participants p on p.participantid = u.id
+								where p.deleted_at is NULL and p.eventid = ?`)
 
 	if err != nil {
 		log.Fatal(err)
@@ -37,7 +39,7 @@ func (r *ParticipantRepository) GetParticipantsByEventId(eventId int) ([]entitie
 	for result.Next() {
 		var participant entities.Participant
 
-		err := result.Scan(&participant.Name, &participant.Avatar) // ada baiknya dibuat istilah yang konsisten, photo atau avatar atau image
+		err := result.Scan(&participant.Name, &participant.Avatar)
 
 		if err != nil {
 			log.Fatal(err)
@@ -51,6 +53,14 @@ func (r *ParticipantRepository) GetParticipantsByEventId(eventId int) ([]entitie
 }
 
 func (r *ParticipantRepository) JoinEvent(eventId int, userId int) error {
+	// check join event in the past
+	err := r.checkAlreadyJoinEvent(eventId, userId)
+
+	if err != nil {
+		log.Fatal(err)
+		return err
+	}
+
 	stmt, err := r.db.Prepare("insert into participants(eventid, participantid, joined_at) values(?, ?, CURRENT_TIMESTAMP)")
 
 	if err != nil {
@@ -65,9 +75,9 @@ func (r *ParticipantRepository) JoinEvent(eventId int, userId int) error {
 		return err
 	}
 
-	row, _ := result.RowsAffected()
+	rowsAffected, _ := result.RowsAffected()
 
-	if row == 0 {
+	if rowsAffected == 0 {
 		return errors.New("failed joining event")
 	}
 
@@ -75,32 +85,28 @@ func (r *ParticipantRepository) JoinEvent(eventId int, userId int) error {
 }
 
 func (r *ParticipantRepository) UnjoinEvent(eventId int, userId int) error {
-	stmt, err := r.db.Prepare("update participants set deleted_at = CURRENT_TIMESTAMP where eventid = ? and participantid = ?")
+	stmt, err := r.db.Prepare("update participants set deleted_at = CURRENT_TIMESTAMP where deleted_at is NULL eventid = ? and participantid = ?")
 
 	if err != nil {
 		log.Fatal(err)
 		return err
 	}
 
-	result, err := stmt.Exec(eventId, userId)
+	_, err = stmt.Exec(eventId, userId)
 
 	if err != nil {
 		log.Fatal(err)
 		return err
-	}
-
-	row, _ := result.RowsAffected()
-
-	if row == 0 {
-		return errors.New("failed unjoining event")
 	}
 
 	return nil
 }
 
-// ini seharusnya muncul di event repository, tetapi daripada conflic ya sudah ditaruh di participant repository
+// ini seharusnya muncul di event repository, tetapi daripada conflict ya sudah ditaruh di participant repository
 func (r *ParticipantRepository) GetEventsByParticipantId(userId int) ([]entities.Event, error) {
-	stmt, err := r.db.Prepare("select e.id, e.name, e.host, u.name, e.description, e.date, e.location, e.category, e.photo from events e left join users u on e.userid = u.id where e.deleted_at is NULL and e.hostid = ?")
+	stmt, err := r.db.Prepare(`select e.id, e.name, e.host, u.name, e.description, e.datetime, e.location, e.category, e.photo
+								from events e left join users u on e.userid = u.id
+								where e.deleted_at is NULL and e.hostid = ?`)
 
 	if err != nil {
 		log.Fatal(err)
@@ -121,7 +127,7 @@ func (r *ParticipantRepository) GetEventsByParticipantId(userId int) ([]entities
 	for result.Next() {
 		var event entities.Event
 
-		err := result.Scan(&event.ID, &event.Name, &event.Host, &event.UserName, &event.Description, &event.Datetime, &event.Location, &event.Category, &event.Photo)
+		err := result.Scan(&event.Id, &event.Name, &event.Host, &event.UserName, &event.Description, &event.Datetime, &event.Location, &event.Category, &event.Photo)
 
 		if err != nil {
 			log.Fatal(err)
@@ -132,4 +138,73 @@ func (r *ParticipantRepository) GetEventsByParticipantId(userId int) ([]entities
 	}
 
 	return events, nil
+}
+
+func (r *ParticipantRepository) UnjoinAllEvent(userId int) error {
+	stmt, err := r.db.Prepare("update participants set deleted_at = CURRENT_TIMESTAMP where deleted_at is NULL and participantid = ?")
+
+	if err != nil {
+		log.Fatal(err)
+		return err
+	}
+
+	_, err = stmt.Exec(userId)
+
+	if err != nil {
+		log.Fatal(err)
+		return err
+	}
+
+	return nil
+}
+
+func (r *ParticipantRepository) DeleteAllParticipantByEventId(eventId int) error {
+	stmt, err := r.db.Prepare("update participants set deleted_at = CURRENT_TIMESTAMP where deleted_at is NULL and eventid = ?")
+
+	if err != nil {
+		log.Fatal(err)
+		return err
+	}
+
+	_, err = stmt.Exec(eventId)
+
+	if err != nil {
+		log.Fatal(err)
+		return err
+	}
+
+	return nil
+}
+
+func (r *ParticipantRepository) checkAlreadyJoinEvent(eventId int, userId int) error {
+	stmt, err := r.db.Prepare("select count(id) from participants where deleted_at is NULL and eventid = ? and participantid = ?")
+
+	if err != nil {
+		log.Fatal(err)
+		return err
+	}
+
+	res, err := stmt.Query(eventId, userId)
+
+	if err != nil {
+		log.Fatal(err)
+		return err
+	}
+
+	defer res.Close()
+
+	count := 0
+
+	if res.Next() {
+		if err = res.Scan(&count); err != nil {
+			return err
+		}
+	}
+
+	// Detect already join event
+	if count != 0 {
+		return errors.New("already join event")
+	}
+
+	return nil
 }

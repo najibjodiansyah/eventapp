@@ -18,90 +18,112 @@ import (
 )
 
 func (r *mutationResolver) CreateUser(ctx context.Context, input model.NewUser) (*model.User, error) {
+	// check email pattern
+	if err := helpers.CheckEmailPattern(input.Email); err != nil {
+		return nil, err
+	}
+
+	// hashing password
 	passwordHash, _ := bcrypt.GenerateFromPassword([]byte(input.Password), bcrypt.MinCost)
-	userData := model.User{
-		Name: input.Name,
-		// Password: input.Password,
-		Password:    string(passwordHash),
-		Email:       input.Email,
-		PhoneNumber: input.PhoneNumber,
-		Avatar:      input.Avatar,
+
+	userData := entities.User{
+		Name:     input.Name,
+		Password: string(passwordHash),
+		Email:    input.Email,
 	}
+
+	if input.PhoneNumber != nil {
+		userData.PhoneNumber = *input.PhoneNumber
+	}
+
+	if input.Avatar != nil {
+		userData.Avatar = *input.Avatar
+	}
+
 	res, err := r.userRepo.Create(userData)
+
 	if err != nil {
-		return nil, errors.New("failed Create User")
+		return nil, errors.New("failed create user")
 	}
+
+	id := res.Id
+	phoneNumber := res.PhoneNumber
+	avatar := res.Avatar
+
 	responseMessage := model.User{
-		Name:  res.Name,
-		Email: res.Email,
-		// Password: res.Password,
-		PhoneNumber: res.PhoneNumber,
-		Avatar:      res.Avatar,
+		ID:          &id,
+		Name:        res.Name,
+		Email:       res.Email,
+		PhoneNumber: &phoneNumber,
+		Avatar:      &avatar,
 	}
+
 	return &responseMessage, nil
 }
 
 func (r *mutationResolver) UpdateUser(ctx context.Context, id int, set model.UpdateUser) (*model.User, error) {
 	dataLogin := ctx.Value("EchoContextKey") // auth jwt
+
 	if dataLogin == nil {
 		return nil, errors.New("unauthorized")
 	}
+
 	convData := ctx.Value("EchoContextKey").(*middlewares.User)
 	fmt.Println("id user", convData.Id)
 
 	if id != convData.Id {
 		return nil, errors.New("unauthorized")
 	}
-	user, err := r.userRepo.GetbyId(id)
+
+	user, err := r.userRepo.GetById(id)
+
 	if err != nil {
 		return nil, err
 	}
-	// user.Name = *set.Name //-----invalid memory address
-	// user.Email = *set.Email
-	// passwordHash, _ := bcrypt.GenerateFromPassword([]byte(*set.Password), bcrypt.MinCost)
-	// user.Password = string(passwordHash)
-	// user.Password = *set.Password
-	fmt.Println("ini user awal",user)
 	if set.Name != nil {
 		user.Name = *set.Name
 	}
-	fmt.Println("ga masuk")
 
 	if set.Email != nil {
 		user.Email = *set.Email
 	}
 
 	if set.Password != nil {
-		// user.Password = *set.Password
 		passwordHash, _ := bcrypt.GenerateFromPassword([]byte(*set.Password), bcrypt.MinCost)
 		user.Password = string(passwordHash)
 	}
+
 	if set.PhoneNumber != nil {
-		user.PhoneNumber = set.PhoneNumber
+		user.PhoneNumber = *set.PhoneNumber
 	}
+
 	if set.Avatar != nil {
-		user.Avatar = set.Avatar
+		user.Avatar = *set.Avatar
 	}
-	fmt.Println("ini user set",user)
 	res, errr := r.userRepo.Update(id, user)
+
 	if errr != nil {
-		return nil, err
+		return nil, errors.New("failed update user")
 	}
+
 	responseMessage := model.User{
-		Name:  res.Name,
-		Email: res.Email,
-		// Password: res.Password,
-		PhoneNumber: res.PhoneNumber,
-		Avatar:      res.Avatar,
+		ID:          &id,
+		Name:        res.Name,
+		Email:       res.Email,
+		PhoneNumber: &res.PhoneNumber,
+		Avatar:      &res.Avatar,
 	}
+
 	return &responseMessage, nil
 }
 
-func (r *mutationResolver) DeleteUser(ctx context.Context, id int) (*model.Message, error) {
+func (r *mutationResolver) DeleteUser(ctx context.Context, id int) (*model.SuccessResponse, error) {
 	dataLogin := ctx.Value("EchoContextKey") // auth jwt
+
 	if dataLogin == nil {
 		return nil, errors.New("unauthorized")
 	}
+
 	convData := ctx.Value("EchoContextKey").(*middlewares.User)
 	fmt.Println("id user", convData.Id)
 
@@ -109,18 +131,49 @@ func (r *mutationResolver) DeleteUser(ctx context.Context, id int) (*model.Messa
 		return nil, errors.New("unauthorized")
 	}
 
-	err := r.userRepo.Delete(id)
-	if err != nil {
-		return nil, errors.New("failed Delete User")
+	// pertama, delete comment, jika ada
+	r.commentRepo.DeleteAllCommentByUserId(id)
+
+	// kedua, unjoin events, jika ada
+	r.participantRepo.UnjoinAllEvent(id)
+
+	// ketiga, delete events, jika ada
+	events, _ := r.eventRepo.GetEventByHostId(id)
+
+	for _, event := range events {
+		// untuk setiap event, delete comment, jika ada
+		r.commentRepo.DeleteAllCommentByEventId(event.Id)
+
+		// untuk setiap event, delete participants, jika ada
+		r.participantRepo.DeleteAllParticipantByEventId(event.Id)
+
+		r.eventRepo.DeleteEvent(event.Id)
 	}
-	responseMessage := model.Message{
-		Message: "Succes Delete User",
+
+	// terakhir, delete user
+	if err := r.userRepo.Delete(id); err != nil {
+		return nil, errors.New("failed delete user")
 	}
+
+	responseMessage := model.SuccessResponse{
+		Code:    http.StatusOK,
+		Message: "succes delete user",
+	}
+
 	return &responseMessage, nil
 }
 
 func (r *mutationResolver) CreateEvent(ctx context.Context, input model.NewEvent) (*model.Event, error) {
-	// passwordHash, _ := bcrypt.GenerateFromPassword([]byte(input.Password), bcrypt.MinCost)
+	dataLogin := ctx.Value("EchoContextKey")
+
+	if dataLogin == nil {
+		return nil, errors.New("unauthorized")
+	}
+
+	convData := ctx.Value("EchoContextKey").(*middlewares.User)
+	fmt.Println("id user ", convData.Id)
+
+	// untuk saat ini, semua field dibuat required
 	eventData := entities.Event{
 		Name:        input.Name,
 		Category:    input.Category,
@@ -130,63 +183,97 @@ func (r *mutationResolver) CreateEvent(ctx context.Context, input model.NewEvent
 		Location:    input.Location,
 		Photo:       input.Photo,
 	}
-	res, err := r.eventRepo.CreateEvent(eventData)
+
+	res, err := r.eventRepo.CreateEvent(convData.Id, eventData)
+
 	if err != nil {
-		fmt.Println("cekk", err)
-		return nil, errors.New("failed Create Event")
+		return nil, errors.New("failed create event")
 	}
+
+	id := res.Id
+
 	responseMessage := model.Event{
+		ID:          &id,
 		Name:        res.Name,
-		Category:    res.Category,
+		Username:    res.UserName,
 		Host:        res.Host,
 		Description: res.Description,
 		Datetime:    res.Datetime,
 		Location:    res.Location,
+		Category:    res.Category,
 		Photo:       res.Photo,
 	}
+
 	return &responseMessage, nil
 }
 
-func (r *mutationResolver) UpdateEvent(ctx context.Context, id int, set model.NewEvent) (*model.Event, error) {
-	var event entities.Event
-	event.Name = set.Name
-	event.Category = set.Category
-	event.Host = set.Host
-	event.Description = set.Description
-	event.Datetime = set.Datetime
-	event.Location = set.Location
-	event.Photo = set.Photo
-	res, err := r.eventRepo.GetUpdateEvent(id, event)
-	if err != nil {
-		fmt.Println("cekk", err)
-		return nil, errors.New("failed Create User")
+func (r *mutationResolver) UpdateEvent(ctx context.Context, id int, set model.UpdateEvent) (*model.Event, error) {
+	dataLogin := ctx.Value("EchoContextKey")
+
+	if dataLogin == nil {
+		return nil, errors.New("unauthorized")
 	}
+
+	convData := ctx.Value("EchoContextKey").(*middlewares.User)
+	fmt.Println("id user ", convData.Id)
+
+	event, _ := r.eventRepo.GetEventByEventId(id)
+
+	if event.HostId != convData.Id {
+		return nil, errors.New("unauthorized")
+	}
+
+	if set.Name != nil {
+		event.Name = *set.Name
+	}
+
+	if set.Host != nil {
+		event.Host = *set.Host
+	}
+
+	if set.Category != nil {
+		event.Category = *set.Category
+	}
+
+	if set.Datetime != nil {
+		event.Datetime = *set.Datetime
+	}
+
+	if set.Location != nil {
+		event.Location = *set.Location
+	}
+
+	if set.Description != nil {
+		event.Description = *set.Description
+	}
+
+	if set.Photo != nil {
+		event.Photo = *set.Photo
+	}
+
+	event.Id = id
+
+	res, err := r.eventRepo.UpdateEvent(event)
+
+	if err != nil {
+		return nil, errors.New("failed update event")
+	}
+
 	responseMessage := model.Event{
 		Name:        res.Name,
-		Category:    res.Category,
+		Username:    res.UserName,
 		Host:        res.Host,
 		Description: res.Description,
 		Datetime:    res.Datetime,
 		Location:    res.Location,
+		Category:    res.Category,
 		Photo:       res.Photo,
 	}
+
 	return &responseMessage, nil
 }
 
 func (r *mutationResolver) DeleteEvent(ctx context.Context, id int) (*model.SuccessResponse, error) {
-	err := r.eventRepo.Delete(id)
-	if err != nil {
-		return nil, errors.New("failed Delete User")
-	}
-	responseMessage := model.SuccessResponse{
-		Code: 200,
-		Message: "Succes Delete Events",
-	}
-	return &responseMessage, nil
-}
-
-// bagus, hanya user yang login yang bisa create comment
-func (r *mutationResolver) CreateComment(ctx context.Context, eventID int, input string) (*model.SuccessResponse, error) {
 	dataLogin := ctx.Value("EchoContextKey")
 
 	if dataLogin == nil {
@@ -196,19 +283,32 @@ func (r *mutationResolver) CreateComment(ctx context.Context, eventID int, input
 	convData := ctx.Value("EchoContextKey").(*middlewares.User)
 	fmt.Println("id user ", convData.Id)
 
-	if err := r.commentRepo.CreateComment(eventID, convData.Id, input); err != nil {
-		return nil, err
+	event, _ := r.eventRepo.GetEventByEventId(id)
+
+	if event.HostId != convData.Id {
+		return nil, errors.New("unauthorized")
+	}
+
+	// pertama, delete all comments, jika ada
+	r.commentRepo.DeleteAllCommentByEventId(id)
+
+	// kedua, delete all participants, jika ada
+	r.participantRepo.DeleteAllParticipantByEventId(id)
+
+	// terakhir, delete event
+	if err := r.eventRepo.DeleteEvent(id); err != nil {
+		return nil, errors.New("failed delete event")
 	}
 
 	responseMessage := model.SuccessResponse{
 		Code:    http.StatusOK,
-		Message: "Succes create comment",
+		Message: "succes delete event",
 	}
+
 	return &responseMessage, nil
 }
 
-// bagus, hanya user yang login yang bisa delete comment nya sendiri
-func (r *mutationResolver) DeleteComment(ctx context.Context, eventID int) (*model.SuccessResponse, error) {
+func (r *mutationResolver) CreateComment(ctx context.Context, eventID int, input string) (*model.Comment, error) {
 	dataLogin := ctx.Value("EchoContextKey")
 
 	if dataLogin == nil {
@@ -218,7 +318,37 @@ func (r *mutationResolver) DeleteComment(ctx context.Context, eventID int) (*mod
 	convData := ctx.Value("EchoContextKey").(*middlewares.User)
 	fmt.Println("id user ", convData.Id)
 
-	if err := r.commentRepo.DeleteComment(eventID, convData.Id); err != nil {
+	comment, err := r.commentRepo.CreateComment(eventID, convData.Id, input)
+
+	if err != nil {
+		return nil, err
+	}
+
+	id := comment.Id
+
+	responseMessage := model.Comment{
+		ID:        &id,
+		UserID:    convData.Id,
+		Name:      comment.UserName,
+		Avatar:    comment.Avatar,
+		Content:   comment.Content,
+		CreatedAt: comment.CreatedAt,
+	}
+
+	return &responseMessage, nil
+}
+
+func (r *mutationResolver) DeleteComment(ctx context.Context, commentID int) (*model.SuccessResponse, error) {
+	dataLogin := ctx.Value("EchoContextKey")
+
+	if dataLogin == nil {
+		return nil, errors.New("unauthorized")
+	}
+
+	convData := ctx.Value("EchoContextKey").(*middlewares.User)
+	fmt.Println("id user ", convData.Id)
+
+	if err := r.commentRepo.DeleteComment(commentID, convData.Id); err != nil {
 		return nil, err
 	}
 
@@ -230,7 +360,6 @@ func (r *mutationResolver) DeleteComment(ctx context.Context, eventID int) (*mod
 	return &responseMessage, nil
 }
 
-// BAGUS, hanya user yang login yang bisa join event
 func (r *mutationResolver) JoinEvent(ctx context.Context, eventID int) (*model.SuccessResponse, error) {
 	dataLogin := ctx.Value("EchoContextKey")
 
@@ -252,7 +381,6 @@ func (r *mutationResolver) JoinEvent(ctx context.Context, eventID int) (*model.S
 	return &responseMessage, nil
 }
 
-// BAGUS, hanya user yang login yang bisa unjoin event
 func (r *mutationResolver) UnjoinEvent(ctx context.Context, eventID int) (*model.SuccessResponse, error) {
 	dataLogin := ctx.Value("EchoContextKey")
 
@@ -284,58 +412,70 @@ func (r *queryResolver) Users(ctx context.Context) ([]*model.User, error) {
 	userResponseData := []*model.User{}
 
 	for _, user := range responseData {
-		convertID := int(*user.ID)
-		userResponseData = append(userResponseData, &model.User{ID: &convertID, Name: user.Name, Email: user.Email, Password: user.Password, PhoneNumber: user.PhoneNumber, Avatar: user.Avatar})
+		id := user.Id
+		phoneNumber := user.PhoneNumber
+		avatar := user.Avatar
+		userResponseData = append(userResponseData, &model.User{ID: &id, Name: user.Name, Email: user.Email, Password: user.Password, PhoneNumber: &phoneNumber, Avatar: &avatar})
 	}
 
 	return userResponseData, nil
 }
 
 func (r *queryResolver) UsersByID(ctx context.Context, id int) (*model.User, error) {
-	responseData, err := r.userRepo.GetbyId(id)
+	responseData, err := r.userRepo.GetById(id)
 
 	if err != nil {
 		return nil, errors.New("not found")
 	}
 
-	responseUserData := model.User{}
-	responseUserData.Email = responseData.Email
-	responseUserData.ID = responseData.ID
-	responseUserData.Name = responseData.Name
-	responseUserData.Password = responseData.Password
-	responseUserData.PhoneNumber = responseData.PhoneNumber
-	responseUserData.Avatar = responseData.Avatar
+	phoneNumber := responseData.PhoneNumber
+	avatar := responseData.Avatar
+
+	responseUserData := model.User{
+		ID:          &id,
+		Name:        responseData.Name,
+		Email:       responseData.Email,
+		PhoneNumber: &phoneNumber,
+		Avatar:      &avatar,
+	}
 
 	return &responseUserData, nil
 }
 
 func (r *queryResolver) AuthLogin(ctx context.Context, email string, password string) (*model.LoginResponse, error) {
-	// password = hash
 	user, err := r.authRepo.Login(email)
+
 	if err != nil {
 		return nil, err
 	}
 
-	match := helpers.CheckPasswordHash(password, user.Password)
-	fmt.Println(match)
+	// match := helpers.CheckPasswordHash(password, user.Password)
+	// fmt.Println(match)
+	// if user.Email != email {
+	// 	return nil, fmt.Errorf("email or password wrong")
+	// }
 
-
-	if user.Email != email {
-		return nil, fmt.Errorf("email or password wrong")
+	// if !match {
+	// 	return nil, fmt.Errorf("email or password wrong")
+	if user == (entities.User{}) {
+		return nil, errors.New("email is wrong")
 	}
+
+	match := helpers.CheckPasswordHash(password, user.Password)
 
 	if !match {
-		return nil, fmt.Errorf("email or password wrong")
+		return nil, errors.New("password does not match")
 	}
 
-	authToken, err := middlewares.CreateToken((int(*user.ID)))
+	authToken, err := middlewares.CreateToken((user.Id))
+
 	if err != nil {
-		return nil, fmt.Errorf("create token gagal")
+		return nil, errors.New("failed create token")
 	}
 
 	response := model.LoginResponse{
-		Message: "Success",
-		ID:      *user.ID,
+		Message: "Login success",
+		ID:      user.Id,
 		Name:    user.Name,
 		Email:   user.Email,
 		Token:   authToken,
@@ -346,7 +486,6 @@ func (r *queryResolver) AuthLogin(ctx context.Context, email string, password st
 
 func (r *queryResolver) Events(ctx context.Context, page int) ([]*model.Event, error) {
 	responseData, err := r.eventRepo.GetAllEvent(page)
-	fmt.Println(responseData)
 
 	if err != nil {
 		return nil, err
@@ -355,24 +494,16 @@ func (r *queryResolver) Events(ctx context.Context, page int) ([]*model.Event, e
 	eventResponseData := []*model.Event{}
 
 	for _, v := range responseData {
-		var event model.Event
-		event.ID = &v.ID
-		event.Name = v.Name
-		event.Category = v.Category
-		event.Host = v.Host
-		event.Description = v.Description
-		event.Datetime = v.Datetime
-		event.Location = v.Location
-		event.Photo = v.Photo
+		id := v.Id
 
-		eventResponseData = append(eventResponseData, &event)
+		eventResponseData = append(eventResponseData, &model.Event{ID: &id, Name: v.Name, Host: v.Host, Category: v.Category, Datetime: v.Datetime, Location: v.Location, Description: v.Description, Photo: v.Photo, Username: v.UserName})
 	}
 
 	return eventResponseData, nil
 }
 
 func (r *queryResolver) EventByHostID(ctx context.Context, userID int) ([]*model.Event, error) {
-	responseData, err := r.eventRepo.GetbyHostId(userID)
+	responseData, err := r.eventRepo.GetEventByHostId(userID)
 
 	if err != nil {
 		return nil, errors.New("not found")
@@ -381,17 +512,9 @@ func (r *queryResolver) EventByHostID(ctx context.Context, userID int) ([]*model
 	eventResponseData := []*model.Event{}
 
 	for _, v := range responseData {
-		var event model.Event
-		event.ID = &v.ID
-		event.Name = v.Name
-		event.Username = v.UserName
-		event.Host = v.Host
-		event.Category = v.Category
-		event.Datetime = v.Datetime
-		event.Location = v.Location
-		event.Description = v.Description
-		event.Photo = v.Photo
-		eventResponseData = append(eventResponseData, &event)
+		id := v.Id
+
+		eventResponseData = append(eventResponseData, &model.Event{ID: &id, Name: v.Name, Host: v.Host, Category: v.Category, Datetime: v.Datetime, Location: v.Location, Description: v.Description, Photo: v.Photo, Username: v.UserName})
 	}
 
 	return eventResponseData, nil
@@ -399,23 +522,17 @@ func (r *queryResolver) EventByHostID(ctx context.Context, userID int) ([]*model
 
 func (r *queryResolver) EventByLocation(ctx context.Context, location string, page int) ([]*model.Event, error) {
 	responseData, err := r.eventRepo.GetEventByLocation(location, page)
-	fmt.Println(responseData)
 
 	if err != nil {
 		return nil, errors.New("not found")
 	}
+
 	eventResponseData := []*model.Event{}
 
 	for _, v := range responseData {
-		var event model.Event
-		event.ID = &v.ID
-		event.Name = v.Name
-		event.Category = v.Category
-		event.Datetime = v.Datetime
-		event.Location = v.Location
-		event.Description = v.Description
-		event.Photo = v.Photo
-		eventResponseData = append(eventResponseData, &event)
+		id := v.Id
+
+		eventResponseData = append(eventResponseData, &model.Event{ID: &id, Name: v.Name, Host: v.Host, Category: v.Category, Datetime: v.Datetime, Location: v.Location, Description: v.Description, Photo: v.Photo, Username: v.UserName})
 	}
 
 	return eventResponseData, nil
@@ -423,25 +540,17 @@ func (r *queryResolver) EventByLocation(ctx context.Context, location string, pa
 
 func (r *queryResolver) EventByKeyword(ctx context.Context, keyword string, page int) ([]*model.Event, error) {
 	responseData, err := r.eventRepo.GetEventByKeyword(keyword, page)
-	fmt.Println(responseData)
 
 	if err != nil {
 		return nil, errors.New("not found")
 	}
+
 	eventResponseData := []*model.Event{}
 
 	for _, v := range responseData {
-		var event model.Event
-		event.ID = &v.ID
-		event.Name = v.Name
-		// event.Username = v.Username
-		event.Host = v.Host
-		event.Category = v.Category
-		event.Datetime = v.Datetime
-		event.Location = v.Location
-		event.Description = v.Description
-		event.Photo = v.Photo
-		eventResponseData = append(eventResponseData, &event)
+		id := v.Id
+
+		eventResponseData = append(eventResponseData, &model.Event{ID: &id, Name: v.Name, Host: v.Host, Category: v.Category, Datetime: v.Datetime, Location: v.Location, Description: v.Description, Photo: v.Photo, Username: v.UserName})
 	}
 
 	return eventResponseData, nil
@@ -457,26 +566,16 @@ func (r *queryResolver) EventByCategory(ctx context.Context, category string, pa
 	eventResponseData := []*model.Event{}
 
 	for _, v := range responseData {
-		var event model.Event
-		event.ID = &v.ID
-		event.Name = v.Name
-		// event.Username = v.Username
-		event.Host = v.Host
-		event.Category = v.Category
-		event.Datetime = v.Datetime
-		event.Location = v.Location
-		event.Description = v.Description
-		event.Photo = v.Photo
-		eventResponseData = append(eventResponseData, &event)
+		id := v.Id
+
+		eventResponseData = append(eventResponseData, &model.Event{ID: &id, Name: v.Name, Host: v.Host, Category: v.Category, Datetime: v.Datetime, Location: v.Location, Description: v.Description, Photo: v.Photo, Username: v.UserName})
 	}
 
 	return eventResponseData, nil
 }
 
-// BAGUS, semua orang bisa lihat daftar event by participant id
 func (r *queryResolver) EventByParticipantID(ctx context.Context, userID int) ([]*model.Event, error) {
 	responseData, err := r.participantRepo.GetEventsByParticipantId(userID)
-	fmt.Println(responseData)
 
 	if err != nil {
 		return nil, errors.New("not found")
@@ -485,27 +584,16 @@ func (r *queryResolver) EventByParticipantID(ctx context.Context, userID int) ([
 	eventResponseData := []*model.Event{}
 
 	for _, v := range responseData {
-		var event model.Event
-		event.ID = &v.ID
-		event.Name = v.Name
-		event.Username = v.UserName
-		event.Category = v.Category
-		event.Host = v.Host
-		event.Description = v.Description
-		event.Datetime = v.Datetime
-		event.Location = v.Location
-		event.Photo = v.Photo
+		id := v.Id
 
-		eventResponseData = append(eventResponseData, &event)
+		eventResponseData = append(eventResponseData, &model.Event{ID: &id, Name: v.Name, Host: v.Host, Category: v.Category, Datetime: v.Datetime, Location: v.Location, Description: v.Description, Photo: v.Photo, Username: v.UserName})
 	}
 
 	return eventResponseData, nil
 }
 
-// BAGUS, semua orang bisa lihat daftar peserta tanpa harus login
 func (r *queryResolver) Participants(ctx context.Context, eventID int) ([]*model.Participant, error) {
 	responseData, err := r.participantRepo.GetParticipantsByEventId(eventID)
-	fmt.Println(responseData)
 
 	if err != nil {
 		return nil, errors.New("not found")
@@ -514,19 +602,14 @@ func (r *queryResolver) Participants(ctx context.Context, eventID int) ([]*model
 	participantResponseData := []*model.Participant{}
 
 	for _, v := range responseData {
-		var participant model.Participant
-		participant.Name = v.Name
-		participant.Avatar = v.Avatar
-		participantResponseData = append(participantResponseData, &participant)
+		participantResponseData = append(participantResponseData, &model.Participant{Name: v.Name, Avatar: v.Avatar})
 	}
 
 	return participantResponseData, nil
 }
 
-// BAGUS, semua orang bisa lihat comment tanpa harus login
 func (r *queryResolver) Comments(ctx context.Context, eventID int) ([]*model.Comment, error) {
 	responseData, err := r.commentRepo.GetCommentsByEventId(eventID)
-	fmt.Println(responseData)
 
 	if err != nil {
 		return nil, errors.New("not found")
@@ -535,12 +618,9 @@ func (r *queryResolver) Comments(ctx context.Context, eventID int) ([]*model.Com
 	commentResponseData := []*model.Comment{}
 
 	for _, v := range responseData {
-		var comment model.Comment
-		comment.Name = v.UserName
-		comment.Avatar = v.Avatar
-		comment.Content = v.Content
-		comment.CreatedAt = v.CreatedAt
-		commentResponseData = append(commentResponseData, &comment)
+		id := v.Id
+
+		commentResponseData = append(commentResponseData, &model.Comment{ID: &id, UserID: v.UserId, Name: v.UserName, Avatar: v.Avatar, Content: v.Content, CreatedAt: v.CreatedAt})
 	}
 
 	return commentResponseData, nil
