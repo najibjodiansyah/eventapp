@@ -84,9 +84,8 @@ func (r *mutationResolver) UpdateUser(ctx context.Context, id int, set model.Upd
 	user, err := r.userRepo.GetById(id)
 
 	if err != nil {
-		return nil, errors.New("not found")
+		return nil, err
 	}
-
 	if set.Name != nil {
 		user.Name = *set.Name
 	}
@@ -463,6 +462,14 @@ func (r *queryResolver) AuthLogin(ctx context.Context, email string, password st
 		return nil, err
 	}
 
+	// match := helpers.CheckPasswordHash(password, user.Password)
+	// fmt.Println(match)
+	// if user.Email != email {
+	// 	return nil, fmt.Errorf("email or password wrong")
+	// }
+
+	// if !match {
+	// 	return nil, fmt.Errorf("email or password wrong")
 	if user == (entities.User{}) {
 		return nil, errors.New("email is wrong")
 	}

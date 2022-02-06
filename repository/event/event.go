@@ -189,7 +189,6 @@ func (r *EventRepositeory) GetEventByKeyword(keyword string, page int) ([]entiti
 
 		events = append(events, event)
 	}
-
 	return events, nil
 }
 
@@ -292,7 +291,6 @@ func (r *EventRepositeory) UpdateEvent(event entities.Event) (entities.Event, er
 	if rowsAffected == 0 {
 		return entities.Event{}, fmt.Errorf("update event failed")
 	}
-
 	return event, nil
 }
 
