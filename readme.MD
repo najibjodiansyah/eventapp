@@ -205,8 +205,10 @@ Membuat API menggunakan bahasa Go dengan menerapkan layered architecture untuk m
     {
       "id": "5ec2a5c7e1a9271cba37af04"
     }
-  ``` -->
+  ```
   ````
+
+  -->
 
 ## Authors
 
