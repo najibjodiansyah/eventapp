@@ -4,7 +4,6 @@ import (
 	"database/sql"
 	"errors"
 	"eventapp/entities"
-	"log"
 )
 
 type UserRepository struct {
@@ -20,7 +19,7 @@ func (r *UserRepository) Get() ([]entities.User, error) {
 	stmt, err := r.db.Prepare("select id, name, email, phone, avatar from users where deleted_at is NULL")
 
 	if err != nil {
-		log.Fatal(err)
+		// log.Fatal(err)
 		return nil, err
 	}
 
@@ -40,7 +39,7 @@ func (r *UserRepository) Get() ([]entities.User, error) {
 		err := result.Scan(&user.Id, &user.Name, &user.Email, &user.PhoneNumber, &user.Avatar)
 
 		if err != nil {
-			log.Fatal(err)
+			// log.Fatal(err)
 			return nil, err
 		}
 
@@ -55,14 +54,14 @@ func (r *UserRepository) GetById(id int) (entities.User, error) {
 	stmt, err := r.db.Prepare("select id, name, email, password, phone, avatar from users where id = ? and deleted_at is NULL")
 
 	if err != nil {
-		log.Fatal(err)
+		// log.Fatal(err)
 		return entities.User{}, err
 	}
 
 	res, err := stmt.Query(id)
 
 	if err != nil {
-		log.Fatal(err)
+		// log.Fatal(err)
 		return entities.User{}, err
 	}
 
@@ -74,7 +73,7 @@ func (r *UserRepository) GetById(id int) (entities.User, error) {
 		err := res.Scan(&user.Id, &user.Name, &user.Email, &user.Password, &user.PhoneNumber, &user.Avatar)
 
 		if err != nil {
-			log.Fatal(err)
+			// log.Fatal(err)
 			return entities.User{}, err
 		}
 	}
@@ -93,21 +92,21 @@ func (r *UserRepository) Create(user entities.User) (entities.User, error) {
 	err := r.checkEmailExistence(user.Email)
 
 	if err != nil {
-		log.Fatal(err)
+		// log.Fatal(err)
 		return entities.User{}, err
 	}
 
 	stmt, err := r.db.Prepare("insert into users(name, email, password, phone, avatar) values(?,?,?,?,?)")
 
 	if err != nil {
-		log.Fatal(err)
+		// log.Fatal(err)
 		return entities.User{}, err
 	}
 
 	res, err := stmt.Exec(user.Name, user.Email, user.Password, user.PhoneNumber, user.Avatar)
 
 	if err != nil {
-		log.Fatal(err)
+		// log.Fatal(err)
 		return entities.User{}, err
 	}
 
@@ -127,21 +126,21 @@ func (r *UserRepository) Update(id int, user entities.User) (entities.User, erro
 	// err := r.checkEmailExistence(user.Email)
 
 	// if err != nil {
-	// 	log.Fatal(err)
+	// log.Fatal(err)
 	// 	return entities.User{}, err
 	// }
 
 	stmt, err := r.db.Prepare("update users set name= ?, email= ?, password= ?, phone= ?, avatar= ? where id = ? and deleted_at is null")
 
 	if err != nil {
-		log.Fatal(err)
+		// log.Fatal(err)
 		return entities.User{}, err
 	}
 
 	res, error := stmt.Exec(user.Name, user.Email, user.Password, user.PhoneNumber, user.Avatar, id)
 
 	if error != nil {
-		log.Fatal(err)
+		// log.Fatal(err)
 		return entities.User{}, err
 	}
 
@@ -159,7 +158,7 @@ func (r *UserRepository) Delete(id int) error {
 	stmt, err := r.db.Prepare("update users set deleted_at = CURRENT_TIMESTAMP where id = ?")
 
 	if err != nil {
-		log.Fatal(err)
+		// log.Fatal(err)
 		return err
 	}
 
@@ -176,14 +175,14 @@ func (r *UserRepository) checkEmailExistence(email string) error {
 	stmt, err := r.db.Prepare("select count(id) from users where email = ?")
 
 	if err != nil {
-		log.Fatal(err)
+		// log.Fatal(err)
 		return err
 	}
 
 	res, err := stmt.Query(email)
 
 	if err != nil {
-		log.Fatal(err)
+		// log.Fatal(err)
 		return err
 	}
 
