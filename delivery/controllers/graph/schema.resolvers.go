@@ -33,7 +33,13 @@ func (r *mutationResolver) CreateUser(ctx context.Context, input model.NewUser) 
 	}
 
 	if input.PhoneNumber != nil {
-		userData.PhoneNumber = *input.PhoneNumber
+		phone := *input.PhoneNumber
+
+		if err := helpers.CheckPhonePattern(phone); err != nil {
+			return nil, err
+		}
+
+		userData.PhoneNumber = phone
 	}
 
 	if input.Avatar != nil {
@@ -95,16 +101,22 @@ func (r *mutationResolver) UpdateUser(ctx context.Context, id int, set model.Upd
 	}
 
 	if set.PhoneNumber != nil {
-		user.PhoneNumber = *set.PhoneNumber
+		phone := *set.PhoneNumber
+
+		if err := helpers.CheckPhonePattern(phone); err != nil {
+			return nil, err
+		}
+
+		user.PhoneNumber = phone
 	}
 
 	if set.Avatar != nil {
 		user.Avatar = *set.Avatar
 	}
 
-	res, errr := r.userRepo.Update(id, user)
+	res, err := r.userRepo.Update(id, user)
 
-	if errr != nil {
+	if err != nil {
 		return nil, errors.New("failed update user")
 	}
 

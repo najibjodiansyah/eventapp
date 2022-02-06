@@ -123,14 +123,13 @@ func (r *UserRepository) Create(user entities.User) (entities.User, error) {
 }
 
 // edit by Bagus, parameter dan return repository memakai entity saja
-// email harus unik, dicek dengan checkEmailExistence
 func (r *UserRepository) Update(id int, user entities.User) (entities.User, error) {
-	err := r.checkEmailExistence(user.Email)
+	// err := r.checkEmailExistence(user.Email)
 
-	if err != nil {
-		log.Fatal(err)
-		return entities.User{}, err
-	}
+	// if err != nil {
+	// 	log.Fatal(err)
+	// 	return entities.User{}, err
+	// }
 
 	stmt, err := r.db.Prepare("update users set name= ?, email= ?, password= ?, phone= ?, avatar= ? where id = ? and deleted_at is null")
 
@@ -146,9 +145,9 @@ func (r *UserRepository) Update(id int, user entities.User) (entities.User, erro
 		return entities.User{}, err
 	}
 
-	notAffected, _ := res.RowsAffected()
+	rowsAffected, _ := res.RowsAffected()
 
-	if notAffected == 0 {
+	if rowsAffected == 0 {
 		return entities.User{}, errors.New("user not updated")
 	}
 
