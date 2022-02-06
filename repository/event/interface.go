@@ -9,6 +9,6 @@ type Event interface {
 	GetEventByCategory(category string, page int) ([]entities.Event, error) //done
 	GetbyHostId(userid int) ([]entities.Event, error) //done
 	CreateEvent(entities.Event) (entities.Event, error)
-	Update(id int, event entities.Event) (entities.Event, error)
+	GetUpdateEvent(id int, event entities.Event) (entities.Event, error)
 	Delete(id int) error //done
 }

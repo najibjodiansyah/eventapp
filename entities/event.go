@@ -11,6 +11,6 @@ type Event struct {
 	Photo       string `json:"photo"`
 	CreatedAt   string `json:"createdAt"`
 	UpdateAt    string `json:"updateAt"`
-	UserId      int    `json:"userid" form:"userid"`
-	Username 	string 	`json:"username"`
+	UserName    string `json:"username" form:"username"`
+	// User User `json:"user" form:"user"`
 }

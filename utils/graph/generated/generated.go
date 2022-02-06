@@ -47,7 +47,8 @@ type ComplexityRoot struct {
 		Avatar    func(childComplexity int) int
 		Content   func(childComplexity int) int
 		CreatedAt func(childComplexity int) int
-		Nama      func(childComplexity int) int
+		Name      func(childComplexity int) int
+		UserID    func(childComplexity int) int
 	}
 
 	Event struct {
@@ -87,7 +88,7 @@ type ComplexityRoot struct {
 		UpdateUser    func(childComplexity int, id int, set model.UpdateUser) int
 	}
 
-	Partcipant struct {
+	Participant struct {
 		Avatar func(childComplexity int) int
 		Name   func(childComplexity int) int
 	}
@@ -112,13 +113,12 @@ type ComplexityRoot struct {
 	}
 
 	User struct {
-		Avatar       func(childComplexity int) int
-		Email        func(childComplexity int) int
-		ID           func(childComplexity int) int
-		Name         func(childComplexity int) int
-		Organization func(childComplexity int) int
-		Password     func(childComplexity int) int
-		PhoneNumber  func(childComplexity int) int
+		Avatar      func(childComplexity int) int
+		Email       func(childComplexity int) int
+		ID          func(childComplexity int) int
+		Name        func(childComplexity int) int
+		Password    func(childComplexity int) int
+		PhoneNumber func(childComplexity int) int
 	}
 }
 
@@ -144,7 +144,7 @@ type QueryResolver interface {
 	EventByKeyword(ctx context.Context, keyword string, page int) ([]*model.Event, error)
 	EventByCategory(ctx context.Context, category string, page int) ([]*model.Event, error)
 	EventByParticipantID(ctx context.Context, userID int) ([]*model.Event, error)
-	Participants(ctx context.Context, eventID int) ([]*model.Partcipant, error)
+	Participants(ctx context.Context, eventID int) ([]*model.Participant, error)
 	Comments(ctx context.Context, eventID int) ([]*model.Comment, error)
 }
 
@@ -177,19 +177,26 @@ func (e *executableSchema) Complexity(typeName, field string, childComplexity in
 
 		return e.complexity.Comment.Content(childComplexity), true
 
-	case "Comment.created_at":
+	case "Comment.createdAt":
 		if e.complexity.Comment.CreatedAt == nil {
 			break
 		}
 
 		return e.complexity.Comment.CreatedAt(childComplexity), true
 
-	case "Comment.nama":
-		if e.complexity.Comment.Nama == nil {
+	case "Comment.name":
+		if e.complexity.Comment.Name == nil {
 			break
 		}
 
-		return e.complexity.Comment.Nama(childComplexity), true
+		return e.complexity.Comment.Name(childComplexity), true
+
+	case "Comment.userId":
+		if e.complexity.Comment.UserID == nil {
+			break
+		}
+
+		return e.complexity.Comment.UserID(childComplexity), true
 
 	case "Event.category":
 		if e.complexity.Event.Category == nil {
@@ -416,19 +423,19 @@ func (e *executableSchema) Complexity(typeName, field string, childComplexity in
 
 		return e.complexity.Mutation.UpdateUser(childComplexity, args["id"].(int), args["set"].(model.UpdateUser)), true
 
-	case "Partcipant.avatar":
-		if e.complexity.Partcipant.Avatar == nil {
+	case "Participant.avatar":
+		if e.complexity.Participant.Avatar == nil {
 			break
 		}
 
-		return e.complexity.Partcipant.Avatar(childComplexity), true
+		return e.complexity.Participant.Avatar(childComplexity), true
 
-	case "Partcipant.name":
-		if e.complexity.Partcipant.Name == nil {
+	case "Participant.name":
+		if e.complexity.Participant.Name == nil {
 			break
 		}
 
-		return e.complexity.Partcipant.Name(childComplexity), true
+		return e.complexity.Participant.Name(childComplexity), true
 
 	case "Query.authLogin":
 		if e.complexity.Query.AuthLogin == nil {
@@ -599,13 +606,6 @@ func (e *executableSchema) Complexity(typeName, field string, childComplexity in
 
 		return e.complexity.User.Name(childComplexity), true
 
-	case "User.organization":
-		if e.complexity.User.Organization == nil {
-			break
-		}
-
-		return e.complexity.User.Organization(childComplexity), true
-
 	case "User.password":
 		if e.complexity.User.Password == nil {
 			break
@@ -693,7 +693,6 @@ type User {
 	name: String!
 	email: String!
 	password: String!
-	organization: String
 	phoneNumber: String
 	avatar: String
 }
@@ -702,7 +701,6 @@ input NewUser {
 	name: String!
 	email: String!
 	password: String!
-	organization: String
 	phoneNumber: String
 	avatar: String
 }
@@ -711,7 +709,6 @@ input UpdateUser {
 	name: String
 	email: String
 	password: String
-	organization: String
 	phoneNumber: String
 	avatar: String
 }
@@ -744,7 +741,7 @@ type Event {
 }
 input NewEvent{
 	name: String!
-	userid: Int!
+	userid: Int
 	host: String!
 	description: String!
 	datetime: String!
@@ -758,16 +755,17 @@ type SuccessResponse {
   	message: String!
 }
 
-type Partcipant{
+type Participant{
 	name: String!
 	avatar: String!
 }
 
 type Comment{
-	nama: String!
+	userId: Int!
+	name: String!
 	avatar: String!
 	content: String!
-	created_at: String!
+	createdAt: String!
 }
 
 type Query {
@@ -782,7 +780,7 @@ type Query {
 	eventByCategory(Category: String!, page: Int!): [Event!]	
 	eventByParticipantId(userId: Int!): [Event] # get semua event yang diikuti oleh user id
 
-	participants(eventId: Int!): [Partcipant]
+	participants(eventId: Int!): [Participant]
 
 	comments(eventId: Int!):[Comment]
 }
@@ -1232,7 +1230,7 @@ func (ec *executionContext) field___Type_fields_args(ctx context.Context, rawArg
 
 // region    **************************** field.gotpl *****************************
 
-func (ec *executionContext) _Comment_nama(ctx context.Context, field graphql.CollectedField, obj *model.Comment) (ret graphql.Marshaler) {
+func (ec *executionContext) _Comment_userId(ctx context.Context, field graphql.CollectedField, obj *model.Comment) (ret graphql.Marshaler) {
 	defer func() {
 		if r := recover(); r != nil {
 			ec.Error(ctx, ec.Recover(ctx, r))
@@ -1250,7 +1248,42 @@ func (ec *executionContext) _Comment_nama(ctx context.Context, field graphql.Col
 	ctx = graphql.WithFieldContext(ctx, fc)
 	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
 		ctx = rctx // use context from middleware stack in children
-		return obj.Nama, nil
+		return obj.UserID, nil
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		if !graphql.HasFieldError(ctx, fc) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.(int)
+	fc.Result = res
+	return ec.marshalNInt2int(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) _Comment_name(ctx context.Context, field graphql.CollectedField, obj *model.Comment) (ret graphql.Marshaler) {
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	fc := &graphql.FieldContext{
+		Object:     "Comment",
+		Field:      field,
+		Args:       nil,
+		IsMethod:   false,
+		IsResolver: false,
+	}
+
+	ctx = graphql.WithFieldContext(ctx, fc)
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return obj.Name, nil
 	})
 	if err != nil {
 		ec.Error(ctx, err)
@@ -1337,7 +1370,7 @@ func (ec *executionContext) _Comment_content(ctx context.Context, field graphql.
 	return ec.marshalNString2string(ctx, field.Selections, res)
 }
 
-func (ec *executionContext) _Comment_created_at(ctx context.Context, field graphql.CollectedField, obj *model.Comment) (ret graphql.Marshaler) {
+func (ec *executionContext) _Comment_createdAt(ctx context.Context, field graphql.CollectedField, obj *model.Comment) (ret graphql.Marshaler) {
 	defer func() {
 		if r := recover(); r != nil {
 			ec.Error(ctx, ec.Recover(ctx, r))
@@ -2314,7 +2347,7 @@ func (ec *executionContext) _Mutation_unjoinEvent(ctx context.Context, field gra
 	return ec.marshalNSuccessResponse2ᚖeventappᚋentitiesᚋgraphᚋmodelᚐSuccessResponse(ctx, field.Selections, res)
 }
 
-func (ec *executionContext) _Partcipant_name(ctx context.Context, field graphql.CollectedField, obj *model.Partcipant) (ret graphql.Marshaler) {
+func (ec *executionContext) _Participant_name(ctx context.Context, field graphql.CollectedField, obj *model.Participant) (ret graphql.Marshaler) {
 	defer func() {
 		if r := recover(); r != nil {
 			ec.Error(ctx, ec.Recover(ctx, r))
@@ -2322,7 +2355,7 @@ func (ec *executionContext) _Partcipant_name(ctx context.Context, field graphql.
 		}
 	}()
 	fc := &graphql.FieldContext{
-		Object:     "Partcipant",
+		Object:     "Participant",
 		Field:      field,
 		Args:       nil,
 		IsMethod:   false,
@@ -2349,7 +2382,7 @@ func (ec *executionContext) _Partcipant_name(ctx context.Context, field graphql.
 	return ec.marshalNString2string(ctx, field.Selections, res)
 }
 
-func (ec *executionContext) _Partcipant_avatar(ctx context.Context, field graphql.CollectedField, obj *model.Partcipant) (ret graphql.Marshaler) {
+func (ec *executionContext) _Participant_avatar(ctx context.Context, field graphql.CollectedField, obj *model.Participant) (ret graphql.Marshaler) {
 	defer func() {
 		if r := recover(); r != nil {
 			ec.Error(ctx, ec.Recover(ctx, r))
@@ -2357,7 +2390,7 @@ func (ec *executionContext) _Partcipant_avatar(ctx context.Context, field graphq
 		}
 	}()
 	fc := &graphql.FieldContext{
-		Object:     "Partcipant",
+		Object:     "Participant",
 		Field:      field,
 		Args:       nil,
 		IsMethod:   false,
@@ -2765,9 +2798,9 @@ func (ec *executionContext) _Query_participants(ctx context.Context, field graph
 	if resTmp == nil {
 		return graphql.Null
 	}
-	res := resTmp.([]*model.Partcipant)
+	res := resTmp.([]*model.Participant)
 	fc.Result = res
-	return ec.marshalOPartcipant2ᚕᚖeventappᚋentitiesᚋgraphᚋmodelᚐPartcipant(ctx, field.Selections, res)
+	return ec.marshalOParticipant2ᚕᚖeventappᚋentitiesᚋgraphᚋmodelᚐParticipant(ctx, field.Selections, res)
 }
 
 func (ec *executionContext) _Query_comments(ctx context.Context, field graphql.CollectedField) (ret graphql.Marshaler) {
@@ -3085,38 +3118,6 @@ func (ec *executionContext) _User_password(ctx context.Context, field graphql.Co
 	res := resTmp.(string)
 	fc.Result = res
 	return ec.marshalNString2string(ctx, field.Selections, res)
-}
-
-func (ec *executionContext) _User_organization(ctx context.Context, field graphql.CollectedField, obj *model.User) (ret graphql.Marshaler) {
-	defer func() {
-		if r := recover(); r != nil {
-			ec.Error(ctx, ec.Recover(ctx, r))
-			ret = graphql.Null
-		}
-	}()
-	fc := &graphql.FieldContext{
-		Object:     "User",
-		Field:      field,
-		Args:       nil,
-		IsMethod:   false,
-		IsResolver: false,
-	}
-
-	ctx = graphql.WithFieldContext(ctx, fc)
-	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
-		ctx = rctx // use context from middleware stack in children
-		return obj.Organization, nil
-	})
-	if err != nil {
-		ec.Error(ctx, err)
-		return graphql.Null
-	}
-	if resTmp == nil {
-		return graphql.Null
-	}
-	res := resTmp.(*string)
-	fc.Result = res
-	return ec.marshalOString2ᚖstring(ctx, field.Selections, res)
 }
 
 func (ec *executionContext) _User_phoneNumber(ctx context.Context, field graphql.CollectedField, obj *model.User) (ret graphql.Marshaler) {
@@ -4326,7 +4327,7 @@ func (ec *executionContext) unmarshalInputNewEvent(ctx context.Context, obj inte
 			var err error
 
 			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("userid"))
-			it.Userid, err = ec.unmarshalNInt2int(ctx, v)
+			it.Userid, err = ec.unmarshalOInt2ᚖint(ctx, v)
 			if err != nil {
 				return it, err
 			}
@@ -4417,14 +4418,6 @@ func (ec *executionContext) unmarshalInputNewUser(ctx context.Context, obj inter
 			if err != nil {
 				return it, err
 			}
-		case "organization":
-			var err error
-
-			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("organization"))
-			it.Organization, err = ec.unmarshalOString2ᚖstring(ctx, v)
-			if err != nil {
-				return it, err
-			}
 		case "phoneNumber":
 			var err error
 
@@ -4480,14 +4473,6 @@ func (ec *executionContext) unmarshalInputUpdateUser(ctx context.Context, obj in
 			if err != nil {
 				return it, err
 			}
-		case "organization":
-			var err error
-
-			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("organization"))
-			it.Organization, err = ec.unmarshalOString2ᚖstring(ctx, v)
-			if err != nil {
-				return it, err
-			}
 		case "phoneNumber":
 			var err error
 
@@ -4528,9 +4513,19 @@ func (ec *executionContext) _Comment(ctx context.Context, sel ast.SelectionSet, 
 		switch field.Name {
 		case "__typename":
 			out.Values[i] = graphql.MarshalString("Comment")
-		case "nama":
+		case "userId":
 			innerFunc := func(ctx context.Context) (res graphql.Marshaler) {
-				return ec._Comment_nama(ctx, field, obj)
+				return ec._Comment_userId(ctx, field, obj)
+			}
+
+			out.Values[i] = innerFunc(ctx)
+
+			if out.Values[i] == graphql.Null {
+				invalids++
+			}
+		case "name":
+			innerFunc := func(ctx context.Context) (res graphql.Marshaler) {
+				return ec._Comment_name(ctx, field, obj)
 			}
 
 			out.Values[i] = innerFunc(ctx)
@@ -4558,9 +4553,9 @@ func (ec *executionContext) _Comment(ctx context.Context, sel ast.SelectionSet, 
 			if out.Values[i] == graphql.Null {
 				invalids++
 			}
-		case "created_at":
+		case "createdAt":
 			innerFunc := func(ctx context.Context) (res graphql.Marshaler) {
-				return ec._Comment_created_at(ctx, field, obj)
+				return ec._Comment_createdAt(ctx, field, obj)
 			}
 
 			out.Values[i] = innerFunc(ctx)
@@ -4919,19 +4914,19 @@ func (ec *executionContext) _Mutation(ctx context.Context, sel ast.SelectionSet)
 	return out
 }
 
-var partcipantImplementors = []string{"Partcipant"}
+var participantImplementors = []string{"Participant"}
 
-func (ec *executionContext) _Partcipant(ctx context.Context, sel ast.SelectionSet, obj *model.Partcipant) graphql.Marshaler {
-	fields := graphql.CollectFields(ec.OperationContext, sel, partcipantImplementors)
+func (ec *executionContext) _Participant(ctx context.Context, sel ast.SelectionSet, obj *model.Participant) graphql.Marshaler {
+	fields := graphql.CollectFields(ec.OperationContext, sel, participantImplementors)
 	out := graphql.NewFieldSet(fields)
 	var invalids uint32
 	for i, field := range fields {
 		switch field.Name {
 		case "__typename":
-			out.Values[i] = graphql.MarshalString("Partcipant")
+			out.Values[i] = graphql.MarshalString("Participant")
 		case "name":
 			innerFunc := func(ctx context.Context) (res graphql.Marshaler) {
-				return ec._Partcipant_name(ctx, field, obj)
+				return ec._Participant_name(ctx, field, obj)
 			}
 
 			out.Values[i] = innerFunc(ctx)
@@ -4941,7 +4936,7 @@ func (ec *executionContext) _Partcipant(ctx context.Context, sel ast.SelectionSe
 			}
 		case "avatar":
 			innerFunc := func(ctx context.Context) (res graphql.Marshaler) {
-				return ec._Partcipant_avatar(ctx, field, obj)
+				return ec._Participant_avatar(ctx, field, obj)
 			}
 
 			out.Values[i] = innerFunc(ctx)
@@ -5315,13 +5310,6 @@ func (ec *executionContext) _User(ctx context.Context, sel ast.SelectionSet, obj
 			if out.Values[i] == graphql.Null {
 				invalids++
 			}
-		case "organization":
-			innerFunc := func(ctx context.Context) (res graphql.Marshaler) {
-				return ec._User_organization(ctx, field, obj)
-			}
-
-			out.Values[i] = innerFunc(ctx)
-
 		case "phoneNumber":
 			innerFunc := func(ctx context.Context) (res graphql.Marshaler) {
 				return ec._User_phoneNumber(ctx, field, obj)
@@ -6324,7 +6312,7 @@ func (ec *executionContext) marshalOInt2ᚖint(ctx context.Context, sel ast.Sele
 	return res
 }
 
-func (ec *executionContext) marshalOPartcipant2ᚕᚖeventappᚋentitiesᚋgraphᚋmodelᚐPartcipant(ctx context.Context, sel ast.SelectionSet, v []*model.Partcipant) graphql.Marshaler {
+func (ec *executionContext) marshalOParticipant2ᚕᚖeventappᚋentitiesᚋgraphᚋmodelᚐParticipant(ctx context.Context, sel ast.SelectionSet, v []*model.Participant) graphql.Marshaler {
 	if v == nil {
 		return graphql.Null
 	}
@@ -6351,7 +6339,7 @@ func (ec *executionContext) marshalOPartcipant2ᚕᚖeventappᚋentitiesᚋgraph
 			if !isLen1 {
 				defer wg.Done()
 			}
-			ret[i] = ec.marshalOPartcipant2ᚖeventappᚋentitiesᚋgraphᚋmodelᚐPartcipant(ctx, sel, v[i])
+			ret[i] = ec.marshalOParticipant2ᚖeventappᚋentitiesᚋgraphᚋmodelᚐParticipant(ctx, sel, v[i])
 		}
 		if isLen1 {
 			f(i)
@@ -6365,11 +6353,11 @@ func (ec *executionContext) marshalOPartcipant2ᚕᚖeventappᚋentitiesᚋgraph
 	return ret
 }
 
-func (ec *executionContext) marshalOPartcipant2ᚖeventappᚋentitiesᚋgraphᚋmodelᚐPartcipant(ctx context.Context, sel ast.SelectionSet, v *model.Partcipant) graphql.Marshaler {
+func (ec *executionContext) marshalOParticipant2ᚖeventappᚋentitiesᚋgraphᚋmodelᚐParticipant(ctx context.Context, sel ast.SelectionSet, v *model.Participant) graphql.Marshaler {
 	if v == nil {
 		return graphql.Null
 	}
-	return ec._Partcipant(ctx, sel, v)
+	return ec._Participant(ctx, sel, v)
 }
 
 func (ec *executionContext) unmarshalOString2string(ctx context.Context, v interface{}) (string, error) {

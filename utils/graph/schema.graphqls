@@ -7,7 +7,6 @@ type User {
 	name: String!
 	email: String!
 	password: String!
-	organization: String
 	phoneNumber: String
 	avatar: String
 }
@@ -16,7 +15,6 @@ input NewUser {
 	name: String!
 	email: String!
 	password: String!
-	organization: String
 	phoneNumber: String
 	avatar: String
 }
@@ -25,7 +23,6 @@ input UpdateUser {
 	name: String
 	email: String
 	password: String
-	organization: String
 	phoneNumber: String
 	avatar: String
 }
@@ -52,13 +49,14 @@ type Event {
 	location: String!
 	category: String!
 	photo: String!
+	# hostid
 	# createdAt: String
 	# deletedAt: String
 	# user: User!
 }
-input NewEvent{
+input NewEvent {
 	name: String!
-	userid: Int!
+	userid: Int
 	host: String!
 	description: String!
 	datetime: String!
@@ -68,20 +66,21 @@ input NewEvent{
 }
 
 type SuccessResponse {
-  	code: Int!
-  	message: String!
+	code: Int!
+	message: String!
 }
 
-type Partcipant{
+type Participant {
 	name: String!
 	avatar: String!
 }
 
-type Comment{
-	nama: String!
+type Comment {
+	userId: Int!
+	name: String!
 	avatar: String!
 	content: String!
-	created_at: String!
+	createdAt: String!
 }
 
 type Query {
@@ -91,16 +90,14 @@ type Query {
 
 	events(page: Int!): [Event!]
 	eventByHostId(userId: Int!): [Event!] # event yang diebuat oleh user id
-	eventByLocation(location: String!, page: Int!): [Event!]	
-	eventByKeyword(keyword: String!, page: Int! ): [Event!]	
-	eventByCategory(Category: String!, page: Int!): [Event!]	
+	eventByLocation(location: String!, page: Int!): [Event!]
+	eventByKeyword(keyword: String!, page: Int!): [Event!]
+	eventByCategory(Category: String!, page: Int!): [Event!]
 	eventByParticipantId(userId: Int!): [Event] # get semua event yang diikuti oleh user id
+	participants(eventId: Int!): [Participant]
 
-	participants(eventId: Int!): [Partcipant]
-
-	comments(eventId: Int!):[Comment]
+	comments(eventId: Int!): [Comment]
 }
-
 
 type Mutation {
 	createUser(input: NewUser!): User!

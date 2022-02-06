@@ -46,7 +46,7 @@ func (r *UserRepository) Get() ([]model.User, error) {
 
 func (r *UserRepository) GetbyId(id int) (model.User, error) {
 	var user model.User
-	stmt, err := r.db.Prepare("select id, name, email, phone, avatar from users where id = ? and deleted_at is NULL")
+	stmt, err := r.db.Prepare("select id, name, password, email, phone, avatar from users where id = ? and deleted_at is NULL")
 	if err != nil {
 		//log.Fatal(err)
 		return user, fmt.Errorf("gagal prepare db")
@@ -60,7 +60,7 @@ func (r *UserRepository) GetbyId(id int) (model.User, error) {
 	defer result.Close()
 
 	for result.Next() {
-		err := result.Scan(&user.ID, &user.Name, &user.Email, &user.PhoneNumber, &user.Avatar)
+		err := result.Scan(&user.ID, &user.Name,&user.Password, &user.Email, &user.PhoneNumber, &user.Avatar)
 		if err != nil {
 			return user, err
 		}
