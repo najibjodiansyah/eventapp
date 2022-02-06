@@ -14,16 +14,16 @@ func CheckEmailPattern(email string) error {
 	}
 
 	if strings.HasPrefix(splitEmail[0], ".") || strings.HasSuffix(splitEmail[0], ".") {
-		return errors.New("local name cannot start or end witn dot")
+		return errors.New("local name cannot start or end with dot")
 	}
 
 	if strings.ContainsAny(splitEmail[0], "..") {
 		return errors.New("local name cannot contain consecutive dots")
 	}
 
-	re := regexp.MustCompile("[a-zA-Z0-9.!#$%&'*+/=?^_`{|}~-]")
+	re := regexp.MustCompile("[^a-zA-Z0-9.!#$%&'*+/=?^_`{|}~-]")
 
-	if !re.MatchString(splitEmail[0]) {
+	if re.MatchString(splitEmail[0]) {
 		return errors.New("local name cannot contain forbidden characters")
 	}
 
@@ -39,10 +39,16 @@ func CheckEmailPattern(email string) error {
 		return errors.New("domain name cannot contain underscore")
 	}
 
-	re = regexp.MustCompile("[a-zA-Z0-9.-]")
+	re = regexp.MustCompile("[^a-zA-Z0-9.-]")
 
-	if !re.MatchString(splitEmail[1]) {
+	if re.MatchString(splitEmail[1]) {
 		return errors.New("domain name cannot contain forbidden characters")
+	}
+
+	splitDomain := strings.Split(splitEmail[1], ".")
+
+	if len(splitDomain) < 2 {
+		return errors.New("domain name must contain top domain")
 	}
 
 	return nil
