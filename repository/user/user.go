@@ -52,7 +52,7 @@ func (r *UserRepository) Get() ([]entities.User, error) {
 
 // edit by Bagus, return repository memakai entity saja
 func (r *UserRepository) GetById(id int) (entities.User, error) {
-	stmt, err := r.db.Prepare("select id, name, email, phone, avatar from users where id = ? and deleted_at is NULL")
+	stmt, err := r.db.Prepare("select id, name, email, password, phone, avatar from users where id = ? and deleted_at is NULL")
 
 	if err != nil {
 		log.Fatal(err)
@@ -71,7 +71,7 @@ func (r *UserRepository) GetById(id int) (entities.User, error) {
 	var user entities.User
 
 	if res.Next() {
-		err := res.Scan(&user.Id, &user.Name, &user.Email, &user.PhoneNumber, &user.Avatar)
+		err := res.Scan(&user.Id, &user.Name, &user.Email, &user.Password, &user.PhoneNumber, &user.Avatar)
 
 		if err != nil {
 			log.Fatal(err)
