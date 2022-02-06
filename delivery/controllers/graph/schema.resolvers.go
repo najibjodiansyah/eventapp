@@ -224,6 +224,7 @@ func (r *mutationResolver) UpdateEvent(ctx context.Context, id int, set model.Up
 	dataLogin := ctx.Value("EchoContextKey")
 
 	if dataLogin == nil {
+		fmt.Println(dataLogin)
 		return nil, errors.New("unauthorized")
 	}
 
@@ -233,6 +234,7 @@ func (r *mutationResolver) UpdateEvent(ctx context.Context, id int, set model.Up
 	event, _ := r.eventRepo.GetEventByEventId(id)
 
 	if event.HostId != convData.Id {
+		fmt.Println(event.HostId, convData.Id)
 		return nil, errors.New("unauthorized")
 	}
 
@@ -290,6 +292,7 @@ func (r *mutationResolver) DeleteEvent(ctx context.Context, id int) (*model.Succ
 	dataLogin := ctx.Value("EchoContextKey")
 
 	if dataLogin == nil {
+		fmt.Println(dataLogin)
 		return nil, errors.New("unauthorized")
 	}
 
@@ -299,6 +302,7 @@ func (r *mutationResolver) DeleteEvent(ctx context.Context, id int) (*model.Succ
 	event, _ := r.eventRepo.GetEventByEventId(id)
 
 	if event.HostId != convData.Id {
+		fmt.Println(event.HostId, convData.Id)
 		return nil, errors.New("unauthorized")
 	}
 

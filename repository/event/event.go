@@ -295,7 +295,7 @@ func (r *EventRepositeory) UpdateEvent(event entities.Event) (entities.Event, er
 }
 
 func (r *EventRepositeory) GetEventByEventId(eventId int) (entities.Event, error) {
-	stmt, err := r.db.Prepare(`select e.id, e.name, e.category, u.name, e.host, e.description, e.datetime, e.location, e.photo 
+	stmt, err := r.db.Prepare(`select e.id, e.name, e.category, u.name, e.host, e.description, e.datetime, e.location, e.photo, e.hostid 
 								from events e join users u on e.hostid = u.id
 								where e.deleted_at IS NULL and e.id = ?`)
 
@@ -316,7 +316,7 @@ func (r *EventRepositeory) GetEventByEventId(eventId int) (entities.Event, error
 	var event entities.Event
 
 	if res.Next() {
-		err := res.Scan(&event.Id, &event.Name, &event.HostId, &event.Category, &event.Host, &event.Description, &event.Datetime, &event.Location, &event.Photo)
+		err := res.Scan(&event.Id, &event.Name, &event.Category, &event.UserName, &event.Host, &event.Description, &event.Datetime, &event.Location, &event.Photo, &event.HostId)
 
 		if err != nil {
 			log.Println(err)
