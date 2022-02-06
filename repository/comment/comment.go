@@ -23,14 +23,14 @@ func (r *CommentRepository) GetCommentsByEventId(eventId int) ([]entities.Commen
 								where c.deleted_at is NULL and c.eventid = ?`)
 
 	if err != nil {
-		log.Fatal(err)
+		log.Println(err)
 		return nil, err
 	}
 
 	res, err := stmt.Query(eventId)
 
 	if err != nil {
-		log.Fatal(err)
+		log.Println(err)
 		return nil, err
 	}
 
@@ -44,7 +44,7 @@ func (r *CommentRepository) GetCommentsByEventId(eventId int) ([]entities.Commen
 		err := res.Scan(&comment.Id, &comment.UserId, &comment.UserName, &comment.Avatar, &comment.Content, &comment.CreatedAt)
 
 		if err != nil {
-			log.Fatal(err)
+			log.Println(err)
 			return nil, err
 		}
 
@@ -58,7 +58,7 @@ func (r *CommentRepository) CreateComment(eventId int, userId int, content strin
 	stmt, err := r.db.Prepare("insert into comments(userid, eventid, comment, created_at) values(?, ?, ?, CURRENT_TIMESTAMP)")
 
 	if err != nil {
-		log.Fatal(err)
+		log.Println(err)
 		return entities.Comment{}, err
 	}
 
@@ -67,7 +67,7 @@ func (r *CommentRepository) CreateComment(eventId int, userId int, content strin
 	res, err := stmt.Exec(eventId, userId, content)
 
 	if err != nil {
-		log.Fatal(err)
+		log.Println(err)
 		return entities.Comment{}, err
 	}
 
@@ -108,14 +108,14 @@ func (r *CommentRepository) DeleteComment(commentId int, userId int) error {
 	stmt, err := r.db.Prepare("update comments set deleted_at = CURRENT_TIMESTAMP where id = ? and userid = ?")
 
 	if err != nil {
-		log.Fatal(err)
+		log.Println(err)
 		return err
 	}
 
 	_, err = stmt.Exec(commentId, userId)
 
 	if err != nil {
-		log.Fatal(err)
+		log.Println(err)
 		return err
 	}
 
@@ -126,14 +126,14 @@ func (r *CommentRepository) DeleteAllCommentByUserId(userId int) error {
 	stmt, err := r.db.Prepare("update comments set deleted_at = CURRENT_TIMESTAMP where deleted_at is NULL and userid = ?")
 
 	if err != nil {
-		log.Fatal(err)
+		log.Println(err)
 		return err
 	}
 
 	_, err = stmt.Exec(userId)
 
 	if err != nil {
-		log.Fatal(err)
+		log.Println(err)
 		return err
 	}
 
@@ -144,14 +144,14 @@ func (r *CommentRepository) DeleteAllCommentByEventId(eventId int) error {
 	stmt, err := r.db.Prepare("update comments set deleted_at = CURRENT_TIMESTAMP where deleted_at is NULL and eventid = ?")
 
 	if err != nil {
-		log.Fatal(err)
+		log.Println(err)
 		return err
 	}
 
 	_, err = stmt.Exec(eventId)
 
 	if err != nil {
-		log.Fatal(err)
+		log.Println(err)
 		return err
 	}
 

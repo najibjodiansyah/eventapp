@@ -19,14 +19,14 @@ func (r *AuthRepository) Login(email string) (entities.User, error) {
 	stmt, err := r.db.Prepare(`select id, name, email, password from users where email = ?`)
 
 	if err != nil {
-		log.Fatal(err)
+		log.Println(err)
 		return entities.User{}, err
 	}
 
 	res, err := stmt.Query(email)
 
 	if err != nil {
-		log.Fatal(err)
+		log.Println(err)
 		return entities.User{}, err
 	}
 
@@ -38,7 +38,7 @@ func (r *AuthRepository) Login(email string) (entities.User, error) {
 		err := res.Scan(&user.Id, &user.Name, &user.Email, &user.Password)
 
 		if err != nil {
-			log.Fatal(err)
+			log.Println(err)
 			return entities.User{}, err
 		}
 	}

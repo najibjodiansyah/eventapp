@@ -21,14 +21,14 @@ func (r *ParticipantRepository) GetParticipantsByEventId(eventId int) ([]entitie
 								where p.deleted_at is NULL and p.eventid = ?`)
 
 	if err != nil {
-		log.Fatal(err)
+		log.Println(err)
 		return nil, err
 	}
 
 	result, err := stmt.Query(eventId)
 
 	if err != nil {
-		log.Fatal(err)
+		log.Println(err)
 		return nil, err
 	}
 
@@ -42,7 +42,7 @@ func (r *ParticipantRepository) GetParticipantsByEventId(eventId int) ([]entitie
 		err := result.Scan(&participant.Name, &participant.Avatar)
 
 		if err != nil {
-			log.Fatal(err)
+			log.Println(err)
 			return nil, err
 		}
 
@@ -57,21 +57,21 @@ func (r *ParticipantRepository) JoinEvent(eventId int, userId int) error {
 	err := r.checkAlreadyJoinEvent(eventId, userId)
 
 	if err != nil {
-		log.Fatal(err)
+		log.Println(err)
 		return err
 	}
 
 	stmt, err := r.db.Prepare("insert into participants(eventid, participantid, joined_at) values(?, ?, CURRENT_TIMESTAMP)")
 
 	if err != nil {
-		log.Fatal(err)
+		log.Println(err)
 		return err
 	}
 
 	result, err := stmt.Exec(eventId, userId)
 
 	if err != nil {
-		log.Fatal(err)
+		log.Println(err)
 		return err
 	}
 
@@ -88,14 +88,14 @@ func (r *ParticipantRepository) UnjoinEvent(eventId int, userId int) error {
 	stmt, err := r.db.Prepare("update participants set deleted_at = CURRENT_TIMESTAMP where deleted_at is NULL eventid = ? and participantid = ?")
 
 	if err != nil {
-		log.Fatal(err)
+		log.Println(err)
 		return err
 	}
 
 	_, err = stmt.Exec(eventId, userId)
 
 	if err != nil {
-		log.Fatal(err)
+		log.Println(err)
 		return err
 	}
 
@@ -109,14 +109,14 @@ func (r *ParticipantRepository) GetEventsByParticipantId(userId int) ([]entities
 								where e.deleted_at is NULL and e.hostid = ?`)
 
 	if err != nil {
-		log.Fatal(err)
+		log.Println(err)
 		return nil, err
 	}
 
 	result, err := stmt.Query(userId)
 
 	if err != nil {
-		log.Fatal(err)
+		log.Println(err)
 		return nil, err
 	}
 
@@ -130,7 +130,7 @@ func (r *ParticipantRepository) GetEventsByParticipantId(userId int) ([]entities
 		err := result.Scan(&event.Id, &event.Name, &event.Host, &event.UserName, &event.Description, &event.Datetime, &event.Location, &event.Category, &event.Photo)
 
 		if err != nil {
-			log.Fatal(err)
+			log.Println(err)
 			return nil, err
 		}
 
@@ -144,14 +144,14 @@ func (r *ParticipantRepository) UnjoinAllEvent(userId int) error {
 	stmt, err := r.db.Prepare("update participants set deleted_at = CURRENT_TIMESTAMP where deleted_at is NULL and participantid = ?")
 
 	if err != nil {
-		log.Fatal(err)
+		log.Println(err)
 		return err
 	}
 
 	_, err = stmt.Exec(userId)
 
 	if err != nil {
-		log.Fatal(err)
+		log.Println(err)
 		return err
 	}
 
@@ -162,14 +162,14 @@ func (r *ParticipantRepository) DeleteAllParticipantByEventId(eventId int) error
 	stmt, err := r.db.Prepare("update participants set deleted_at = CURRENT_TIMESTAMP where deleted_at is NULL and eventid = ?")
 
 	if err != nil {
-		log.Fatal(err)
+		log.Println(err)
 		return err
 	}
 
 	_, err = stmt.Exec(eventId)
 
 	if err != nil {
-		log.Fatal(err)
+		log.Println(err)
 		return err
 	}
 
@@ -180,14 +180,14 @@ func (r *ParticipantRepository) checkAlreadyJoinEvent(eventId int, userId int) e
 	stmt, err := r.db.Prepare("select count(id) from participants where deleted_at is NULL and eventid = ? and participantid = ?")
 
 	if err != nil {
-		log.Fatal(err)
+		log.Println(err)
 		return err
 	}
 
 	res, err := stmt.Query(eventId, userId)
 
 	if err != nil {
-		log.Fatal(err)
+		log.Println(err)
 		return err
 	}
 

@@ -22,7 +22,7 @@ func (r *EventRepositeory) GetAllEvent(page int) ([]entities.Event, error) {
 								where e.deleted_at IS NULL limit ? offset ?`)
 
 	if err != nil {
-		log.Fatal(err)
+		log.Println(err)
 		return nil, err
 	}
 
@@ -32,7 +32,7 @@ func (r *EventRepositeory) GetAllEvent(page int) ([]entities.Event, error) {
 	res, err := stmt.Query(limit, offset)
 
 	if err != nil {
-		log.Fatal(err)
+		log.Println(err)
 		return nil, err
 	}
 
@@ -46,7 +46,7 @@ func (r *EventRepositeory) GetAllEvent(page int) ([]entities.Event, error) {
 		err := res.Scan(&event.Id, &event.Name, &event.Category, &event.UserName, &event.Host, &event.Description, &event.Datetime, &event.Location, &event.Photo)
 
 		if err != nil {
-			log.Fatal(err)
+			log.Println(err)
 			return nil, err
 		}
 
@@ -63,7 +63,7 @@ func (r *EventRepositeory) GetEventByLocation(location string, page int) ([]enti
 								where e.location = ? and e.deleted_at IS NULL limit ? offset ?`)
 
 	if err != nil {
-		log.Fatal(err)
+		log.Println(err)
 		return nil, err
 	}
 
@@ -73,7 +73,7 @@ func (r *EventRepositeory) GetEventByLocation(location string, page int) ([]enti
 	res, errr := stmt.Query(location, limit, offset)
 
 	if errr != nil {
-		log.Fatal(err)
+		log.Println(err)
 		return nil, err
 	}
 
@@ -87,7 +87,7 @@ func (r *EventRepositeory) GetEventByLocation(location string, page int) ([]enti
 		err := res.Scan(&event.Id, &event.Name, &event.Category, &event.UserName, &event.Host, &event.Description, &event.Datetime, &event.Location, &event.Photo)
 
 		if err != nil {
-			log.Fatal(err)
+			log.Println(err)
 			return nil, err
 		}
 
@@ -140,7 +140,7 @@ func (r *EventRepositeory) CreateEvent(hostId int, event entities.Event) (entiti
 func (r *EventRepositeory) DeleteEvent(eventid int) error {
 	stmt, err := r.db.Prepare("update events set deleted_at = CURRENT_TIMESTAMP where id = ?")
 	if err != nil {
-		log.Fatal(err)
+		log.Println(err)
 	}
 
 	_, err = stmt.Exec(eventid)
@@ -158,7 +158,7 @@ func (r *EventRepositeory) GetEventByKeyword(keyword string, page int) ([]entiti
 								where e.deleted_at is null and e.name like ? limit ? offset ?`)
 
 	if err != nil {
-		log.Fatal(err)
+		log.Println(err)
 		return nil, err
 	}
 
@@ -169,7 +169,7 @@ func (r *EventRepositeory) GetEventByKeyword(keyword string, page int) ([]entiti
 	res, err := stmt.Query(like, limit, offset)
 
 	if err != nil {
-		log.Fatal(err)
+		log.Println(err)
 		return nil, err
 	}
 
@@ -183,7 +183,7 @@ func (r *EventRepositeory) GetEventByKeyword(keyword string, page int) ([]entiti
 		err := res.Scan(&event.Id, &event.Name, &event.Category, &event.UserName, &event.Host, &event.Description, &event.Datetime, &event.Location, &event.Photo)
 
 		if err != nil {
-			log.Fatal(err)
+			log.Println(err)
 			return nil, err
 		}
 
@@ -199,7 +199,7 @@ func (r *EventRepositeory) GetEventByCategory(category string, page int) ([]enti
 								where e.deleted_at is null and e.category = ? limit ? offset ?`)
 
 	if err != nil {
-		log.Fatal(err)
+		log.Println(err)
 		return nil, err
 	}
 
@@ -209,7 +209,7 @@ func (r *EventRepositeory) GetEventByCategory(category string, page int) ([]enti
 	res, err := stmt.Query(category, limit, offset)
 
 	if err != nil {
-		log.Fatal(err)
+		log.Println(err)
 		return nil, err
 	}
 
@@ -223,7 +223,7 @@ func (r *EventRepositeory) GetEventByCategory(category string, page int) ([]enti
 		err := res.Scan(&event.Id, &event.Name, &event.Category, &event.UserName, &event.Host, &event.Description, &event.Datetime, &event.Location, &event.Photo)
 
 		if err != nil {
-			log.Fatal(err)
+			log.Println(err)
 			return nil, err
 		}
 
@@ -240,14 +240,14 @@ func (r *EventRepositeory) GetEventByHostId(hostId int) ([]entities.Event, error
 								where e.hostid = u.id and e.deleted_at is null and e.hostid = ?`)
 
 	if err != nil {
-		log.Fatal(err)
+		log.Println(err)
 		return nil, err
 	}
 
 	res, err := stmt.Query(hostId)
 
 	if err != nil {
-		log.Fatal(err)
+		log.Println(err)
 		return nil, err
 	}
 
@@ -261,7 +261,7 @@ func (r *EventRepositeory) GetEventByHostId(hostId int) ([]entities.Event, error
 		err := res.Scan(&event.Id, &event.Name, &event.HostId, &event.Host, &event.Category, &event.Datetime, &event.Location, &event.Description, &event.Photo, &event.UserName)
 
 		if err != nil {
-			log.Fatal(err)
+			log.Println(err)
 			return nil, err
 		}
 
@@ -275,14 +275,14 @@ func (r *EventRepositeory) UpdateEvent(event entities.Event) (entities.Event, er
 	stmt, err := r.db.Prepare("update events set name= ?, category= ?, host= ?, location= ?, description= ?, datetime= ?, photo= ? where id = ? and deleted_at is NULL")
 
 	if err != nil {
-		log.Fatal(err)
+		log.Println(err)
 		return entities.Event{}, err
 	}
 
 	result, error := stmt.Exec(event.Name, event.Category, event.Host, event.Location, event.Description, event.Datetime, event.Photo, event.Id)
 
 	if error != nil {
-		log.Fatal(err)
+		log.Println(err)
 		return entities.Event{}, err
 	}
 
@@ -300,14 +300,14 @@ func (r *EventRepositeory) GetEventByEventId(eventId int) (entities.Event, error
 								where e.deleted_at IS NULL and e.id = ?`)
 
 	if err != nil {
-		log.Fatal(err)
+		log.Println(err)
 		return entities.Event{}, err
 	}
 
 	res, err := stmt.Query(eventId)
 
 	if err != nil {
-		log.Fatal(err)
+		log.Println(err)
 		return entities.Event{}, err
 	}
 
@@ -319,7 +319,7 @@ func (r *EventRepositeory) GetEventByEventId(eventId int) (entities.Event, error
 		err := res.Scan(&event.Id, &event.Name, &event.HostId, &event.Category, &event.Host, &event.Description, &event.Datetime, &event.Location, &event.Photo)
 
 		if err != nil {
-			log.Fatal(err)
+			log.Println(err)
 			return entities.Event{}, err
 		}
 	}
