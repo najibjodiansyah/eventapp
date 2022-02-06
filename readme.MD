@@ -1,4 +1,4 @@
-# Event Planning Api for Klender App
+# Event Planning BackEnd Api for Klender App
 
 Event Planning App adalah sebuah aplikasi yang digunakan untuk membuat dan management sebuah event.
 
