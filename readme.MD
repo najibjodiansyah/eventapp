@@ -28,187 +28,98 @@ Membuat API menggunakan bahasa Go dengan menerapkan layered architecture untuk m
 - CRUD Event
 - Join/Going Event
 - Post and Read Comment
-<!--
 
-## Queries for _client_ 🏄🏻‍♀️
 
-### User 🧛🏾‍♂️
+## Queries and Mutations
 
-#### Register
+### User
 
-- _Mutation_
+- How register a new user
 
-  ```graphql
-  mutation registerNewUser($input: UserRegister!) {
-  	register(input: $input) {
-  		result
-  	}
-  }
-  ```
-
-  ```jsx
-    // Query variable example
-
-    {
-      "input": {
-        "username": "kholid",
-        "email": "fikr@gmail.com",
-        "password": "123456"
-      }
+```graphql
+mutation {
+    createUser(
+        input: {
+            name: String!
+            email: String!
+            password: String!
+            phoneNumber: String
+            avatar: String
+        }
+    ) {
+        id: Int
+        name: String!
+        email: String!
+        password: String!
+        phoneNumber: String
+        avatar: String
     }
-  ```
+}
+```
 
-#### Login
-
-- _Mutation_
-
-  ```graphql
-  mutation loginUser($input: UserLogin!) {
-  	login(input: $input) {
-  		result
-  	}
-  }
-  ```
-
-  ```jsx
-    // Query variable example
-
-    {
-      "input": {
-        "email": "fikr@gmail.com",
-        "password": "123456"
-      }
+```jsx
+// example request body
+mutation {
+    createUser(
+        input: {
+            name: "Bagus Brahmantya"
+            email: "bagusbpg@gmail.com"
+            password: "qwerty1234"
+        }
+    ) {
+        id
+        name
     }
-  ```
+}
 
-#### Logout
-
-- _Mutation_
-  ```graphql
-  mutation logoutUser {
-  	logout {
-  		result
-  	}
-  }
-  ```
-
-### Event 🎸
-
-#### New Event
-
-- _Mutation_
-
-  ```graphql
-  mutation createEvent($event: EventInput!) {
-  	createEvent(event: $event) {
-  		id
-  		title
-  		description
-  		timestamp
-  	}
-  }
-  ```
-
-  ```jsx
-    // Query variable example
-
-    {
-      "event": {
-        "title": "tekken 7",
-        "description": "Abis main, pergi ke pasar buat nyari makan sama temen g",
-        "timestamp": "1589814419531"
-      }
+// example success response
+{
+    "data": {
+        "id": 1
+        "name": "Bagus Brahmantya"
     }
-  ```
+}
+```
 
-#### Get All Events
+- How registered user login
 
-- _Query_
-  ```graphql
-  query allEvents {
-  	getEvents {
-  		id
-  		email
-  		title
-  		description
-  		timestamp
-  	}
-  }
-  ```
-
-#### Get Event by ID
-
-- _Query_
-
-  ```graphql
-  query eventById($id: ID!) {
-  	getEventsById(id: $id) {
-  		id
-  		title
-  		description
-  		timestamp
-  	}
-  }
-  ```
-
-  ```jsx
-    // Query variable example
-
-    {
-      "id": "5ec2a500e1a9271cba37af03"
+```graphql
+query {
+    authLogin(
+        email: String!
+        password: String!
+    ) {
+        message: String!
+	    id: Int!
+	    name: String!
+	    email: String!
+	    token: String!
     }
-  ```
+}
+```
 
-#### Edit Event by ID
-
-- _Mutation_
-
-  ```graphql
-  mutation editEvent($id: ID!, $event: EventInput!) {
-  	editEvent(id: $id, event: $event) {
-  		id
-  		title
-  		description
-  		timestamp
-  	}
-  }
-  ```
-
-  ```jsx
-    // Query variable example
-
-    {
-      "id": "5ec2a500e1a9271cba37af03",
-      "event": {
-        "title": "trine 4",
-        "description": "Ya gitu dehhh",
-        "timestamp": "1589814733208"
-      }
+```jsx
+// example request body
+query {
+    authLogin(
+        email: "bagusbpg@gmail.com"
+        password: "qwerty1234"
+    ) {
+        id
+        name
+        token
     }
-  ```
+}
 
-#### Delete Event
-
-- _Mutation_
-
-  ```graphql
-  mutation deleteEvent($id: ID!) {
-  	deleteEvent(id: $id) {
-  		result
-  	}
-  }
-  ```
-
-  ````jsx
-    // Query variable example
-
-    {
-      "id": "5ec2a5c7e1a9271cba37af04"
+// example success response
+{
+    "data": {
+        "id": 1
+        "name": "Bagus Brahmantya"
+        "token": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJhdXRob3JpemVkIjp0cnVlLCJleHAiOjE2NDI1ODE0OTAsImlkIjoxLCJuYW1lIjoiIn0.NW5sOrXy_h9R1LovaarufA-anCJ14QAIwrzYLirkQdQ"
     }
-  ```
-  ````
-
-  -->
+}
+```
 
 ## Authors
 

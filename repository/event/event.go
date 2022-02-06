@@ -258,7 +258,7 @@ func (r *EventRepositeory) GetEventByHostId(hostId int) ([]entities.Event, error
 	for res.Next() {
 		var event entities.Event
 
-		err := res.Scan(&event.Id, &event.Name, &event.HostId, &event.Host, &event.Category, &event.Datetime, &event.Location, &event.Description, &event.Photo, &event.UserName)
+		err := res.Scan(&event.Id, &event.Name, &event.Category, &event.UserName, &event.Host, &event.Description, &event.Datetime, &event.Location, &event.Photo)
 
 		if err != nil {
 			log.Println(err)

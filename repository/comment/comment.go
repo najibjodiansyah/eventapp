@@ -64,7 +64,7 @@ func (r *CommentRepository) CreateComment(eventId int, userId int, content strin
 
 	created_at := time.Now()
 
-	res, err := stmt.Exec(eventId, userId, content)
+	res, err := stmt.Exec(userId, eventId, content)
 
 	if err != nil {
 		log.Println(err)
@@ -112,11 +112,17 @@ func (r *CommentRepository) DeleteComment(commentId int, userId int) error {
 		return err
 	}
 
-	_, err = stmt.Exec(commentId, userId)
+	res, err := stmt.Exec(commentId, userId)
 
 	if err != nil {
 		log.Println(err)
 		return err
+	}
+
+	rowsAffected, _ := res.RowsAffected()
+
+	if rowsAffected == 0 {
+		return errors.New("no comment deleted")
 	}
 
 	return nil

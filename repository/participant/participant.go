@@ -85,7 +85,7 @@ func (r *ParticipantRepository) JoinEvent(eventId int, userId int) error {
 }
 
 func (r *ParticipantRepository) UnjoinEvent(eventId int, userId int) error {
-	stmt, err := r.db.Prepare("update participants set deleted_at = CURRENT_TIMESTAMP where deleted_at is NULL eventid = ? and participantid = ?")
+	stmt, err := r.db.Prepare("update participants set deleted_at = CURRENT_TIMESTAMP where deleted_at is NULL and eventid = ? and participantid = ?")
 
 	if err != nil {
 		log.Println(err)
@@ -105,7 +105,7 @@ func (r *ParticipantRepository) UnjoinEvent(eventId int, userId int) error {
 // ini seharusnya muncul di event repository, tetapi daripada conflict ya sudah ditaruh di participant repository
 func (r *ParticipantRepository) GetEventsByParticipantId(userId int) ([]entities.Event, error) {
 	stmt, err := r.db.Prepare(`select e.id, e.name, e.host, u.name, e.description, e.datetime, e.location, e.category, e.photo
-								from events e left join users u on e.userid = u.id
+								from events e left join users u on e.hostid = u.id
 								where e.deleted_at is NULL and e.hostid = ?`)
 
 	if err != nil {
