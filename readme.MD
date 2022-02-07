@@ -34,11 +34,11 @@ Membuat API menggunakan bahasa Go dengan menerapkan layered architecture untuk m
 
 ### User
 
-- How register a new user
+- **How a new user register**
 
 ```graphql
 mutation {
-    createUser(
+    createUser (
         input: {
             name: String!
             email: String!
@@ -60,7 +60,7 @@ mutation {
 ```jsx
 // example request body
 mutation {
-    createUser(
+    createUser (
         input: {
             name: "Bagus Brahmantya"
             email: "bagusbpg@gmail.com"
@@ -81,11 +81,11 @@ mutation {
 }
 ```
 
-- How registered user login
+- **How a registered user login**
 
 ```graphql
 query {
-    authLogin(
+    authLogin (
         email: String!
         password: String!
     ) {
@@ -101,7 +101,7 @@ query {
 ```jsx
 // example request body
 query {
-    authLogin(
+    authLogin (
         email: "bagusbpg@gmail.com"
         password: "qwerty1234"
     ) {
@@ -117,6 +117,100 @@ query {
         "id": 1
         "name": "Bagus Brahmantya"
         "token": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJhdXRob3JpemVkIjp0cnVlLCJleHAiOjE2NDI1ODE0OTAsImlkIjoxLCJuYW1lIjoiIn0.NW5sOrXy_h9R1LovaarufA-anCJ14QAIwrzYLirkQdQ"
+    }
+}
+```
+
+- **How anyone get list of all users**
+
+```graphql
+query {
+    users {
+        id: Int
+	    name: String!
+	    email: String!
+	    password: String!
+        phoneNumber: String
+        avatar: String
+    }
+}
+```
+
+```jsx
+// example request body
+query {
+    userById {
+        id
+	    name
+    }
+}
+
+// example success response
+{
+    "data": {
+        [
+            {
+                "id": 1
+                "name": "Bagus Brahmantya"
+            },
+            {
+                "id": 2
+                "name": "Najib Jodiansyah"
+            },
+            {
+                "id": 3
+                "name": "Yahya Zakariya"
+            }
+        ]
+    }
+}
+```
+
+- **How anyone get list of all users**
+
+```graphql
+query {
+    userById (
+        id: Int!
+    ) {
+        id: Int
+	    name: String!
+	    email: String!
+	    password: String!
+        phoneNumber: String
+        avatar: String
+    }
+}
+```
+
+```jsx
+// example request body
+query {
+    user (
+        id: 1
+    ) {
+        id
+	    name
+    }
+}
+
+// example success response
+{
+    "data": {
+        [
+            {
+                "id": 1
+                "name": "Bagus Brahmantya"
+            },
+            {
+                "id": 2
+                "name": "Najib Jodiansyah"
+            },
+            {
+                "id": 3
+                "name": "Yahya Zakariya"
+            }
+        ]
     }
 }
 ```
@@ -179,7 +273,7 @@ To run tests, run the following command
 
 This project is used by the following companies:
 
-- Group 5 Projet Event Planning App : Klender
+- Group 3 Projet Event Planning App : Klender
 
 ## Lessons Learned
 

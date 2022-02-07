@@ -93,7 +93,7 @@ type Comment {
 
 type Query {
 	users: [User!]
-	usersByID(id: Int!): User
+	userById(id: Int!): User
 	authLogin(email: String!, password: String!): LoginResponse!
 
 	events(page: Int!): [Event!]

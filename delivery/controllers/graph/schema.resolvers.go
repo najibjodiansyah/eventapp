@@ -86,6 +86,7 @@ func (r *mutationResolver) UpdateUser(ctx context.Context, id int, set model.Upd
 	if err != nil {
 		return nil, err
 	}
+
 	if set.Name != nil {
 		user.Name = *set.Name
 	}
@@ -446,7 +447,7 @@ func (r *queryResolver) Users(ctx context.Context) ([]*model.User, error) {
 	return userResponseData, nil
 }
 
-func (r *queryResolver) UsersByID(ctx context.Context, id int) (*model.User, error) {
+func (r *queryResolver) UserByID(ctx context.Context, id int) (*model.User, error) {
 	responseData, err := r.userRepo.GetById(id)
 
 	if err != nil {
