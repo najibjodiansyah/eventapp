@@ -279,9 +279,9 @@ func (r *EventRepositeory) UpdateEvent(event entities.Event) (entities.Event, er
 		return entities.Event{}, err
 	}
 
-	result, error := stmt.Exec(event.Name, event.Category, event.Host, event.Location, event.Description, event.Datetime, event.Photo, event.Id)
+	result, err := stmt.Exec(event.Name, event.Category, event.Host, event.Location, event.Description, event.Datetime, event.Photo, event.Id)
 
-	if error != nil {
+	if err != nil {
 		log.Println(err)
 		return entities.Event{}, err
 	}
