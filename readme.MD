@@ -304,6 +304,374 @@ mutation {
 }
 ```
 
+### Event
+
+- **How anyone get list of all events (pagination mode: on)**
+
+```graphql
+query {
+    events (
+        page: Int!
+    ) {
+        id: Int
+	    name: String!
+	    username: String!
+	    host: String!
+	    description: String!
+	    datetime: String!
+	    location: String!
+	    category: String!
+	    photo: String!
+    }
+}
+```
+
+```jsx
+// example request body
+query {
+    events (
+        page: 1
+    ) {
+        id
+	    name
+        host
+        category
+    }
+}
+
+// example success response
+{
+    "data": {
+        "events": [
+            {
+                "id": 1
+                "name": "Git 101"
+                "host": "Alterra Academy"
+                "category": "Education"
+            },
+            {
+                "id": 2
+                "name": "Unit Testing for Beginner"
+                "host": "Alterra Academy"
+                "category": "Education"
+            },
+            {
+                "id": 3
+                "name": "Introduction to TypeScript"
+                "host": "Alterra Academy"
+                "category": "Education"
+            }
+        ]
+    }
+}
+```
+
+- **How anyone get list of all events hosted by particular user (pagination mode: off)**
+
+```graphql
+query {
+    eventByHostId (
+        userId: Int!
+    ) {
+        id: Int
+	    name: String!
+	    username: String!
+	    host: String!
+	    description: String!
+	    datetime: String!
+	    location: String!
+	    category: String!
+	    photo: String!
+    }
+}
+```
+
+```jsx
+// example request body
+query {
+    eventByHostId (
+        userId: 1
+    ) {
+        id
+	    name
+        username
+    }
+}
+
+// example success response
+{
+    "data": {
+        "eventByHostId": [
+            {
+                "id": 1
+                "name": "Git 101"
+                "username": "Bagus Brahmantya"
+            },
+            {
+                "id": 2
+                "name": "Unit Testing for Beginner"
+                "username": "Bagus Brahmantya"
+            },
+            {
+                "id": 3
+                "name": "Introduction to TypeScript"
+                "username": "Bagus Brahmantya"
+            }
+        ]
+    }
+}
+```
+
+- **How anyone get list of all events held in certain location (pagination mode: on)**
+
+```graphql
+query {
+    eventByLocation (
+        location: String!
+        page: Int!
+    ) {
+        id: Int
+	    name: String!
+	    username: String!
+	    host: String!
+	    description: String!
+	    datetime: String!
+	    location: String!
+	    category: String!
+	    photo: String!
+    }
+}
+```
+
+```jsx
+// example request body
+query {
+    eventByLocation (
+        location: "Malang"
+        page: 1
+    ) {
+        id
+	    name
+        location
+    }
+}
+
+// example success response
+{
+    "data": {
+        "eventByLocation": [
+            {
+                "id": 1
+                "name": "Git 101"
+                "location": "Malang"
+            },
+            {
+                "id": 2
+                "name": "Unit Testing for Beginner"
+                "location": "Malang"
+            }
+        ]
+    }
+}
+```
+
+- **How anyone get list of all events based on search keyword in event name (pagination mode: on)**
+
+```graphql
+query {
+    eventByKeyword (
+        keyword: String!
+        page: Int!
+    ) {
+        id: Int
+	    name: String!
+	    username: String!
+	    host: String!
+	    description: String!
+	    datetime: String!
+	    location: String!
+	    category: String!
+	    photo: String!
+    }
+}
+```
+
+```jsx
+// example request body
+query {
+    eventByKeyword (
+        keyword: "beginner"
+        page: 1
+    ) {
+        id
+	    name
+    }
+}
+
+// example success response
+{
+    "data": {
+        "eventByKeyword": [
+            {
+                "id": 2
+                "name": "Unit Testing for Beginner"
+            }
+        ]
+    }
+}
+```
+
+- **How anyone get list of all events based on category (pagination mode: on)**
+
+```graphql
+query {
+    eventByCategory (
+        category: String!
+        page: Int!
+    ) {
+        id: Int
+	    name: String!
+	    username: String!
+	    host: String!
+	    description: String!
+	    datetime: String!
+	    location: String!
+	    category: String!
+	    photo: String!
+    }
+}
+```
+
+```jsx
+// example request body
+query {
+    eventByCategory (
+        category: "Education"
+        page: 1
+    ) {
+	    name
+        category
+    }
+}
+
+// example success response
+{
+    "data": {
+        "eventByCategory": [
+            {
+                "name": "Git 101"
+                "category": "Education"
+            },
+            {
+                "name": "Unit Testing for Beginner"
+                "category": "Education"
+            },
+            {
+                "name": "Introduction to TypeScript"
+                "category": "Education"
+            }
+        ]
+    }
+}
+```
+
+- **How registered user get list of all events he/she participates (pagination mode: off)**
+
+```graphql
+query {
+    eventByParticipantId (
+        userId: Int!
+    ) {
+        id: Int
+	    name: String!
+	    username: String!
+	    host: String!
+	    description: String!
+	    datetime: String!
+	    location: String!
+	    category: String!
+	    photo: String!
+    }
+}
+```
+
+```jsx
+// example request body
+query {
+    eventByParticipantId (
+        userId: 1
+    ) {
+	    name
+        username
+        host
+        location
+        category
+    }
+}
+
+// example success response
+{
+    "data": {
+        "eventByParticipantId": {
+            "name": "Git 101"
+            "username": "Bagus Brahmantya"
+            "host": "Alterra Academy"
+            "location": "Malang"
+            "category": "Education"
+        }
+    }
+}
+```
+
+- **How anyone retrieve particular event by id**
+
+```graphql
+query {
+    eventById (
+        id: Int!
+    ) {
+        id: Int
+	    name: String!
+	    username: String!
+	    host: String!
+	    description: String!
+	    datetime: String!
+	    location: String!
+	    category: String!
+	    photo: String!
+    }
+}
+```
+
+```jsx
+// example request body
+query {
+    eventById (
+        id: 1
+    ) {
+	    name
+
+    }
+}
+
+// example success response
+{
+    "data": {
+        "eventByParticipantId": [
+            {
+                "name": "Gaining Profit from Cyrptocurrency"
+            },
+            {
+                "name": "Creating Profitable NFT"
+            },
+            {
+                "name": "Life is a Joke"
+            }
+        ]
+    }
+}
+```
+
 ## Authors
 
 - [@bagusbpg](https://www.github.com/bagusbpg)
@@ -347,7 +715,7 @@ Install dependencies
 Start the server
 
 ```bash
-  go run ./app/main.go
+  go run ./app/server.go
 ```
 
 ## Running Tests

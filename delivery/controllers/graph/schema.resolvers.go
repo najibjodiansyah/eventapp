@@ -618,6 +618,30 @@ func (r *queryResolver) EventByParticipantID(ctx context.Context, userID int) ([
 	return eventResponseData, nil
 }
 
+func (r *queryResolver) EventByID(ctx context.Context, id int) (*model.Event, error) {
+	responseData, _ := r.eventRepo.GetEventByEventId(id)
+
+	if responseData == (entities.Event{}) {
+		return nil, errors.New("not found")
+	}
+
+	eventid := responseData.Id
+
+	responseEventData := model.Event{
+		ID:          &eventid,
+		Name:        responseData.Name,
+		Username:    responseData.UserName,
+		Host:        responseData.Host,
+		Description: responseData.Description,
+		Datetime:    responseData.Datetime,
+		Location:    responseData.Location,
+		Category:    responseData.Category,
+		Photo:       responseData.Photo,
+	}
+
+	return &responseEventData, nil
+}
+
 func (r *queryResolver) Participants(ctx context.Context, eventID int) ([]*model.Participant, error) {
 	responseData, err := r.participantRepo.GetParticipantsByEventId(eventID)
 

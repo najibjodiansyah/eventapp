@@ -45,10 +45,6 @@ type Event {
 	location: String!
 	category: String!
 	photo: String!
-	# hostid
-	# createdAt: String
-	# deletedAt: String
-	# user: User!
 }
 
 input NewEvent {
@@ -97,11 +93,13 @@ type Query {
 	authLogin(email: String!, password: String!): LoginResponse!
 
 	events(page: Int!): [Event!]
-	eventByHostId(userId: Int!): [Event!] # event yang diebuat oleh user id
+	eventByHostId(userId: Int!): [Event!]
 	eventByLocation(location: String!, page: Int!): [Event!]
 	eventByKeyword(keyword: String!, page: Int!): [Event!]
-	eventByCategory(Category: String!, page: Int!): [Event!]
-	eventByParticipantId(userId: Int!): [Event!] # get semua event yang diikuti oleh user id
+	eventByCategory(category: String!, page: Int!): [Event!]
+	eventByParticipantId(userId: Int!): [Event!]
+	eventById(id: Int!): Event
+	
 	participants(eventId: Int!): [Participant]
 
 	comments(eventId: Int!): [Comment]
@@ -122,8 +120,3 @@ type Mutation {
 	joinEvent(eventId: Int!): SuccessResponse!
 	unjoinEvent(eventId: Int!): SuccessResponse!
 }
-
-# buat di controller update biar rapih (pake entities.user)
-# token biar ngirim data nama dan email (v)
-# schema harus ganti ga kalo repo ditambah soft delete (repo:delete)
-# kalo soft delete apa aja yang harus diganti //didiskusikan
