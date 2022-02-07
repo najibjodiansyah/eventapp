@@ -87,6 +87,11 @@ type Comment {
 	createdAt: String!
 }
 
+type eventResponse {
+	event: [Event!]
+	totalPage: Int!
+}
+
 type Query {
 	users: [User!]
 	userById(id: Int!): User
@@ -94,12 +99,12 @@ type Query {
 
 	events(page: Int!): [Event!]
 	eventByHostId(userId: Int!): [Event!]
-	eventByLocation(location: String!, page: Int!): [Event!]
-	eventByKeyword(keyword: String!, page: Int!): [Event!]
-	eventByCategory(category: String!, page: Int!): [Event!]
+	eventByLocation(location: String!, page: Int!): eventResponse!
+	eventByKeyword(keyword: String!, page: Int!): eventResponse!
+	eventByCategory(category: String!, page: Int!): eventResponse!
 	eventByParticipantId(userId: Int!): [Event!]
 	eventById(id: Int!): Event
-	
+
 	participants(eventId: Int!): [Participant]
 
 	comments(eventId: Int!): [Comment]
@@ -120,3 +125,8 @@ type Mutation {
 	joinEvent(eventId: Int!): SuccessResponse!
 	unjoinEvent(eventId: Int!): SuccessResponse!
 }
+
+# membuat type schema gql (done)
+# membuat interface repo (bikin satu function)
+# membuat repo sintaks sql (bikin satu function)
+# kondisikan di schema resolver yang make pagination

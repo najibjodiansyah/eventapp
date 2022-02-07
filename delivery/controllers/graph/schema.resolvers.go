@@ -12,6 +12,7 @@ import (
 	"eventapp/entities/graph/model"
 	"eventapp/utils/graph/generated"
 	"fmt"
+	"math"
 	"net/http"
 	"strings"
 	"time"
@@ -19,8 +20,25 @@ import (
 	"golang.org/x/crypto/bcrypt"
 )
 
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 func (r *mutationResolver) CreateUser(ctx context.Context, input model.NewUser) (*model.User, error) {
-	// check email pattern
+		// check email pattern
 	if err := helpers.CheckEmailPattern(input.Email); err != nil {
 		return nil, err
 	}
@@ -67,10 +85,10 @@ func (r *mutationResolver) CreateUser(ctx context.Context, input model.NewUser) 
 	}
 
 	return &responseMessage, nil
-}
+	}
 
 func (r *mutationResolver) UpdateUser(ctx context.Context, id int, set model.UpdateUser) (*model.User, error) {
-	dataLogin := ctx.Value("EchoContextKey") // auth jwt
+		dataLogin := ctx.Value("EchoContextKey") // auth jwt
 
 	if dataLogin == nil {
 		return nil, errors.New("unauthorized")
@@ -131,10 +149,10 @@ func (r *mutationResolver) UpdateUser(ctx context.Context, id int, set model.Upd
 	}
 
 	return &responseMessage, nil
-}
+	}
 
 func (r *mutationResolver) DeleteUser(ctx context.Context, id int) (*model.SuccessResponse, error) {
-	dataLogin := ctx.Value("EchoContextKey") // auth jwt
+		dataLogin := ctx.Value("EchoContextKey") // auth jwt
 
 	if dataLogin == nil {
 		return nil, errors.New("unauthorized")
@@ -177,10 +195,10 @@ func (r *mutationResolver) DeleteUser(ctx context.Context, id int) (*model.Succe
 	}
 
 	return &responseMessage, nil
-}
+	}
 
 func (r *mutationResolver) CreateEvent(ctx context.Context, input model.NewEvent) (*model.Event, error) {
-	dataLogin := ctx.Value("EchoContextKey")
+		dataLogin := ctx.Value("EchoContextKey")
 
 	if dataLogin == nil {
 		return nil, errors.New("unauthorized")
@@ -221,10 +239,10 @@ func (r *mutationResolver) CreateEvent(ctx context.Context, input model.NewEvent
 	}
 
 	return &responseMessage, nil
-}
+	}
 
 func (r *mutationResolver) UpdateEvent(ctx context.Context, id int, set model.UpdateEvent) (*model.Event, error) {
-	dataLogin := ctx.Value("EchoContextKey")
+		dataLogin := ctx.Value("EchoContextKey")
 
 	if dataLogin == nil {
 		fmt.Println(dataLogin)
@@ -273,15 +291,15 @@ func (r *mutationResolver) UpdateEvent(ctx context.Context, id int, set model.Up
 		event.Photo = *set.Photo
 	}
 
-	event.Datetime = strings.ReplaceAll(event.Datetime,"T"," ")
-	event.Datetime = strings.ReplaceAll(event.Datetime,"Z","")
-	fmt.Println("ini date time" ,event.Datetime)
+	event.Datetime = strings.ReplaceAll(event.Datetime, "T", " ")
+	event.Datetime = strings.ReplaceAll(event.Datetime, "Z", "")
+	fmt.Println("ini date time", event.Datetime)
 
 	event.Id = id
-	fmt.Println("ini isi event",event)
+	fmt.Println("ini isi event", event)
 	res, err := r.eventRepo.UpdateEvent(event)
-	fmt.Println("respon",res)
-	fmt.Println("error",err)
+	fmt.Println("respon", res)
+	fmt.Println("error", err)
 	if err != nil {
 		return nil, errors.New("failed update event")
 	}
@@ -298,10 +316,10 @@ func (r *mutationResolver) UpdateEvent(ctx context.Context, id int, set model.Up
 	}
 
 	return &responseMessage, nil
-}
+	}
 
 func (r *mutationResolver) DeleteEvent(ctx context.Context, id int) (*model.SuccessResponse, error) {
-	dataLogin := ctx.Value("EchoContextKey")
+		dataLogin := ctx.Value("EchoContextKey")
 
 	if dataLogin == nil {
 		fmt.Println(dataLogin)
@@ -339,10 +357,10 @@ func (r *mutationResolver) DeleteEvent(ctx context.Context, id int) (*model.Succ
 	}
 
 	return &responseMessage, nil
-}
+	}
 
 func (r *mutationResolver) CreateComment(ctx context.Context, eventID int, input string) (*model.Comment, error) {
-	dataLogin := ctx.Value("EchoContextKey")
+		dataLogin := ctx.Value("EchoContextKey")
 
 	if dataLogin == nil {
 		return nil, errors.New("unauthorized")
@@ -369,10 +387,10 @@ func (r *mutationResolver) CreateComment(ctx context.Context, eventID int, input
 	}
 
 	return &responseMessage, nil
-}
+	}
 
 func (r *mutationResolver) DeleteComment(ctx context.Context, commentID int) (*model.SuccessResponse, error) {
-	dataLogin := ctx.Value("EchoContextKey")
+		dataLogin := ctx.Value("EchoContextKey")
 
 	if dataLogin == nil {
 		return nil, errors.New("unauthorized")
@@ -391,10 +409,10 @@ func (r *mutationResolver) DeleteComment(ctx context.Context, commentID int) (*m
 	}
 
 	return &responseMessage, nil
-}
+	}
 
 func (r *mutationResolver) JoinEvent(ctx context.Context, eventID int) (*model.SuccessResponse, error) {
-	dataLogin := ctx.Value("EchoContextKey")
+		dataLogin := ctx.Value("EchoContextKey")
 
 	if dataLogin == nil {
 		return nil, errors.New("unauthorized")
@@ -407,20 +425,19 @@ func (r *mutationResolver) JoinEvent(ctx context.Context, eventID int) (*model.S
 	// kondisi tanggal sekarang di bandingkan dengan format rfc
 	event, err := r.eventRepo.GetEventByEventId(eventID)
 	if err != nil {
-		return nil,err
+		return nil, err
 	}
 
 	current_time := time.Now()
-	fmt.Println("ini current time",current_time)
-	eventdate,_ := time.Parse(time.RFC3339, event.Datetime)
-	fmt.Println("ini event date time",eventdate)
+	fmt.Println("ini current time", current_time)
+	eventdate, _ := time.Parse(time.RFC3339, event.Datetime)
+	fmt.Println("ini event date time", eventdate)
 	current_time.Before(eventdate)
 	fmt.Println(current_time.Before(eventdate))
 
 	if !current_time.Before(eventdate) {
 		return nil, errors.New(" Cant join, Event already past ")
 	}
-
 
 	if err := r.participantRepo.JoinEvent(eventID, convData.Id); err != nil {
 		return nil, err
@@ -431,10 +448,10 @@ func (r *mutationResolver) JoinEvent(ctx context.Context, eventID int) (*model.S
 		Message: "Succes join event",
 	}
 	return &responseMessage, nil
-}
+	}
 
 func (r *mutationResolver) UnjoinEvent(ctx context.Context, eventID int) (*model.SuccessResponse, error) {
-	dataLogin := ctx.Value("EchoContextKey")
+		dataLogin := ctx.Value("EchoContextKey")
 
 	if dataLogin == nil {
 		return nil, errors.New("unauthorized")
@@ -452,10 +469,10 @@ func (r *mutationResolver) UnjoinEvent(ctx context.Context, eventID int) (*model
 		Message: "Succes unjoin event",
 	}
 	return &responseMessage, nil
-}
+	}
 
 func (r *queryResolver) Users(ctx context.Context) ([]*model.User, error) {
-	responseData, err := r.userRepo.Get()
+		responseData, err := r.userRepo.Get()
 
 	if err != nil {
 		return nil, errors.New("user not found")
@@ -471,10 +488,10 @@ func (r *queryResolver) Users(ctx context.Context) ([]*model.User, error) {
 	}
 
 	return userResponseData, nil
-}
+	}
 
 func (r *queryResolver) UserByID(ctx context.Context, id int) (*model.User, error) {
-	responseData, err := r.userRepo.GetById(id)
+		responseData, err := r.userRepo.GetById(id)
 
 	if err != nil {
 		return nil, errors.New("not found")
@@ -492,10 +509,10 @@ func (r *queryResolver) UserByID(ctx context.Context, id int) (*model.User, erro
 	}
 
 	return &responseUserData, nil
-}
+	}
 
 func (r *queryResolver) AuthLogin(ctx context.Context, email string, password string) (*model.LoginResponse, error) {
-	user, err := r.authRepo.Login(email)
+		user, err := r.authRepo.Login(email)
 
 	if err != nil {
 		return nil, err
@@ -534,10 +551,10 @@ func (r *queryResolver) AuthLogin(ctx context.Context, email string, password st
 	}
 
 	return &response, nil
-}
+	}
 
 func (r *queryResolver) Events(ctx context.Context, page int) ([]*model.Event, error) {
-	responseData, err := r.eventRepo.GetAllEvent(page)
+		responseData, err := r.eventRepo.GetAllEvent(page)
 
 	if err != nil {
 		return nil, err
@@ -552,10 +569,10 @@ func (r *queryResolver) Events(ctx context.Context, page int) ([]*model.Event, e
 	}
 
 	return eventResponseData, nil
-}
+	}
 
 func (r *queryResolver) EventByHostID(ctx context.Context, userID int) ([]*model.Event, error) {
-	responseData, err := r.eventRepo.GetEventByHostId(userID)
+		responseData, err := r.eventRepo.GetEventByHostId(userID)
 
 	if err != nil {
 		return nil, errors.New("not found")
@@ -570,10 +587,35 @@ func (r *queryResolver) EventByHostID(ctx context.Context, userID int) ([]*model
 	}
 
 	return eventResponseData, nil
-}
+	}
 
-func (r *queryResolver) EventByLocation(ctx context.Context, location string, page int) ([]*model.Event, error) {
-	responseData, err := r.eventRepo.GetEventByLocation(location, page)
+func (r *queryResolver) EventByLocation(ctx context.Context, location string, page int) (*model.EventResponse, error) {
+	responseData, totalEvent, err := r.eventRepo.GetEventByLocation(location, page)
+	fmt.Println("ini tot",totalEvent)
+	if err != nil {
+		return nil, errors.New("not found")
+	}
+
+	eventResponseData := []*model.Event{}
+
+	for _, v := range responseData {
+		id := v.Id
+		eventResponseData = append(eventResponseData, &model.Event{ID: &id, Name: v.Name, Host: v.Host, Category: v.Category, Datetime: v.Datetime, Location: v.Location, Description: v.Description, Photo: v.Photo, Username: v.UserName})
+	}
+	limit := 5
+	
+	totalPage := int(math.Ceil(float64(totalEvent) / float64(limit)))
+
+	eventResponse := model.EventResponse{
+		Event: eventResponseData,
+		TotalPage: totalPage,
+	}
+
+	return &eventResponse, nil
+	}
+
+func (r *queryResolver) EventByKeyword(ctx context.Context, keyword string, page int) (*model.EventResponse, error) {
+		responseData, totalEvent, err := r.eventRepo.GetEventByKeyword(keyword, page)
 
 	if err != nil {
 		return nil, errors.New("not found")
@@ -587,11 +629,19 @@ func (r *queryResolver) EventByLocation(ctx context.Context, location string, pa
 		eventResponseData = append(eventResponseData, &model.Event{ID: &id, Name: v.Name, Host: v.Host, Category: v.Category, Datetime: v.Datetime, Location: v.Location, Description: v.Description, Photo: v.Photo, Username: v.UserName})
 	}
 
-	return eventResponseData, nil
-}
+	limit := 5
+	totalPage := int(math.Ceil(float64(totalEvent) / float64(limit)))
 
-func (r *queryResolver) EventByKeyword(ctx context.Context, keyword string, page int) ([]*model.Event, error) {
-	responseData, err := r.eventRepo.GetEventByKeyword(keyword, page)
+	eventResponse := model.EventResponse{
+		Event: eventResponseData,
+		TotalPage: totalPage,
+	}
+
+	return &eventResponse, nil
+	}
+
+func (r *queryResolver) EventByCategory(ctx context.Context, category string, page int) (*model.EventResponse, error) {
+		responseData, totalEvent, err := r.eventRepo.GetEventByCategory(category, page)
 
 	if err != nil {
 		return nil, errors.New("not found")
@@ -604,30 +654,20 @@ func (r *queryResolver) EventByKeyword(ctx context.Context, keyword string, page
 
 		eventResponseData = append(eventResponseData, &model.Event{ID: &id, Name: v.Name, Host: v.Host, Category: v.Category, Datetime: v.Datetime, Location: v.Location, Description: v.Description, Photo: v.Photo, Username: v.UserName})
 	}
+	
+	limit := 5
+	totalPage := int(math.Ceil(float64(totalEvent) / float64(limit)))
 
-	return eventResponseData, nil
-}
-
-func (r *queryResolver) EventByCategory(ctx context.Context, category string, page int) ([]*model.Event, error) {
-	responseData, err := r.eventRepo.GetEventByCategory(category, page)
-
-	if err != nil {
-		return nil, errors.New("not found")
+	eventResponse := model.EventResponse{
+		Event: eventResponseData,
+		TotalPage: totalPage,
 	}
 
-	eventResponseData := []*model.Event{}
-
-	for _, v := range responseData {
-		id := v.Id
-
-		eventResponseData = append(eventResponseData, &model.Event{ID: &id, Name: v.Name, Host: v.Host, Category: v.Category, Datetime: v.Datetime, Location: v.Location, Description: v.Description, Photo: v.Photo, Username: v.UserName})
+	return &eventResponse, nil
 	}
-
-	return eventResponseData, nil
-}
 
 func (r *queryResolver) EventByParticipantID(ctx context.Context, userID int) ([]*model.Event, error) {
-	responseData, err := r.participantRepo.GetEventsByParticipantId(userID)
+		responseData, err := r.participantRepo.GetEventsByParticipantId(userID)
 
 	if err != nil {
 		return nil, errors.New("not found")
@@ -642,10 +682,10 @@ func (r *queryResolver) EventByParticipantID(ctx context.Context, userID int) ([
 	}
 
 	return eventResponseData, nil
-}
+	}
 
 func (r *queryResolver) EventByID(ctx context.Context, id int) (*model.Event, error) {
-	responseData, _ := r.eventRepo.GetEventByEventId(id)
+		responseData, _ := r.eventRepo.GetEventByEventId(id)
 
 	if responseData == (entities.Event{}) {
 		return nil, errors.New("not found")
@@ -666,10 +706,10 @@ func (r *queryResolver) EventByID(ctx context.Context, id int) (*model.Event, er
 	}
 
 	return &responseEventData, nil
-}
+	}
 
 func (r *queryResolver) Participants(ctx context.Context, eventID int) ([]*model.Participant, error) {
-	responseData, err := r.participantRepo.GetParticipantsByEventId(eventID)
+		responseData, err := r.participantRepo.GetParticipantsByEventId(eventID)
 
 	if err != nil {
 		return nil, errors.New("not found")
@@ -682,10 +722,10 @@ func (r *queryResolver) Participants(ctx context.Context, eventID int) ([]*model
 	}
 
 	return participantResponseData, nil
-}
+	}
 
 func (r *queryResolver) Comments(ctx context.Context, eventID int) ([]*model.Comment, error) {
-	responseData, err := r.commentRepo.GetCommentsByEventId(eventID)
+		responseData, err := r.commentRepo.GetCommentsByEventId(eventID)
 
 	if err != nil {
 		return nil, errors.New("not found")
@@ -700,13 +740,18 @@ func (r *queryResolver) Comments(ctx context.Context, eventID int) ([]*model.Com
 	}
 
 	return commentResponseData, nil
-}
+	}
+
+
 
 // Mutation returns generated.MutationResolver implementation.
-func (r *Resolver) Mutation() generated.MutationResolver { return &mutationResolver{r} }
-
+	func (r *Resolver) Mutation() generated.MutationResolver { return &mutationResolver{r} }
 // Query returns generated.QueryResolver implementation.
-func (r *Resolver) Query() generated.QueryResolver { return &queryResolver{r} }
+	func (r *Resolver) Query() generated.QueryResolver { return &queryResolver{r} }
 
-type mutationResolver struct{ *Resolver }
-type queryResolver struct{ *Resolver }
+
+type mutationResolver struct { *Resolver }
+type queryResolver struct { *Resolver }
+
+
+
