@@ -111,8 +111,8 @@ func (r *ParticipantRepository) UnjoinEvent(eventId int, userId int) error {
 // ini seharusnya muncul di event repository, tetapi daripada conflict ya sudah ditaruh di participant repository
 func (r *ParticipantRepository) GetEventsByParticipantId(userId int) ([]entities.Event, error) {
 	stmt, err := r.db.Prepare(`select e.id, e.name, e.host, u.name, e.description, e.datetime, e.location, e.category, e.photo
-								from events e left join users u on e.hostid = u.id
-								where e.deleted_at is NULL and e.hostid = ?`)
+								from events e left join users u on e.hostid = u.id join participants p on e.id = p.eventid
+								where e.deleted_at is NULL and p.paricipantid = ?`)
 
 	if err != nil {
 		log.Println(err)
