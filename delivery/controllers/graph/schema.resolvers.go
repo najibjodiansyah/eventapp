@@ -554,7 +554,7 @@ func (r *queryResolver) AuthLogin(ctx context.Context, email string, password st
 	}
 
 func (r *queryResolver) Events(ctx context.Context, page int) ([]*model.Event, error) {
-		responseData, err := r.eventRepo.GetAllEvent(page)
+	responseData, err := r.eventRepo.GetAllEvent(page)
 
 	if err != nil {
 		return nil, err
@@ -591,7 +591,7 @@ func (r *queryResolver) EventByHostID(ctx context.Context, userID int) ([]*model
 
 func (r *queryResolver) EventByLocation(ctx context.Context, location string, page int) (*model.EventResponse, error) {
 	responseData, totalEvent, err := r.eventRepo.GetEventByLocation(location, page)
-	fmt.Println("ini tot",totalEvent)
+
 	if err != nil {
 		return nil, errors.New("not found")
 	}
@@ -615,7 +615,7 @@ func (r *queryResolver) EventByLocation(ctx context.Context, location string, pa
 	}
 
 func (r *queryResolver) EventByKeyword(ctx context.Context, keyword string, page int) (*model.EventResponse, error) {
-		responseData, totalEvent, err := r.eventRepo.GetEventByKeyword(keyword, page)
+	responseData, totalEvent, err := r.eventRepo.GetEventByKeyword(keyword, page)
 
 	if err != nil {
 		return nil, errors.New("not found")
@@ -625,7 +625,6 @@ func (r *queryResolver) EventByKeyword(ctx context.Context, keyword string, page
 
 	for _, v := range responseData {
 		id := v.Id
-
 		eventResponseData = append(eventResponseData, &model.Event{ID: &id, Name: v.Name, Host: v.Host, Category: v.Category, Datetime: v.Datetime, Location: v.Location, Description: v.Description, Photo: v.Photo, Username: v.UserName})
 	}
 
