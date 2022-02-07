@@ -29,7 +29,6 @@ Membuat API menggunakan bahasa Go dengan menerapkan layered architecture untuk m
 - Join/Going Event
 - Post and Read Comment
 
-
 ## Queries and Mutations
 
 ### User
@@ -78,7 +77,7 @@ mutation {
         "createUser": {
             "id": 1
             "name": "Bagus Brahmantya"
-        } 
+        }
     }
 }
 ```
@@ -313,15 +312,18 @@ query {
     events (
         page: Int!
     ) {
-        id: Int
-	    name: String!
-	    username: String!
-	    host: String!
-	    description: String!
-	    datetime: String!
-	    location: String!
-	    category: String!
-	    photo: String!
+        totalPage
+        event{
+            id: Int
+            name: String!
+            username: String!
+            host: String!
+            description: String!
+            datetime: String!
+            location: String!
+            category: String!
+            photo: String!
+        }
     }
 }
 ```
@@ -329,19 +331,25 @@ query {
 ```jsx
 // example request body
 query {
-    events (
-        page: 1
-    ) {
-        id
-	    name
-        host
-        category
+    events(page:1)
+    {
+    totalPage
+    event{  name
+            username
+            host
+            description
+            datetime
+            location
+            category
+            photo
+        }
     }
 }
 
 // example success response
 {
     "data": {
+        "totalPage": 3
         "events": [
             {
                 "id": 1
@@ -430,15 +438,17 @@ query {
         location: String!
         page: Int!
     ) {
-        id: Int
-	    name: String!
-	    username: String!
-	    host: String!
-	    description: String!
-	    datetime: String!
-	    location: String!
-	    category: String!
-	    photo: String!
+        totalPage
+        event{
+            id: Int
+            name: String!
+            username: String!
+            host: String!
+            description: String!
+            datetime: String!
+            location: String!
+            category: String!
+            photo: String!
     }
 }
 ```
@@ -450,15 +460,22 @@ query {
         location: "Malang"
         page: 1
     ) {
-        id
-	    name
-        location
+    totalPage
+    event{  name
+            username
+            host
+            description
+            datetime
+            location
+            category
+            photo
     }
 }
 
 // example success response
 {
     "data": {
+        "totalPage": 3
         "eventByLocation": [
             {
                 "id": 1
@@ -483,15 +500,17 @@ query {
         keyword: String!
         page: Int!
     ) {
-        id: Int
-	    name: String!
-	    username: String!
-	    host: String!
-	    description: String!
-	    datetime: String!
-	    location: String!
-	    category: String!
-	    photo: String!
+        totalPage
+        event{
+            id: Int
+            name: String!
+            username: String!
+            host: String!
+            description: String!
+            datetime: String!
+            location: String!
+            category: String!
+            photo: String!
     }
 }
 ```
@@ -503,14 +522,23 @@ query {
         keyword: "beginner"
         page: 1
     ) {
-        id
-	    name
+    totalPage
+    event{  name
+            username
+            host
+            description
+            datetime
+            location
+            category
+            photo
+    }
     }
 }
 
 // example success response
 {
     "data": {
+        "totalPage": 1
         "eventByKeyword": [
             {
                 "id": 2
@@ -529,15 +557,17 @@ query {
         category: String!
         page: Int!
     ) {
-        id: Int
-	    name: String!
-	    username: String!
-	    host: String!
-	    description: String!
-	    datetime: String!
-	    location: String!
-	    category: String!
-	    photo: String!
+        totalPage
+        event{
+            id: Int
+            name: String!
+            username: String!
+            host: String!
+            description: String!
+            datetime: String!
+            location: String!
+            category: String!
+            photo: String!
     }
 }
 ```
@@ -549,14 +579,22 @@ query {
         category: "Education"
         page: 1
     ) {
-	    name
-        category
+	totalPage
+    event{  name
+            username
+            host
+            description
+            datetime
+            location
+            category
+            photo
     }
 }
 
 // example success response
 {
     "data": {
+        "totalPage": 1
         "eventByCategory": [
             {
                 "name": "Git 101"
