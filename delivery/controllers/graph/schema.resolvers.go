@@ -13,6 +13,7 @@ import (
 	"eventapp/utils/graph/generated"
 	"fmt"
 	"net/http"
+	"strings"
 
 	"golang.org/x/crypto/bcrypt"
 )
@@ -270,10 +271,15 @@ func (r *mutationResolver) UpdateEvent(ctx context.Context, id int, set model.Up
 		event.Photo = *set.Photo
 	}
 
+	event.Datetime = strings.ReplaceAll(event.Datetime,"T"," ")
+	event.Datetime = strings.ReplaceAll(event.Datetime,"Z","")
+	fmt.Println("ini date time" ,event.Datetime)
+
 	event.Id = id
-
+	fmt.Println("ini isi event",event)
 	res, err := r.eventRepo.UpdateEvent(event)
-
+	fmt.Println("respon",res)
+	fmt.Println("error",err)
 	if err != nil {
 		return nil, errors.New("failed update event")
 	}

@@ -278,19 +278,19 @@ func (r *EventRepositeory) UpdateEvent(event entities.Event) (entities.Event, er
 		log.Println(err)
 		return entities.Event{}, err
 	}
-
-	result, error := stmt.Exec(event.Name, event.Category, event.Host, event.Location, event.Description, event.Datetime, event.Photo, event.Id)
+	fmt.Println("di repo dari schema",event)
+	_, error := stmt.Exec(event.Name, event.Category, event.Host, event.Location, event.Description, event.Datetime, event.Photo, event.Id)
 
 	if error != nil {
-		log.Println(err)
-		return entities.Event{}, err
+		log.Println(error)
+		return entities.Event{}, error
 	}
+	fmt.Println("setelah exec",event)
+	// rowsAffected, _ := result.RowsAffected()
 
-	rowsAffected, _ := result.RowsAffected()
-
-	if rowsAffected == 0 {
-		return entities.Event{}, fmt.Errorf("update event failed")
-	}
+	// if rowsAffected == 0 {
+	// 	return entities.Event{}, fmt.Errorf("update event failed")
+	// }
 	return event, nil
 }
 
