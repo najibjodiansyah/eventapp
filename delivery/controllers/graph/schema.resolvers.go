@@ -87,6 +87,7 @@ func (r *mutationResolver) UpdateUser(ctx context.Context, id int, set model.Upd
 	if err != nil {
 		return nil, err
 	}
+
 	if set.Name != nil {
 		user.Name = *set.Name
 	}
@@ -452,7 +453,7 @@ func (r *queryResolver) Users(ctx context.Context) ([]*model.User, error) {
 	return userResponseData, nil
 }
 
-func (r *queryResolver) UsersByID(ctx context.Context, id int) (*model.User, error) {
+func (r *queryResolver) UserByID(ctx context.Context, id int) (*model.User, error) {
 	responseData, err := r.userRepo.GetById(id)
 
 	if err != nil {
@@ -621,6 +622,30 @@ func (r *queryResolver) EventByParticipantID(ctx context.Context, userID int) ([
 	}
 
 	return eventResponseData, nil
+}
+
+func (r *queryResolver) EventByID(ctx context.Context, id int) (*model.Event, error) {
+	responseData, _ := r.eventRepo.GetEventByEventId(id)
+
+	if responseData == (entities.Event{}) {
+		return nil, errors.New("not found")
+	}
+
+	eventid := responseData.Id
+
+	responseEventData := model.Event{
+		ID:          &eventid,
+		Name:        responseData.Name,
+		Username:    responseData.UserName,
+		Host:        responseData.Host,
+		Description: responseData.Description,
+		Datetime:    responseData.Datetime,
+		Location:    responseData.Location,
+		Category:    responseData.Category,
+		Photo:       responseData.Photo,
+	}
+
+	return &responseEventData, nil
 }
 
 func (r *queryResolver) Participants(ctx context.Context, eventID int) ([]*model.Participant, error) {

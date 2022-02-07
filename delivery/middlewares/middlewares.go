@@ -8,6 +8,7 @@ import (
 	"github.com/labstack/echo/v4"
 	"github.com/labstack/echo/v4/middleware"
 )
+
 type User struct {
 	Id   int
 	Role string
@@ -18,10 +19,6 @@ func JWTMiddleware() echo.MiddlewareFunc {
 		SigningMethod: "HS256",
 		SigningKey:    []byte("R4HASIA"),
 		Skipper: func(c echo.Context) bool {
-			// if c.Request().Header.Get("Authorization") == "" {
-			// 	return true
-			// }
-			// return false
 			return c.Request().Header.Get("Authorization") == ""
 		}, SuccessHandler: func(c echo.Context) {
 			c.Set("INFO", &User{ExtractToken(c), "admin"})
@@ -34,13 +31,9 @@ func ExtractToken(e echo.Context) int {
 	token := e.Get("user").(*jwt.Token)
 	if token != nil && token.Valid {
 		claims := token.Claims.(jwt.MapClaims)
-		id := claims["id"]
-		switch id.(type) {
-		case float64:
-			return int(id.(float64))
-		default:
-			return id.(int)
-		}
+		id := int(claims["id"].(float64))
+
+		return id
 	}
 	return -1 //invalid
 }
