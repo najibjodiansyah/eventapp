@@ -672,6 +672,273 @@ query {
 }
 ```
 
+- **How registered user create an event**
+
+```graphql
+mutation {
+    createEvent (
+        input: {
+            name: String!
+	        userid: Int
+	        host: String!
+	        description: String!
+	        datetime: String!
+	        location: String!
+	        category: String!
+	        photo: String!
+        }
+    ) {
+        id: Int
+	    name: String!
+	    username: String!
+	    host: String!
+	    description: String!
+	    datetime: String!
+	    location: String!
+	    category: String!
+	    photo: String!
+    }
+}
+```
+
+```jsx
+// example request body
+mutation {
+    createEvent (
+        input: {
+            name: "Arabica Coffee Speciality"
+	        host: "Starbucks"
+	        description: "Apa dan bagaimana"
+	        datetime: "2022-02-04 15:00:00"
+	        location: "IKN"
+	        category: "Hobby"
+	        photo: "http://imgur.com/t70asvafhde"
+        }
+    ) {
+	    id
+	    name
+	    username
+	    host
+    }
+}
+
+// example success response
+{
+    "data": {
+        "createEvent": {
+            "id": 18
+            "name": "Arabica Coffee Speciality"
+            "username": "Najib Jodiansyah"
+            "host": "Starbucks"
+        }
+    }
+}
+```
+
+- **How registered user update an event he/she hosts**
+
+```graphql
+mutation {
+    updateEvent (
+        id: Int!
+        input: {
+            name: String
+	        host: String
+	        description: String
+	        datetime: String
+	        location: String
+	        category: String
+	        photo: String
+        }
+    ) {
+        id: Int
+	    name: String!
+	    username: String!
+	    host: String!
+	    description: String!
+	    datetime: String!
+	    location: String!
+	    category: String!
+	    photo: String!
+    }
+}
+```
+
+```jsx
+// example request body
+mutation {
+    updateEvent (
+        id: 18
+        input: {
+            name: "Arabica Coffee Speciality for Beginner"
+        }
+    ) {
+	    name
+    }
+}
+
+// example success response
+{
+    "data": {
+        "updateEvent": {
+            "name": "Arabica Coffee Speciality for Beginner"
+        }
+    }
+}
+```
+
+- **How registered user delete an event he/she hosts**
+
+```graphql
+mutation {
+    deleteEvent (
+        id: Int!
+    ) {
+        code: Int!
+        message: String!
+    }
+}
+```
+
+```jsx
+// example request body
+mutation {
+    deleteEvent (
+        id: 18
+    ) {
+	    code
+        message
+    }
+}
+
+// example success response
+{
+    "data": {
+        "deleteEvent": {
+            "code": 200
+            "message": "success delete event"
+        }
+    }
+}
+```
+
+### Participants
+
+- **How anyone get list of all participants in a particular event (pagination mode: off)**
+
+```graphql
+query {
+    participants (
+        eventId: Int!
+    ) {
+	    name: String!
+	    avatar: String!
+    }
+}
+```
+
+```jsx
+// example request body
+query {
+    participants (
+        eventId: 1
+    ) {
+	    name
+        avatar
+    }
+}
+
+// example success response
+{
+    "data": {
+        "participants": [
+            {
+                "name": "Bagus Brahmantya"
+                "avatar": "http://imgur.com/bistayo"
+            },
+            {
+                "name": "Najib Jodiansyah"
+                "avatar": "http://imgur.com/squarepants"
+            },
+            {
+                "name": "Yahya Zakariya"
+                "avatar": "http://imgur.com/tuankrab"
+            }
+        ]
+    }
+}
+```
+
+- **How registered user join an event**
+
+```graphql
+mutation {
+    joinEvent (
+        eventid: Int!
+    ) {
+        code: Int!
+        message: String!
+    }
+}
+```
+
+```jsx
+// example request body
+mutation {
+    joinEvent (
+        eventid: 1
+    ) {
+	    code
+        message
+    }
+}
+
+// example success response
+{
+    "data": {
+        "joinEvent": {
+            "code": 200
+            "message": "success join event"
+        }
+    }
+}
+```
+
+- **How registered user unjoin an event he/she previosly joined**
+
+```graphql
+mutation {
+    unjoinEvent (
+        eventid: Int!
+    ) {
+        code: Int!
+        message: String!
+    }
+}
+```
+
+```jsx
+// example request body
+mutation {
+    unjoinEvent (
+        eventid: 1
+    ) {
+	    code
+        message
+    }
+}
+
+// example success response
+{
+    "data": {
+        "joinEvent": {
+            "code": 200
+            "message": "success unjoin event"
+        }
+    }
+}
+```
+
 ## Authors
 
 - [@bagusbpg](https://www.github.com/bagusbpg)
