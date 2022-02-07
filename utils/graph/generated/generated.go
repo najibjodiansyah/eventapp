@@ -141,7 +141,7 @@ type QueryResolver interface {
 	Users(ctx context.Context) ([]*model.User, error)
 	UserByID(ctx context.Context, id int) (*model.User, error)
 	AuthLogin(ctx context.Context, email string, password string) (*model.LoginResponse, error)
-	Events(ctx context.Context, page int) ([]*model.Event, error)
+	Events(ctx context.Context, page int) (*model.EventResponse, error)
 	EventByHostID(ctx context.Context, userID int) ([]*model.Event, error)
 	EventByLocation(ctx context.Context, location string, page int) (*model.EventResponse, error)
 	EventByKeyword(ctx context.Context, keyword string, page int) (*model.EventResponse, error)
@@ -813,7 +813,7 @@ type Query {
 	userById(id: Int!): User
 	authLogin(email: String!, password: String!): LoginResponse!
 
-	events(page: Int!): [Event!]
+	events(page: Int!): eventResponse!
 	eventByHostId(userId: Int!): [Event!]
 	eventByLocation(location: String!, page: Int!): eventResponse!
 	eventByKeyword(keyword: String!, page: Int!): eventResponse!
@@ -846,6 +846,7 @@ type Mutation {
 # membuat interface repo (bikin satu function)
 # membuat repo sintaks sql (bikin satu function)
 # kondisikan di schema resolver yang make pagination
+# perbaiki readme buat semua yang pake page ganti responnya
 `, BuiltIn: false},
 }
 var parsedSchema = gqlparser.MustLoadSchema(sources...)
@@ -2614,11 +2615,14 @@ func (ec *executionContext) _Query_events(ctx context.Context, field graphql.Col
 		return graphql.Null
 	}
 	if resTmp == nil {
+		if !graphql.HasFieldError(ctx, fc) {
+			ec.Errorf(ctx, "must not be null")
+		}
 		return graphql.Null
 	}
-	res := resTmp.([]*model.Event)
+	res := resTmp.(*model.EventResponse)
 	fc.Result = res
-	return ec.marshalOEvent2ᚕᚖeventappᚋentitiesᚋgraphᚋmodelᚐEventᚄ(ctx, field.Selections, res)
+	return ec.marshalNeventResponse2ᚖeventappᚋentitiesᚋgraphᚋmodelᚐEventResponse(ctx, field.Selections, res)
 }
 
 func (ec *executionContext) _Query_eventByHostId(ctx context.Context, field graphql.CollectedField) (ret graphql.Marshaler) {
@@ -5261,6 +5265,9 @@ func (ec *executionContext) _Query(ctx context.Context, sel ast.SelectionSet) gr
 					}
 				}()
 				res = ec._Query_events(ctx, field)
+				if res == graphql.Null {
+					atomic.AddUint32(&invalids, 1)
+				}
 				return res
 			}
 

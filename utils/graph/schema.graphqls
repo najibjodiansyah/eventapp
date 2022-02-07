@@ -97,7 +97,7 @@ type Query {
 	userById(id: Int!): User
 	authLogin(email: String!, password: String!): LoginResponse!
 
-	events(page: Int!): [Event!]
+	events(page: Int!): eventResponse!
 	eventByHostId(userId: Int!): [Event!]
 	eventByLocation(location: String!, page: Int!): eventResponse!
 	eventByKeyword(keyword: String!, page: Int!): eventResponse!

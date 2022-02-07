@@ -4,7 +4,7 @@ import "eventapp/entities"
 
 type Event interface {
 	GetEventByEventId(eventid int) (entities.Event, error)
-	GetAllEvent(page int) ([]entities.Event, error)
+	GetAllEvent(page int) ([]entities.Event,int, error)
 	GetEventByLocation(location string, page int) ([]entities.Event, int, error)
 	GetEventByKeyword(keyword string, page int) ([]entities.Event, int, error)
 	GetEventByCategory(category string, page int) ([]entities.Event, int, error)
