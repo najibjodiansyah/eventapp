@@ -260,7 +260,7 @@ func (r *EventRepositeory) GetEventByKeyword(keyword string, page int) ([]entiti
 // sudah dicek, return ditambah user name
 func (r *EventRepositeory) GetEventByCategory(category string, page int) ([]entities.Event, int, error) {
 	var totalEvent int
-	stmt, err := r.db.Prepare(`select count(e.id), e.id, e.name, e.category, u.name, e.host, e.description, e.datetime, e.location, e.photo 
+	stmt, err := r.db.Prepare(`select e.id, e.name, e.category, u.name, e.host, e.description, e.datetime, e.location, e.photo 
 								from events e join users u on e.hostid = u.id
 								where e.deleted_at is null and e.category = ? limit ? offset ?`)
 
@@ -286,7 +286,7 @@ func (r *EventRepositeory) GetEventByCategory(category string, page int) ([]enti
 	for res.Next() {
 		var event entities.Event
 
-		err := res.Scan(&totalEvent, &event.Id, &event.Name, &event.Category, &event.UserName, &event.Host, &event.Description, &event.Datetime, &event.Location, &event.Photo)
+		err := res.Scan(&event.Id, &event.Name, &event.Category, &event.UserName, &event.Host, &event.Description, &event.Datetime, &event.Location, &event.Photo)
 
 		if err != nil {
 			log.Println(err)
@@ -296,7 +296,36 @@ func (r *EventRepositeory) GetEventByCategory(category string, page int) ([]enti
 		events = append(events, event)
 	}
 
-	return events, totalEvent, nil
+	stmt2, err := r.db.Prepare(`select count(e.id)
+								from events e 
+								where e.deleted_at is null and e.category = ? 
+								`)
+
+	if err != nil {
+		log.Println(err)
+		return nil, totalEvent, err
+	}
+
+	res2, err := stmt2.Query(category)
+
+	if err != nil {
+		log.Println(err)
+		return nil, totalEvent, err
+	}
+
+	defer res2.Close()
+
+	for res2.Next() {
+
+		err := res2.Scan(&totalEvent)
+
+		if err != nil {
+			log.Println(err)
+			return nil, totalEvent, err
+		}
+
+	}
+	return events, totalEvent, nil 
 }
 
 // sudah dicek
