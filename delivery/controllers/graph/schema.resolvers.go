@@ -14,6 +14,7 @@ import (
 	"fmt"
 	"net/http"
 	"strings"
+	"time"
 
 	"golang.org/x/crypto/bcrypt"
 )
@@ -401,6 +402,25 @@ func (r *mutationResolver) JoinEvent(ctx context.Context, eventID int) (*model.S
 
 	convData := ctx.Value("EchoContextKey").(*middlewares.User)
 	fmt.Println("id user ", convData.Id)
+
+	// get event buat dapet tanggal
+	// kondisi tanggal sekarang di bandingkan dengan format rfc
+	event, err := r.eventRepo.GetEventByEventId(eventID)
+	if err != nil {
+		return nil,err
+	}
+
+	current_time := time.Now()
+	fmt.Println("ini current time",current_time)
+	eventdate,_ := time.Parse(time.RFC3339, event.Datetime)
+	fmt.Println("ini event date time",eventdate)
+	current_time.Before(eventdate)
+	fmt.Println(current_time.Before(eventdate))
+
+	if !current_time.Before(eventdate) {
+		return nil, errors.New(" Cant join, Event already past ")
+	}
+
 
 	if err := r.participantRepo.JoinEvent(eventID, convData.Id); err != nil {
 		return nil, err
