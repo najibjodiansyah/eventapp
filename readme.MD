@@ -75,8 +75,10 @@ mutation {
 // example success response
 {
     "data": {
-        "id": 1
-        "name": "Bagus Brahmantya"
+        "createUser": {
+            "id": 1
+            "name": "Bagus Brahmantya"
+        } 
     }
 }
 ```
@@ -114,9 +116,11 @@ query {
 // example success response
 {
     "data": {
-        "id": 1
-        "name": "Bagus Brahmantya"
-        "token": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJhdXRob3JpemVkIjp0cnVlLCJleHAiOjE2NDI1ODE0OTAsImlkIjoxLCJuYW1lIjoiIn0.NW5sOrXy_h9R1LovaarufA-anCJ14QAIwrzYLirkQdQ"
+        "authLogin": {
+            "id": 1
+            "name": "Bagus Brahmantya"
+            "token": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJhdXRob3JpemVkIjp0cnVlLCJleHAiOjE2NDI1ODE0OTAsImlkIjoxLCJuYW1lIjoiIn0.NW5sOrXy_h9R1LovaarufA-anCJ14QAIwrzYLirkQdQ"
+        }
     }
 }
 ```
@@ -139,7 +143,7 @@ query {
 ```jsx
 // example request body
 query {
-    userById {
+    users {
         id
 	    name
     }
@@ -148,7 +152,7 @@ query {
 // example success response
 {
     "data": {
-        [
+        "users": [
             {
                 "id": 1
                 "name": "Bagus Brahmantya"
@@ -166,7 +170,7 @@ query {
 }
 ```
 
-- **How anyone get list of all users**
+- **How anyone get user by id**
 
 ```graphql
 query {
@@ -189,28 +193,113 @@ query {
     user (
         id: 1
     ) {
-        id
 	    name
+        email
     }
 }
 
 // example success response
 {
     "data": {
-        [
-            {
-                "id": 1
-                "name": "Bagus Brahmantya"
-            },
-            {
-                "id": 2
-                "name": "Najib Jodiansyah"
-            },
-            {
-                "id": 3
-                "name": "Yahya Zakariya"
-            }
-        ]
+        "userById": {
+            "name": "Bagus Brahmantya"
+            "email": "bagusbpg@gmail.com"
+        }
+    }
+}
+```
+
+- **How registered user update his/her own profile**
+
+```graphql
+mutation {
+    updateUser (
+        id: Int!
+        set: {
+            name: String
+	        email: String
+	        password: String
+	        phoneNumber: String
+	        avatar: String
+        }
+    ) {
+        id: Int
+	    name: String!
+	    email: String!
+	    password: String!
+        phoneNumber: String
+        avatar: String
+    }
+}
+```
+
+```jsx
+// example request body
+mutation {
+    updateUser (
+        id: 1
+        set: {
+	        email: "bagusbrahmantya@gmail.com"
+	        password: "yametkudasi"
+            phoneNumber: "+6281234567890"
+            avatar: "http://imgur.com/afywt07sav"
+        }
+    ) {
+	    id
+	    name
+	    email
+	    password
+        phoneNumber
+        avatar
+    }
+}
+
+// example success response
+{
+    "data": {
+        "updateUser": {
+            "id": 1
+            "name": "Bagus Brahmantya"
+            "email": "bagusbrahmantya@gmail.com"
+            "password":
+            "phoneNumber": "+6281234567890"
+            "avatar": "http://imgur.com/afywt07sav"
+        }
+    }
+}
+```
+
+- **How registered user delete his/her own account**
+
+```graphql
+mutation {
+    deleteUser (
+        id: Int!
+    ) {
+        code: Int!
+	    message: String!
+    }
+}
+```
+
+```jsx
+// example request body
+mutation {
+    deleteUser (
+        id: 1
+    ) {
+	    code
+        message
+    }
+}
+
+// example success response
+{
+    "data": {
+        "deleteUser": {
+            "code": 200
+            "message": "success delete user"
+        }
     }
 }
 ```
