@@ -939,6 +939,141 @@ mutation {
 }
 ```
 
+### Comments
+
+- **How anyone get list of all comments in a particular event (pagination mode: off)**
+
+```graphql
+query {
+    comments (
+        eventId: Int!
+    ) {
+        id: Int
+	    userId: Int!
+	    name: String!
+	    avatar: String!
+	    content: String!
+	    createdAt: String!
+    }
+}
+```
+
+```jsx
+// example request body
+query {
+    comments (
+        eventId: 1
+    ) {
+	    name
+        content
+    }
+}
+
+// example success response
+{
+    "data": {
+        "comments": [
+            {
+                "name": "Bagus Brahmantya"
+                "content": "Dikasih snack ga boss?"
+            },
+            {
+                "name": "Najib Jodiansyah"
+                "content": "Pembicaranya ganti aja dong."
+            },
+            {
+                "name": "Yahya Zakariya"
+                "avatar": "Ini bukannya pas tanggal merah ya? Panitianya ngaco nih."
+            }
+        ]
+    }
+}
+```
+
+- **How registered user make a comment on an event**
+
+```graphql
+mutation {
+    createComment (
+        eventid: Int!
+        input: String!
+    ) {
+        id: Int
+	    userId: Int!
+	    name: String!
+	    avatar: String!
+	    content: String!
+	    createdAt: String!
+    }
+}
+```
+
+```jsx
+// example request body
+mutation {
+    createComment (
+        eventid: 1
+        input: "Ini wajib on camera ya pas webinarnya? kameraku rusak bos"
+    ) {
+	    id
+	    userId
+	    name
+	    avatar
+	    content
+	    createdAt
+    }
+}
+
+// example success response
+{
+    "data": {
+        "createComment": {
+            "id": 1
+	        "userId": 1
+	        "name": "Bagus Brahmantya"
+	        "avatar": "http://imgur.com/afywt07sav"
+	        "content": "Ini wajib on camera ya pas webinarnya? kameraku rusak bos"
+	        "createdAt": "2022-02-04 06:35:40"
+        }
+    }
+}
+```
+
+- **How registered user delete a comment he/she made in an event**
+
+```graphql
+mutation {
+    deleteComment (
+        commentid: Int!
+    ) {
+        code: Int!
+        message: String!
+    }
+}
+```
+
+```jsx
+// example request body
+mutation {
+    deleteComment (
+        commentid: 1
+    ) {
+	    code
+        message
+    }
+}
+
+// example success response
+{
+    "data": {
+        "deleteComment": {
+            "code": 200
+            "message": "success delete comment"
+        }
+    }
+}
+```
+
 ## Authors
 
 - [@bagusbpg](https://www.github.com/bagusbpg)
