@@ -16,14 +16,15 @@ func New(db *sql.DB) *EventRepositeory {
 }
 
 // sudah dicek
-func (r *EventRepositeory) GetAllEvent(page int) ([]entities.Event, error) {
+func (r *EventRepositeory) GetAllEvent(page int) ([]entities.Event, int, error) {
+	var totalEvent int
 	stmt, err := r.db.Prepare(`select e.id, e.name, e.category, u.name, e.host, e.description, e.datetime, e.location, e.photo 
 								from events e join users u on e.hostid = u.id 
 								where e.deleted_at IS NULL limit ? offset ?`)
 
 	if err != nil {
 		log.Println(err)
-		return nil, err
+		return nil,totalEvent, err
 	}
 
 	limit := 5
@@ -33,7 +34,7 @@ func (r *EventRepositeory) GetAllEvent(page int) ([]entities.Event, error) {
 
 	if err != nil {
 		log.Println(err)
-		return nil, err
+		return nil,totalEvent, err
 	}
 
 	defer res.Close()
@@ -47,24 +48,56 @@ func (r *EventRepositeory) GetAllEvent(page int) ([]entities.Event, error) {
 
 		if err != nil {
 			log.Println(err)
-			return nil, err
+			return nil,totalEvent, err
 		}
 
 		events = append(events, event)
 	}
 
-	return events, nil
-}
-
-// sudah dicek
-func (r *EventRepositeory) GetEventByLocation(location string, page int) ([]entities.Event, error) {
-	stmt, err := r.db.Prepare(`select e.id, e.name, e.category, u.name, e.host, e.description, e.datetime, e.location, e.photo 
-								from events e join users u on e.hostid = u.id
-								where e.location = ? and e.deleted_at IS NULL limit ? offset ?`)
+	stmt2, err := r.db.Prepare(`select count(e.id)
+								from events e 
+								where e.deleted_at is null
+								`)
 
 	if err != nil {
 		log.Println(err)
-		return nil, err
+		return nil, totalEvent, err
+	}
+
+	res2, err := stmt2.Query()
+
+	if err != nil {
+		log.Println(err)
+		return nil, totalEvent, err
+	}
+
+	defer res2.Close()
+
+	for res2.Next() {
+
+		err := res2.Scan(&totalEvent)
+
+		if err != nil {
+			log.Println(err)
+			return nil, totalEvent, err
+		}
+
+	}
+
+	return events,totalEvent, nil
+}
+
+// sudah dicek
+func (r *EventRepositeory) GetEventByLocation(location string, page int) ([]entities.Event, int, error) {
+	var totalEvent int
+	stmt, err := r.db.Prepare(`select e.id, e.name, e.category, u.name, e.host, e.description, e.datetime, e.location, e.photo 
+								from events e join users u on e.hostid = u.id
+								where e.location = ? and e.deleted_at IS NULL 
+								limit ? offset ?`)
+
+	if err != nil {
+		log.Println(err)
+		return nil, totalEvent, err
 	}
 
 	limit := 5
@@ -74,10 +107,26 @@ func (r *EventRepositeory) GetEventByLocation(location string, page int) ([]enti
 
 	if errr != nil {
 		log.Println(err)
-		return nil, err
+		return nil, totalEvent, err
 	}
 
+	stmt2, err := r.db.Prepare("select count(id) from events where location = ? and deleted_at IS NULL")
+	if err != nil {
+		log.Println(err)
+		return nil, totalEvent, err
+	}
+	res2, err2 := stmt2.Query(location)
+	if err2 != nil {
+		log.Println(err2)
+		return nil, totalEvent, err2
+	}
+	if errr != nil {
+		log.Println(err)
+		return nil, totalEvent, err
+	}
+	fmt.Println("sampe sini jalan")
 	defer res.Close()
+	defer res2.Close()
 
 	var events []entities.Event
 
@@ -88,13 +137,27 @@ func (r *EventRepositeory) GetEventByLocation(location string, page int) ([]enti
 
 		if err != nil {
 			log.Println(err)
-			return nil, err
+			return nil, totalEvent, err
 		}
-
+		// fmt.Println(totalEvent)
+		
 		events = append(events, event)
 	}
+	fmt.Println("sampe sini jalan2")
+	for res2.Next() {
 
-	return events, nil
+		err := res2.Scan(&totalEvent)
+
+		if err != nil {
+			log.Println(err)
+			return nil, totalEvent, err
+		}
+		fmt.Println(totalEvent)
+	}
+	fmt.Println("sampe sini finish")
+
+	
+	return events, totalEvent, nil
 }
 
 // edit by bagus, return ditambah event id dan user name
@@ -152,25 +215,26 @@ func (r *EventRepositeory) DeleteEvent(eventid int) error {
 }
 
 // sudah diceck, return ditambah user name
-func (r *EventRepositeory) GetEventByKeyword(keyword string, page int) ([]entities.Event, error) {
+func (r *EventRepositeory) GetEventByKeyword(keyword string, page int) ([]entities.Event, int, error) {
+	var totalEvent int
 	stmt, err := r.db.Prepare(`select e.id, e.name, e.category, u.name, e.host, e.description, e.datetime, e.location, e.photo 
 								from events e join users u on e.hostid = u.id
 								where e.deleted_at is null and e.name like ? limit ? offset ?`)
 
 	if err != nil {
 		log.Println(err)
-		return nil, err
+		return nil, totalEvent, err
 	}
 
 	like := "%" + keyword + "%"
-	limit := 10
+	limit := 5
 	offset := (page - 1) * limit
 
 	res, err := stmt.Query(like, limit, offset)
 
 	if err != nil {
 		log.Println(err)
-		return nil, err
+		return nil, totalEvent, err
 	}
 
 	defer res.Close()
@@ -184,23 +248,56 @@ func (r *EventRepositeory) GetEventByKeyword(keyword string, page int) ([]entiti
 
 		if err != nil {
 			log.Println(err)
-			return nil, err
+			return nil, totalEvent, err
 		}
 
 		events = append(events, event)
 	}
-	return events, nil
+
+	stmt2, err := r.db.Prepare(`select count(e.id)
+								from events e 
+								where e.deleted_at is null and e.name like ? 
+								`)
+
+	if err != nil {
+		log.Println(err)
+		return nil, totalEvent, err
+	}
+
+	like2 := "%" + keyword + "%"
+
+	res2, err := stmt2.Query(like2)
+
+	if err != nil {
+		log.Println(err)
+		return nil, totalEvent, err
+	}
+
+	defer res2.Close()
+
+	for res2.Next() {
+
+		err := res2.Scan(&totalEvent)
+
+		if err != nil {
+			log.Println(err)
+			return nil, totalEvent, err
+		}
+
+	}
+	return events, totalEvent, nil 
 }
 
 // sudah dicek, return ditambah user name
-func (r *EventRepositeory) GetEventByCategory(category string, page int) ([]entities.Event, error) {
+func (r *EventRepositeory) GetEventByCategory(category string, page int) ([]entities.Event, int, error) {
+	var totalEvent int
 	stmt, err := r.db.Prepare(`select e.id, e.name, e.category, u.name, e.host, e.description, e.datetime, e.location, e.photo 
 								from events e join users u on e.hostid = u.id
 								where e.deleted_at is null and e.category = ? limit ? offset ?`)
 
 	if err != nil {
 		log.Println(err)
-		return nil, err
+		return nil, totalEvent, err
 	}
 
 	limit := 5
@@ -210,7 +307,7 @@ func (r *EventRepositeory) GetEventByCategory(category string, page int) ([]enti
 
 	if err != nil {
 		log.Println(err)
-		return nil, err
+		return nil, totalEvent, err
 	}
 
 	defer res.Close()
@@ -224,13 +321,42 @@ func (r *EventRepositeory) GetEventByCategory(category string, page int) ([]enti
 
 		if err != nil {
 			log.Println(err)
-			return nil, err
+			return nil, totalEvent, err
 		}
 
 		events = append(events, event)
 	}
 
-	return events, nil
+	stmt2, err := r.db.Prepare(`select count(e.id)
+								from events e 
+								where e.deleted_at is null and e.category = ? 
+								`)
+
+	if err != nil {
+		log.Println(err)
+		return nil, totalEvent, err
+	}
+
+	res2, err := stmt2.Query(category)
+
+	if err != nil {
+		log.Println(err)
+		return nil, totalEvent, err
+	}
+
+	defer res2.Close()
+
+	for res2.Next() {
+
+		err := res2.Scan(&totalEvent)
+
+		if err != nil {
+			log.Println(err)
+			return nil, totalEvent, err
+		}
+
+	}
+	return events, totalEvent, nil 
 }
 
 // sudah dicek

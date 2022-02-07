@@ -118,6 +118,11 @@ type ComplexityRoot struct {
 		Password    func(childComplexity int) int
 		PhoneNumber func(childComplexity int) int
 	}
+
+	EventResponse struct {
+		Event     func(childComplexity int) int
+		TotalPage func(childComplexity int) int
+	}
 }
 
 type MutationResolver interface {
@@ -136,11 +141,11 @@ type QueryResolver interface {
 	Users(ctx context.Context) ([]*model.User, error)
 	UserByID(ctx context.Context, id int) (*model.User, error)
 	AuthLogin(ctx context.Context, email string, password string) (*model.LoginResponse, error)
-	Events(ctx context.Context, page int) ([]*model.Event, error)
+	Events(ctx context.Context, page int) (*model.EventResponse, error)
 	EventByHostID(ctx context.Context, userID int) ([]*model.Event, error)
-	EventByLocation(ctx context.Context, location string, page int) ([]*model.Event, error)
-	EventByKeyword(ctx context.Context, keyword string, page int) ([]*model.Event, error)
-	EventByCategory(ctx context.Context, category string, page int) ([]*model.Event, error)
+	EventByLocation(ctx context.Context, location string, page int) (*model.EventResponse, error)
+	EventByKeyword(ctx context.Context, keyword string, page int) (*model.EventResponse, error)
+	EventByCategory(ctx context.Context, category string, page int) (*model.EventResponse, error)
 	EventByParticipantID(ctx context.Context, userID int) ([]*model.Event, error)
 	EventByID(ctx context.Context, id int) (*model.Event, error)
 	Participants(ctx context.Context, eventID int) ([]*model.Participant, error)
@@ -631,6 +636,20 @@ func (e *executableSchema) Complexity(typeName, field string, childComplexity in
 
 		return e.complexity.User.PhoneNumber(childComplexity), true
 
+	case "eventResponse.event":
+		if e.complexity.EventResponse.Event == nil {
+			break
+		}
+
+		return e.complexity.EventResponse.Event(childComplexity), true
+
+	case "eventResponse.totalPage":
+		if e.complexity.EventResponse.TotalPage == nil {
+			break
+		}
+
+		return e.complexity.EventResponse.TotalPage(childComplexity), true
+
 	}
 	return 0, false
 }
@@ -784,19 +803,24 @@ type Comment {
 	createdAt: String!
 }
 
+type eventResponse {
+	event: [Event!]
+	totalPage: Int!
+}
+
 type Query {
 	users: [User!]
 	userById(id: Int!): User
 	authLogin(email: String!, password: String!): LoginResponse!
 
-	events(page: Int!): [Event!]
+	events(page: Int!): eventResponse!
 	eventByHostId(userId: Int!): [Event!]
-	eventByLocation(location: String!, page: Int!): [Event!]
-	eventByKeyword(keyword: String!, page: Int!): [Event!]
-	eventByCategory(category: String!, page: Int!): [Event!]
+	eventByLocation(location: String!, page: Int!): eventResponse!
+	eventByKeyword(keyword: String!, page: Int!): eventResponse!
+	eventByCategory(category: String!, page: Int!): eventResponse!
 	eventByParticipantId(userId: Int!): [Event!]
 	eventById(id: Int!): Event
-	
+
 	participants(eventId: Int!): [Participant]
 
 	comments(eventId: Int!): [Comment]
@@ -817,6 +841,12 @@ type Mutation {
 	joinEvent(eventId: Int!): SuccessResponse!
 	unjoinEvent(eventId: Int!): SuccessResponse!
 }
+
+# membuat type schema gql (done)
+# membuat interface repo (bikin satu function)
+# membuat repo sintaks sql (bikin satu function)
+# kondisikan di schema resolver yang make pagination
+# perbaiki readme buat semua yang pake page ganti responnya
 `, BuiltIn: false},
 }
 var parsedSchema = gqlparser.MustLoadSchema(sources...)
@@ -2585,11 +2615,14 @@ func (ec *executionContext) _Query_events(ctx context.Context, field graphql.Col
 		return graphql.Null
 	}
 	if resTmp == nil {
+		if !graphql.HasFieldError(ctx, fc) {
+			ec.Errorf(ctx, "must not be null")
+		}
 		return graphql.Null
 	}
-	res := resTmp.([]*model.Event)
+	res := resTmp.(*model.EventResponse)
 	fc.Result = res
-	return ec.marshalOEvent2ᚕᚖeventappᚋentitiesᚋgraphᚋmodelᚐEventᚄ(ctx, field.Selections, res)
+	return ec.marshalNeventResponse2ᚖeventappᚋentitiesᚋgraphᚋmodelᚐEventResponse(ctx, field.Selections, res)
 }
 
 func (ec *executionContext) _Query_eventByHostId(ctx context.Context, field graphql.CollectedField) (ret graphql.Marshaler) {
@@ -2663,11 +2696,14 @@ func (ec *executionContext) _Query_eventByLocation(ctx context.Context, field gr
 		return graphql.Null
 	}
 	if resTmp == nil {
+		if !graphql.HasFieldError(ctx, fc) {
+			ec.Errorf(ctx, "must not be null")
+		}
 		return graphql.Null
 	}
-	res := resTmp.([]*model.Event)
+	res := resTmp.(*model.EventResponse)
 	fc.Result = res
-	return ec.marshalOEvent2ᚕᚖeventappᚋentitiesᚋgraphᚋmodelᚐEventᚄ(ctx, field.Selections, res)
+	return ec.marshalNeventResponse2ᚖeventappᚋentitiesᚋgraphᚋmodelᚐEventResponse(ctx, field.Selections, res)
 }
 
 func (ec *executionContext) _Query_eventByKeyword(ctx context.Context, field graphql.CollectedField) (ret graphql.Marshaler) {
@@ -2702,11 +2738,14 @@ func (ec *executionContext) _Query_eventByKeyword(ctx context.Context, field gra
 		return graphql.Null
 	}
 	if resTmp == nil {
+		if !graphql.HasFieldError(ctx, fc) {
+			ec.Errorf(ctx, "must not be null")
+		}
 		return graphql.Null
 	}
-	res := resTmp.([]*model.Event)
+	res := resTmp.(*model.EventResponse)
 	fc.Result = res
-	return ec.marshalOEvent2ᚕᚖeventappᚋentitiesᚋgraphᚋmodelᚐEventᚄ(ctx, field.Selections, res)
+	return ec.marshalNeventResponse2ᚖeventappᚋentitiesᚋgraphᚋmodelᚐEventResponse(ctx, field.Selections, res)
 }
 
 func (ec *executionContext) _Query_eventByCategory(ctx context.Context, field graphql.CollectedField) (ret graphql.Marshaler) {
@@ -2741,11 +2780,14 @@ func (ec *executionContext) _Query_eventByCategory(ctx context.Context, field gr
 		return graphql.Null
 	}
 	if resTmp == nil {
+		if !graphql.HasFieldError(ctx, fc) {
+			ec.Errorf(ctx, "must not be null")
+		}
 		return graphql.Null
 	}
-	res := resTmp.([]*model.Event)
+	res := resTmp.(*model.EventResponse)
 	fc.Result = res
-	return ec.marshalOEvent2ᚕᚖeventappᚋentitiesᚋgraphᚋmodelᚐEventᚄ(ctx, field.Selections, res)
+	return ec.marshalNeventResponse2ᚖeventappᚋentitiesᚋgraphᚋmodelᚐEventResponse(ctx, field.Selections, res)
 }
 
 func (ec *executionContext) _Query_eventByParticipantId(ctx context.Context, field graphql.CollectedField) (ret graphql.Marshaler) {
@@ -4364,6 +4406,73 @@ func (ec *executionContext) ___Type_ofType(ctx context.Context, field graphql.Co
 	return ec.marshalO__Type2ᚖgithubᚗcomᚋ99designsᚋgqlgenᚋgraphqlᚋintrospectionᚐType(ctx, field.Selections, res)
 }
 
+func (ec *executionContext) _eventResponse_event(ctx context.Context, field graphql.CollectedField, obj *model.EventResponse) (ret graphql.Marshaler) {
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	fc := &graphql.FieldContext{
+		Object:     "eventResponse",
+		Field:      field,
+		Args:       nil,
+		IsMethod:   false,
+		IsResolver: false,
+	}
+
+	ctx = graphql.WithFieldContext(ctx, fc)
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return obj.Event, nil
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		return graphql.Null
+	}
+	res := resTmp.([]*model.Event)
+	fc.Result = res
+	return ec.marshalOEvent2ᚕᚖeventappᚋentitiesᚋgraphᚋmodelᚐEventᚄ(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) _eventResponse_totalPage(ctx context.Context, field graphql.CollectedField, obj *model.EventResponse) (ret graphql.Marshaler) {
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	fc := &graphql.FieldContext{
+		Object:     "eventResponse",
+		Field:      field,
+		Args:       nil,
+		IsMethod:   false,
+		IsResolver: false,
+	}
+
+	ctx = graphql.WithFieldContext(ctx, fc)
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return obj.TotalPage, nil
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		if !graphql.HasFieldError(ctx, fc) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.(int)
+	fc.Result = res
+	return ec.marshalNInt2int(ctx, field.Selections, res)
+}
+
 // endregion **************************** field.gotpl *****************************
 
 // region    **************************** input.gotpl *****************************
@@ -5156,6 +5265,9 @@ func (ec *executionContext) _Query(ctx context.Context, sel ast.SelectionSet) gr
 					}
 				}()
 				res = ec._Query_events(ctx, field)
+				if res == graphql.Null {
+					atomic.AddUint32(&invalids, 1)
+				}
 				return res
 			}
 
@@ -5196,6 +5308,9 @@ func (ec *executionContext) _Query(ctx context.Context, sel ast.SelectionSet) gr
 					}
 				}()
 				res = ec._Query_eventByLocation(ctx, field)
+				if res == graphql.Null {
+					atomic.AddUint32(&invalids, 1)
+				}
 				return res
 			}
 
@@ -5216,6 +5331,9 @@ func (ec *executionContext) _Query(ctx context.Context, sel ast.SelectionSet) gr
 					}
 				}()
 				res = ec._Query_eventByKeyword(ctx, field)
+				if res == graphql.Null {
+					atomic.AddUint32(&invalids, 1)
+				}
 				return res
 			}
 
@@ -5236,6 +5354,9 @@ func (ec *executionContext) _Query(ctx context.Context, sel ast.SelectionSet) gr
 					}
 				}()
 				res = ec._Query_eventByCategory(ctx, field)
+				if res == graphql.Null {
+					atomic.AddUint32(&invalids, 1)
+				}
 				return res
 			}
 
@@ -5869,6 +5990,44 @@ func (ec *executionContext) ___Type(ctx context.Context, sel ast.SelectionSet, o
 	return out
 }
 
+var eventResponseImplementors = []string{"eventResponse"}
+
+func (ec *executionContext) _eventResponse(ctx context.Context, sel ast.SelectionSet, obj *model.EventResponse) graphql.Marshaler {
+	fields := graphql.CollectFields(ec.OperationContext, sel, eventResponseImplementors)
+	out := graphql.NewFieldSet(fields)
+	var invalids uint32
+	for i, field := range fields {
+		switch field.Name {
+		case "__typename":
+			out.Values[i] = graphql.MarshalString("eventResponse")
+		case "event":
+			innerFunc := func(ctx context.Context) (res graphql.Marshaler) {
+				return ec._eventResponse_event(ctx, field, obj)
+			}
+
+			out.Values[i] = innerFunc(ctx)
+
+		case "totalPage":
+			innerFunc := func(ctx context.Context) (res graphql.Marshaler) {
+				return ec._eventResponse_totalPage(ctx, field, obj)
+			}
+
+			out.Values[i] = innerFunc(ctx)
+
+			if out.Values[i] == graphql.Null {
+				invalids++
+			}
+		default:
+			panic("unknown field " + strconv.Quote(field.Name))
+		}
+	}
+	out.Dispatch()
+	if invalids > 0 {
+		return graphql.Null
+	}
+	return out
+}
+
 // endregion **************************** object.gotpl ****************************
 
 // region    ***************************** type.gotpl *****************************
@@ -6259,6 +6418,20 @@ func (ec *executionContext) marshalN__TypeKind2string(ctx context.Context, sel a
 		}
 	}
 	return res
+}
+
+func (ec *executionContext) marshalNeventResponse2eventappᚋentitiesᚋgraphᚋmodelᚐEventResponse(ctx context.Context, sel ast.SelectionSet, v model.EventResponse) graphql.Marshaler {
+	return ec._eventResponse(ctx, sel, &v)
+}
+
+func (ec *executionContext) marshalNeventResponse2ᚖeventappᚋentitiesᚋgraphᚋmodelᚐEventResponse(ctx context.Context, sel ast.SelectionSet, v *model.EventResponse) graphql.Marshaler {
+	if v == nil {
+		if !graphql.HasFieldError(ctx, graphql.GetFieldContext(ctx)) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	return ec._eventResponse(ctx, sel, v)
 }
 
 func (ec *executionContext) unmarshalOBoolean2bool(ctx context.Context, v interface{}) (bool, error) {

@@ -12,6 +12,7 @@ import (
 	"eventapp/entities/graph/model"
 	"eventapp/utils/graph/generated"
 	"fmt"
+	"math"
 	"net/http"
 	"strings"
 	"time"
@@ -273,15 +274,15 @@ func (r *mutationResolver) UpdateEvent(ctx context.Context, id int, set model.Up
 		event.Photo = *set.Photo
 	}
 
-	event.Datetime = strings.ReplaceAll(event.Datetime,"T"," ")
-	event.Datetime = strings.ReplaceAll(event.Datetime,"Z","")
-	fmt.Println("ini date time" ,event.Datetime)
+	event.Datetime = strings.ReplaceAll(event.Datetime, "T", " ")
+	event.Datetime = strings.ReplaceAll(event.Datetime, "Z", "")
+	fmt.Println("ini date time", event.Datetime)
 
 	event.Id = id
-	fmt.Println("ini isi event",event)
+	fmt.Println("ini isi event", event)
 	res, err := r.eventRepo.UpdateEvent(event)
-	fmt.Println("respon",res)
-	fmt.Println("error",err)
+	fmt.Println("respon", res)
+	fmt.Println("error", err)
 	if err != nil {
 		return nil, errors.New("failed update event")
 	}
@@ -407,20 +408,19 @@ func (r *mutationResolver) JoinEvent(ctx context.Context, eventID int) (*model.S
 	// kondisi tanggal sekarang di bandingkan dengan format rfc
 	event, err := r.eventRepo.GetEventByEventId(eventID)
 	if err != nil {
-		return nil,err
+		return nil, err
 	}
 
 	current_time := time.Now()
-	fmt.Println("ini current time",current_time)
-	eventdate,_ := time.Parse(time.RFC3339, event.Datetime)
-	fmt.Println("ini event date time",eventdate)
+	fmt.Println("ini current time", current_time)
+	eventdate, _ := time.Parse(time.RFC3339, event.Datetime)
+	fmt.Println("ini event date time", eventdate)
 	current_time.Before(eventdate)
 	fmt.Println(current_time.Before(eventdate))
 
 	if !current_time.Before(eventdate) {
 		return nil, errors.New(" Cant join, Event already past ")
 	}
-
 
 	if err := r.participantRepo.JoinEvent(eventID, convData.Id); err != nil {
 		return nil, err
@@ -536,8 +536,8 @@ func (r *queryResolver) AuthLogin(ctx context.Context, email string, password st
 	return &response, nil
 }
 
-func (r *queryResolver) Events(ctx context.Context, page int) ([]*model.Event, error) {
-	responseData, err := r.eventRepo.GetAllEvent(page)
+func (r *queryResolver) Events(ctx context.Context, page int) (*model.EventResponse, error) {
+	responseData, totalEvent, err := r.eventRepo.GetAllEvent(page)
 
 	if err != nil {
 		return nil, err
@@ -551,7 +551,15 @@ func (r *queryResolver) Events(ctx context.Context, page int) ([]*model.Event, e
 		eventResponseData = append(eventResponseData, &model.Event{ID: &id, Name: v.Name, Host: v.Host, Category: v.Category, Datetime: v.Datetime, Location: v.Location, Description: v.Description, Photo: v.Photo, Username: v.UserName})
 	}
 
-	return eventResponseData, nil
+	limit := 5
+	totalPage := int(math.Ceil(float64(totalEvent) / float64(limit)))
+
+	eventResponse := model.EventResponse{
+		Event:     eventResponseData,
+		TotalPage: totalPage,
+	}
+
+	return &eventResponse,nil
 }
 
 func (r *queryResolver) EventByHostID(ctx context.Context, userID int) ([]*model.Event, error) {
@@ -572,8 +580,8 @@ func (r *queryResolver) EventByHostID(ctx context.Context, userID int) ([]*model
 	return eventResponseData, nil
 }
 
-func (r *queryResolver) EventByLocation(ctx context.Context, location string, page int) ([]*model.Event, error) {
-	responseData, err := r.eventRepo.GetEventByLocation(location, page)
+func (r *queryResolver) EventByLocation(ctx context.Context, location string, page int) (*model.EventResponse, error) {
+	responseData, totalEvent, err := r.eventRepo.GetEventByLocation(location, page)
 
 	if err != nil {
 		return nil, errors.New("not found")
@@ -583,15 +591,22 @@ func (r *queryResolver) EventByLocation(ctx context.Context, location string, pa
 
 	for _, v := range responseData {
 		id := v.Id
-
 		eventResponseData = append(eventResponseData, &model.Event{ID: &id, Name: v.Name, Host: v.Host, Category: v.Category, Datetime: v.Datetime, Location: v.Location, Description: v.Description, Photo: v.Photo, Username: v.UserName})
 	}
+	limit := 5
 
-	return eventResponseData, nil
+	totalPage := int(math.Ceil(float64(totalEvent) / float64(limit)))
+
+	eventResponse := model.EventResponse{
+		Event:     eventResponseData,
+		TotalPage: totalPage,
+	}
+
+	return &eventResponse, nil
 }
 
-func (r *queryResolver) EventByKeyword(ctx context.Context, keyword string, page int) ([]*model.Event, error) {
-	responseData, err := r.eventRepo.GetEventByKeyword(keyword, page)
+func (r *queryResolver) EventByKeyword(ctx context.Context, keyword string, page int) (*model.EventResponse, error) {
+	responseData, totalEvent, err := r.eventRepo.GetEventByKeyword(keyword, page)
 
 	if err != nil {
 		return nil, errors.New("not found")
@@ -601,15 +616,22 @@ func (r *queryResolver) EventByKeyword(ctx context.Context, keyword string, page
 
 	for _, v := range responseData {
 		id := v.Id
-
 		eventResponseData = append(eventResponseData, &model.Event{ID: &id, Name: v.Name, Host: v.Host, Category: v.Category, Datetime: v.Datetime, Location: v.Location, Description: v.Description, Photo: v.Photo, Username: v.UserName})
 	}
 
-	return eventResponseData, nil
+	limit := 5
+	totalPage := int(math.Ceil(float64(totalEvent) / float64(limit)))
+
+	eventResponse := model.EventResponse{
+		Event:     eventResponseData,
+		TotalPage: totalPage,
+	}
+
+	return &eventResponse, nil
 }
 
-func (r *queryResolver) EventByCategory(ctx context.Context, category string, page int) ([]*model.Event, error) {
-	responseData, err := r.eventRepo.GetEventByCategory(category, page)
+func (r *queryResolver) EventByCategory(ctx context.Context, category string, page int) (*model.EventResponse, error) {
+	responseData, totalEvent, err := r.eventRepo.GetEventByCategory(category, page)
 
 	if err != nil {
 		return nil, errors.New("not found")
@@ -623,7 +645,15 @@ func (r *queryResolver) EventByCategory(ctx context.Context, category string, pa
 		eventResponseData = append(eventResponseData, &model.Event{ID: &id, Name: v.Name, Host: v.Host, Category: v.Category, Datetime: v.Datetime, Location: v.Location, Description: v.Description, Photo: v.Photo, Username: v.UserName})
 	}
 
-	return eventResponseData, nil
+	limit := 5
+	totalPage := int(math.Ceil(float64(totalEvent) / float64(limit)))
+
+	eventResponse := model.EventResponse{
+		Event:     eventResponseData,
+		TotalPage: totalPage,
+	}
+
+	return &eventResponse, nil
 }
 
 func (r *queryResolver) EventByParticipantID(ctx context.Context, userID int) ([]*model.Event, error) {
