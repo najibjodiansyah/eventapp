@@ -16,14 +16,15 @@ func New(db *sql.DB) *EventRepositeory {
 }
 
 // sudah dicek
-func (r *EventRepositeory) GetAllEvent(page int) ([]entities.Event, error) {
+func (r *EventRepositeory) GetAllEvent(page int) ([]entities.Event, int, error) {
+	var totalEvent int
 	stmt, err := r.db.Prepare(`select e.id, e.name, e.category, u.name, e.host, e.description, e.datetime, e.location, e.photo 
 								from events e join users u on e.hostid = u.id 
 								where e.deleted_at IS NULL limit ? offset ?`)
 
 	if err != nil {
 		log.Println(err)
-		return nil, err
+		return nil,totalEvent, err
 	}
 
 	limit := 5
@@ -33,7 +34,7 @@ func (r *EventRepositeory) GetAllEvent(page int) ([]entities.Event, error) {
 
 	if err != nil {
 		log.Println(err)
-		return nil, err
+		return nil,totalEvent, err
 	}
 
 	defer res.Close()
@@ -47,13 +48,43 @@ func (r *EventRepositeory) GetAllEvent(page int) ([]entities.Event, error) {
 
 		if err != nil {
 			log.Println(err)
-			return nil, err
+			return nil,totalEvent, err
 		}
 
 		events = append(events, event)
 	}
 
-	return events, nil
+	stmt2, err := r.db.Prepare(`select count(e.id)
+								from events e 
+								where e.deleted_at is null
+								`)
+
+	if err != nil {
+		log.Println(err)
+		return nil, totalEvent, err
+	}
+
+	res2, err := stmt2.Query()
+
+	if err != nil {
+		log.Println(err)
+		return nil, totalEvent, err
+	}
+
+	defer res2.Close()
+
+	for res2.Next() {
+
+		err := res2.Scan(&totalEvent)
+
+		if err != nil {
+			log.Println(err)
+			return nil, totalEvent, err
+		}
+
+	}
+
+	return events,totalEvent, nil
 }
 
 // sudah dicek
