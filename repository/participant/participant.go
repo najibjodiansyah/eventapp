@@ -112,7 +112,7 @@ func (r *ParticipantRepository) UnjoinEvent(eventId int, userId int) error {
 func (r *ParticipantRepository) GetEventsByParticipantId(userId int) ([]entities.Event, error) {
 	stmt, err := r.db.Prepare(`select e.id, e.name, e.host, u.name, e.description, e.datetime, e.location, e.category, e.photo
 								from events e left join users u on e.hostid = u.id join participants p on e.id = p.eventid
-								where e.deleted_at is NULL and p.participantid = ?`)
+								where e.deleted_at is NULL and p.deleted_at is NULL and p.participantid = ?`)
 
 	if err != nil {
 		log.Println(err)
