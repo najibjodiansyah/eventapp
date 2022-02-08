@@ -334,14 +334,10 @@ query {
     events(page:1)
     {
     totalPage
-    event{  name
-            username
+    event{  id
+            name
             host
-            description
-            datetime
-            location
             category
-            photo
         }
     }
 }
@@ -461,14 +457,9 @@ query {
         page: 1
     ) {
     totalPage
-    event{  name
-            username
-            host
-            description
-            datetime
+    event{  id
+            name
             location
-            category
-            photo
     }
 }
 
@@ -523,14 +514,8 @@ query {
         page: 1
     ) {
     totalPage
-    event{  name
-            username
-            host
-            description
-            datetime
-            location
-            category
-            photo
+    event{  id
+            name
     }
     }
 }
@@ -581,13 +566,7 @@ query {
     ) {
 	totalPage
     event{  name
-            username
-            host
-            description
-            datetime
-            location
             category
-            photo
     }
 }
 
