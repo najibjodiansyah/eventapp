@@ -86,3 +86,8 @@ type User struct {
 	PhoneNumber *string `json:"phoneNumber"`
 	Avatar      *string `json:"avatar"`
 }
+
+type EventResponse struct {
+	Event     []*Event `json:"event"`
+	TotalPage int      `json:"totalPage"`
+}
