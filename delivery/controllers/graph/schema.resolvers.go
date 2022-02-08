@@ -559,7 +559,7 @@ func (r *queryResolver) Events(ctx context.Context, page int) (*model.EventRespo
 		TotalPage: totalPage,
 	}
 
-	return &eventResponse,nil
+	return &eventResponse, nil
 }
 
 func (r *queryResolver) EventByHostID(ctx context.Context, userID int) ([]*model.Event, error) {
