@@ -49,6 +49,11 @@ type UpdateUserResponse {
 	data: User!
 }
 
+type DeleteUserResponse {
+	code: Int!
+	message: String!
+}
+
 type Event {
 	id: Int
 	name: String!
@@ -127,7 +132,7 @@ type Query {
 type Mutation {
 	createUser(input: NewUser!): CreateUserResponse!
 	updateUser(id: Int!, set: UpdateUser!): UpdateUserResponse!
-	deleteUser(id: Int!): SuccessResponse!
+	deleteUser(id: Int!): DeleteUserResponse!
 
 	createEvent(input: NewEvent!): Event!
 	updateEvent(id: Int!, set: UpdateEvent!): Event!

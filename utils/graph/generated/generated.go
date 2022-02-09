@@ -58,6 +58,11 @@ type ComplexityRoot struct {
 		Message func(childComplexity int) int
 	}
 
+	DeleteUserResponse struct {
+		Code    func(childComplexity int) int
+		Message func(childComplexity int) int
+	}
+
 	Event struct {
 		Category    func(childComplexity int) int
 		Datetime    func(childComplexity int) int
@@ -144,7 +149,7 @@ type ComplexityRoot struct {
 type MutationResolver interface {
 	CreateUser(ctx context.Context, input model.NewUser) (*model.CreateUserResponse, error)
 	UpdateUser(ctx context.Context, id int, set model.UpdateUser) (*model.UpdateUserResponse, error)
-	DeleteUser(ctx context.Context, id int) (*model.SuccessResponse, error)
+	DeleteUser(ctx context.Context, id int) (*model.DeleteUserResponse, error)
 	CreateEvent(ctx context.Context, input model.NewEvent) (*model.Event, error)
 	UpdateEvent(ctx context.Context, id int, set model.UpdateEvent) (*model.Event, error)
 	DeleteEvent(ctx context.Context, id int) (*model.SuccessResponse, error)
@@ -245,6 +250,20 @@ func (e *executableSchema) Complexity(typeName, field string, childComplexity in
 		}
 
 		return e.complexity.CreateUserResponse.Message(childComplexity), true
+
+	case "DeleteUserResponse.code":
+		if e.complexity.DeleteUserResponse.Code == nil {
+			break
+		}
+
+		return e.complexity.DeleteUserResponse.Code(childComplexity), true
+
+	case "DeleteUserResponse.message":
+		if e.complexity.DeleteUserResponse.Message == nil {
+			break
+		}
+
+		return e.complexity.DeleteUserResponse.Message(childComplexity), true
 
 	case "Event.category":
 		if e.complexity.Event.Category == nil {
@@ -830,6 +849,11 @@ type UpdateUserResponse {
 	data: User!
 }
 
+type DeleteUserResponse {
+	code: Int!
+	message: String!
+}
+
 type Event {
 	id: Int
 	name: String!
@@ -908,7 +932,7 @@ type Query {
 type Mutation {
 	createUser(input: NewUser!): CreateUserResponse!
 	updateUser(id: Int!, set: UpdateUser!): UpdateUserResponse!
-	deleteUser(id: Int!): SuccessResponse!
+	deleteUser(id: Int!): DeleteUserResponse!
 
 	createEvent(input: NewEvent!): Event!
 	updateEvent(id: Int!, set: UpdateEvent!): Event!
@@ -1671,6 +1695,76 @@ func (ec *executionContext) _CreateUserResponse_data(ctx context.Context, field 
 	return ec.marshalNUser2ᚖeventappᚋentitiesᚋgraphᚋmodelᚐUser(ctx, field.Selections, res)
 }
 
+func (ec *executionContext) _DeleteUserResponse_code(ctx context.Context, field graphql.CollectedField, obj *model.DeleteUserResponse) (ret graphql.Marshaler) {
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	fc := &graphql.FieldContext{
+		Object:     "DeleteUserResponse",
+		Field:      field,
+		Args:       nil,
+		IsMethod:   false,
+		IsResolver: false,
+	}
+
+	ctx = graphql.WithFieldContext(ctx, fc)
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return obj.Code, nil
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		if !graphql.HasFieldError(ctx, fc) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.(int)
+	fc.Result = res
+	return ec.marshalNInt2int(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) _DeleteUserResponse_message(ctx context.Context, field graphql.CollectedField, obj *model.DeleteUserResponse) (ret graphql.Marshaler) {
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	fc := &graphql.FieldContext{
+		Object:     "DeleteUserResponse",
+		Field:      field,
+		Args:       nil,
+		IsMethod:   false,
+		IsResolver: false,
+	}
+
+	ctx = graphql.WithFieldContext(ctx, fc)
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return obj.Message, nil
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		if !graphql.HasFieldError(ctx, fc) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.(string)
+	fc.Result = res
+	return ec.marshalNString2string(ctx, field.Selections, res)
+}
+
 func (ec *executionContext) _Event_id(ctx context.Context, field graphql.CollectedField, obj *model.Event) (ret graphql.Marshaler) {
 	defer func() {
 		if r := recover(); r != nil {
@@ -2203,9 +2297,9 @@ func (ec *executionContext) _Mutation_deleteUser(ctx context.Context, field grap
 		}
 		return graphql.Null
 	}
-	res := resTmp.(*model.SuccessResponse)
+	res := resTmp.(*model.DeleteUserResponse)
 	fc.Result = res
-	return ec.marshalNSuccessResponse2ᚖeventappᚋentitiesᚋgraphᚋmodelᚐSuccessResponse(ctx, field.Selections, res)
+	return ec.marshalNDeleteUserResponse2ᚖeventappᚋentitiesᚋgraphᚋmodelᚐDeleteUserResponse(ctx, field.Selections, res)
 }
 
 func (ec *executionContext) _Mutation_createEvent(ctx context.Context, field graphql.CollectedField) (ret graphql.Marshaler) {
@@ -5173,6 +5267,47 @@ func (ec *executionContext) _CreateUserResponse(ctx context.Context, sel ast.Sel
 	return out
 }
 
+var deleteUserResponseImplementors = []string{"DeleteUserResponse"}
+
+func (ec *executionContext) _DeleteUserResponse(ctx context.Context, sel ast.SelectionSet, obj *model.DeleteUserResponse) graphql.Marshaler {
+	fields := graphql.CollectFields(ec.OperationContext, sel, deleteUserResponseImplementors)
+	out := graphql.NewFieldSet(fields)
+	var invalids uint32
+	for i, field := range fields {
+		switch field.Name {
+		case "__typename":
+			out.Values[i] = graphql.MarshalString("DeleteUserResponse")
+		case "code":
+			innerFunc := func(ctx context.Context) (res graphql.Marshaler) {
+				return ec._DeleteUserResponse_code(ctx, field, obj)
+			}
+
+			out.Values[i] = innerFunc(ctx)
+
+			if out.Values[i] == graphql.Null {
+				invalids++
+			}
+		case "message":
+			innerFunc := func(ctx context.Context) (res graphql.Marshaler) {
+				return ec._DeleteUserResponse_message(ctx, field, obj)
+			}
+
+			out.Values[i] = innerFunc(ctx)
+
+			if out.Values[i] == graphql.Null {
+				invalids++
+			}
+		default:
+			panic("unknown field " + strconv.Quote(field.Name))
+		}
+	}
+	out.Dispatch()
+	if invalids > 0 {
+		return graphql.Null
+	}
+	return out
+}
+
 var eventImplementors = []string{"Event"}
 
 func (ec *executionContext) _Event(ctx context.Context, sel ast.SelectionSet, obj *model.Event) graphql.Marshaler {
@@ -6502,6 +6637,20 @@ func (ec *executionContext) marshalNCreateUserResponse2ᚖeventappᚋentitiesᚋ
 		return graphql.Null
 	}
 	return ec._CreateUserResponse(ctx, sel, v)
+}
+
+func (ec *executionContext) marshalNDeleteUserResponse2eventappᚋentitiesᚋgraphᚋmodelᚐDeleteUserResponse(ctx context.Context, sel ast.SelectionSet, v model.DeleteUserResponse) graphql.Marshaler {
+	return ec._DeleteUserResponse(ctx, sel, &v)
+}
+
+func (ec *executionContext) marshalNDeleteUserResponse2ᚖeventappᚋentitiesᚋgraphᚋmodelᚐDeleteUserResponse(ctx context.Context, sel ast.SelectionSet, v *model.DeleteUserResponse) graphql.Marshaler {
+	if v == nil {
+		if !graphql.HasFieldError(ctx, graphql.GetFieldContext(ctx)) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	return ec._DeleteUserResponse(ctx, sel, v)
 }
 
 func (ec *executionContext) marshalNEvent2eventappᚋentitiesᚋgraphᚋmodelᚐEvent(ctx context.Context, sel ast.SelectionSet, v model.Event) graphql.Marshaler {

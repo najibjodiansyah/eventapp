@@ -16,7 +16,6 @@ func New(db *sql.DB) *UserRepository {
 	return &UserRepository{db: db}
 }
 
-// edit by Bagus, return repository memakai entity saja
 func (r *UserRepository) Get() ([]entities.User, error) {
 	stmt, err := r.db.Prepare("select id, name, email, phone, avatar from users where deleted_at is NULL")
 
@@ -104,7 +103,7 @@ func (r *UserRepository) CreateUser(user entities.User) (createdUser entities.Us
 		return createdUser, code, err
 	}
 
-	stmt, err := r.db.Prepare("insert into users(name, email, password) values(?,?,?)")
+	stmt, err := r.db.Prepare("insert into users(name, email, password, phone, avatar, created_at) values(?,?,?,'','',CURRENT_TIMESTAMP)")
 
 	if err != nil {
 		log.Println(err)
@@ -134,7 +133,7 @@ func (r *UserRepository) CreateUser(user entities.User) (createdUser entities.Us
 	return createdUser, http.StatusOK, nil
 }
 
-func (r *UserRepository) Update(user entities.User) (updatedUser entities.User, code int, err error) {
+func (r *UserRepository) UpdateUser(user entities.User) (updatedUser entities.User, code int, err error) {
 	id, err := r.checkEmailExistence(user.Email)
 
 	if err != nil {
@@ -143,8 +142,8 @@ func (r *UserRepository) Update(user entities.User) (updatedUser entities.User, 
 		return updatedUser, code, err
 	}
 
-	if id != int64(user.Id) {
-		log.Println(id, "email already exist while create user")
+	if id != 0 && id != int64(user.Id) {
+		log.Println(id, user.Id, "email already exist while create user")
 		code, err = http.StatusBadRequest, errors.New("email already exist")
 		return updatedUser, code, err
 	}
@@ -175,31 +174,47 @@ func (r *UserRepository) Update(user entities.User) (updatedUser entities.User, 
 
 	if rowsAffected == 0 {
 		log.Println("rows affected is 0 while update user")
-		code, err = http.StatusInternalServerError, errors.New("user not updated")
+		code, err = http.StatusBadRequest, errors.New("user not updated")
 		return updatedUser, code, err
 	}
 
 	updatedUser = user
 
-	return updatedUser, code, err
+	return updatedUser, http.StatusOK, nil
 }
 
-func (r *UserRepository) Delete(id int) error {
-	// stmt, err := r.db.Prepare("DELETE from users where id = ?")
-	stmt, err := r.db.Prepare("update users set deleted_at = CURRENT_TIMESTAMP where id = ?")
+func (r *UserRepository) DeleteUser(id int) (code int, err error) {
+	stmt, err := r.db.Prepare("update users set deleted_at = CURRENT_TIMESTAMP where deleted_at is NULL and id = ?")
 
 	if err != nil {
 		log.Println(err)
-		return err
+		code, err = http.StatusInternalServerError, errors.New("internal server error")
+		return code, err
 	}
 
-	_, err = stmt.Exec(id)
+	res, err := stmt.Exec(id)
 
 	if err != nil {
-		return err
+		log.Println(err)
+		code, err = http.StatusInternalServerError, errors.New("internal server error")
+		return code, err
 	}
 
-	return nil
+	rowsAffected, err := res.RowsAffected()
+
+	if err != nil {
+		log.Println(err)
+		code, err = http.StatusInternalServerError, errors.New("internal server error")
+		return code, err
+	}
+
+	if rowsAffected == 0 {
+		log.Println("rows affected is 0 while delete user")
+		code, err = http.StatusBadRequest, errors.New("user not deleted")
+		return code, err
+	}
+
+	return http.StatusOK, nil
 }
 
 func (r *UserRepository) checkEmailExistence(email string) (id int64, err error) {

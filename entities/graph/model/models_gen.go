@@ -17,6 +17,11 @@ type CreateUserResponse struct {
 	Data    *User  `json:"data"`
 }
 
+type DeleteUserResponse struct {
+	Code    int    `json:"code"`
+	Message string `json:"message"`
+}
+
 type Event struct {
 	ID          *int   `json:"id"`
 	Name        string `json:"name"`

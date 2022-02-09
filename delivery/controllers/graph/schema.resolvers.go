@@ -12,6 +12,7 @@ import (
 	_entities "eventapp/entities"
 	_model "eventapp/entities/graph/model"
 	_generated "eventapp/utils/graph/generated"
+	"fmt"
 	"math"
 	"net/http"
 	"strings"
@@ -103,9 +104,9 @@ func (r *mutationResolver) CreateUser(ctx context.Context, input _model.NewUser)
 
 func (r *mutationResolver) UpdateUser(ctx context.Context, id int, set _model.UpdateUser) (*_model.UpdateUserResponse, error) {
 	// set default return value
-	id, phone, avatar := -1, "", ""
+	_id, phone, avatar := -1, "", ""
 	_updatedUser := _model.User{
-		ID:       &id,
+		ID:       &_id,
 		Name:     "",
 		Email:    "",
 		Password: "",
@@ -128,6 +129,7 @@ func (r *mutationResolver) UpdateUser(ctx context.Context, id int, set _model.Up
 
 	// detect unautorized update
 	if id != convData.Id {
+		fmt.Println(id, convData.Id)
 		return &_model.UpdateUserResponse{
 			Code:    http.StatusUnauthorized,
 			Message: "unauthorized",
@@ -259,8 +261,10 @@ func (r *mutationResolver) UpdateUser(ctx context.Context, id int, set _model.Up
 
 	updateUserData.Id = id
 
-	updatedUser, code, err := r.userRepo.Update(updateUserData)
+	// query via repository to update user
+	updatedUser, code, err := r.userRepo.UpdateUser(updateUserData)
 
+	// detect failure in repository
 	if err != nil {
 		return &_model.UpdateUserResponse{
 			Code:    code,
@@ -269,7 +273,7 @@ func (r *mutationResolver) UpdateUser(ctx context.Context, id int, set _model.Up
 		}, nil
 	}
 
-	phone, avatar = updatedUser.Phone, updatedUser.Avatar
+	_id, phone, avatar = updatedUser.Id, updatedUser.Phone, updatedUser.Avatar
 
 	// prepare output to response
 	_updatedUser.Name = updatedUser.Name
@@ -285,49 +289,60 @@ func (r *mutationResolver) UpdateUser(ctx context.Context, id int, set _model.Up
 	}, nil
 }
 
-func (r *mutationResolver) DeleteUser(ctx context.Context, id int) (*_model.SuccessResponse, error) {
-	dataLogin := ctx.Value(_config.GetConfig().ContextKey) // auth jwt
+func (r *mutationResolver) DeleteUser(ctx context.Context, id int) (*_model.DeleteUserResponse, error) {
+	// only registered user can delete his/her own profile
+	dataLogin := ctx.Value(_config.GetConfig().ContextKey)
 
 	if dataLogin == nil {
-		return nil, errors.New("unauthorized")
+		return &_model.DeleteUserResponse{
+			Code:    http.StatusUnauthorized,
+			Message: "unauthorized",
+		}, nil
 	}
 
 	convData := ctx.Value(_config.GetConfig().ContextKey).(*_middlewares.User)
 
+	// detect unautorized delete
 	if id != convData.Id {
-		return nil, errors.New("unauthorized")
+		return &_model.DeleteUserResponse{
+			Code:    http.StatusUnauthorized,
+			Message: "unauthorized",
+		}, nil
 	}
 
-	// pertama, delete comment, jika ada
-	r.commentRepo.DeleteAllCommentByUserId(id)
+	// // pertama, delete comment, jika ada
+	// r.commentRepo.DeleteAllCommentByUserId(id)
 
-	// kedua, unjoin events, jika ada
-	r.participantRepo.UnjoinAllEvent(id)
+	// // kedua, unjoin events, jika ada
+	// r.participantRepo.UnjoinAllEvent(id)
 
-	// ketiga, delete events, jika ada
-	events, _ := r.eventRepo.GetEventByHostId(id)
+	// // ketiga, delete events, jika ada
+	// events, _ := r.eventRepo.GetEventByHostId(id)
 
-	for _, event := range events {
-		// untuk setiap event, delete comment, jika ada
-		r.commentRepo.DeleteAllCommentByEventId(event.Id)
+	// for _, event := range events {
+	// 	// untuk setiap event, delete comment, jika ada
+	// 	r.commentRepo.DeleteAllCommentByEventId(event.Id)
 
-		// untuk setiap event, delete participants, jika ada
-		r.participantRepo.DeleteAllParticipantByEventId(event.Id)
+	// 	// untuk setiap event, delete participants, jika ada
+	// 	r.participantRepo.DeleteAllParticipantByEventId(event.Id)
 
-		r.eventRepo.DeleteEvent(event.Id)
-	}
+	// 	r.eventRepo.DeleteEvent(event.Id)
+	// }
 
 	// terakhir, delete user
-	if err := r.userRepo.Delete(id); err != nil {
-		return nil, errors.New("failed delete user")
+	code, err := r.userRepo.DeleteUser(id)
+
+	if err != nil {
+		return &_model.DeleteUserResponse{
+			Code:    code,
+			Message: err.Error(),
+		}, nil
 	}
 
-	responseMessage := _model.SuccessResponse{
+	return &_model.DeleteUserResponse{
 		Code:    http.StatusOK,
-		Message: "succes delete user",
-	}
-
-	return &responseMessage, nil
+		Message: "success delete user",
+	}, nil
 }
 
 func (r *mutationResolver) CreateEvent(ctx context.Context, input _model.NewEvent) (*_model.Event, error) {
