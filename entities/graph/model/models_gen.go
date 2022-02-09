@@ -11,6 +11,12 @@ type Comment struct {
 	CreatedAt string `json:"createdAt"`
 }
 
+type CreateUserResponse struct {
+	Code    int    `json:"code"`
+	Message string `json:"message"`
+	Data    *User  `json:"data"`
+}
+
 type Event struct {
 	ID          *int   `json:"id"`
 	Name        string `json:"name"`
@@ -43,11 +49,9 @@ type NewEvent struct {
 }
 
 type NewUser struct {
-	Name        string  `json:"name"`
-	Email       string  `json:"email"`
-	Password    string  `json:"password"`
-	PhoneNumber *string `json:"phoneNumber"`
-	Avatar      *string `json:"avatar"`
+	Name     string `json:"name"`
+	Email    string `json:"email"`
+	Password string `json:"password"`
 }
 
 type Participant struct {

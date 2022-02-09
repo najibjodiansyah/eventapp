@@ -6,12 +6,12 @@ package graph
 import (
 	"context"
 	"errors"
-	"eventapp/delivery/helpers"
-	"eventapp/delivery/middlewares"
-	"eventapp/entities"
-	"eventapp/entities/graph/model"
-	"eventapp/utils/graph/generated"
-	"fmt"
+	_config "eventapp/config"
+	_helpers "eventapp/delivery/helpers"
+	_middlewares "eventapp/delivery/middlewares"
+	_entities "eventapp/entities"
+	_model "eventapp/entities/graph/model"
+	_generated "eventapp/utils/graph/generated"
 	"math"
 	"net/http"
 	"strings"
@@ -20,65 +20,87 @@ import (
 	"golang.org/x/crypto/bcrypt"
 )
 
-func (r *mutationResolver) CreateUser(ctx context.Context, input model.NewUser) (*model.User, error) {
+func (r *mutationResolver) CreateUser(ctx context.Context, input _model.NewUser) (*_model.CreateUserResponse, error) {
+	// set default value
+	id, phoneNumber, avatar := -1, "", ""
+	_createdUser := _model.User{
+		ID:          &id,
+		Name:        "",
+		Email:       "",
+		Password:    "",
+		PhoneNumber: &phoneNumber,
+		Avatar:      &avatar,
+	}
+
+	// check mallicious character in input
+	strings_to_check := []string{input.Name, input.Email, input.Password}
+
+	for _, s := range strings_to_check {
+		if err := _helpers.CheckStringInput(s); err != nil {
+			return &_model.CreateUserResponse{
+				Code:    http.StatusBadRequest,
+				Message: s + ": " + err.Error(),
+				Data:    &_createdUser,
+			}, nil
+		}
+	}
+
 	// check email pattern
-	if err := helpers.CheckEmailPattern(input.Email); err != nil {
-		return nil, err
+	if err := _helpers.CheckEmailPattern(input.Email); err != nil {
+		return &_model.CreateUserResponse{
+			Code:    http.StatusBadRequest,
+			Message: input.Email + ": " + err.Error(),
+			Data:    &_createdUser,
+		}, nil
 	}
 
 	// hashing password
 	passwordHash, _ := bcrypt.GenerateFromPassword([]byte(input.Password), bcrypt.MinCost)
 
-	userData := entities.User{
+	// prepare input to repository
+	userData := _entities.User{
 		Name:     input.Name,
 		Password: string(passwordHash),
 		Email:    input.Email,
 	}
 
-	if input.PhoneNumber != nil {
-		phone := *input.PhoneNumber
+	// input to repository
+	createdUser, code, err := r.userRepo.Create(userData)
 
-		if err := helpers.CheckPhonePattern(phone); err != nil {
-			return nil, err
-		}
-
-		userData.PhoneNumber = phone
-	}
-
-	if input.Avatar != nil {
-		userData.Avatar = *input.Avatar
-	}
-
-	res, err := r.userRepo.Create(userData)
-
+	// detect failure in repository
 	if err != nil {
-		return nil, errors.New("failed create user")
+		return &_model.CreateUserResponse{
+			Code:    code,
+			Message: err.Error(),
+			Data:    &_createdUser,
+		}, nil
 	}
 
-	id := res.Id
-	phoneNumber := res.PhoneNumber
-	avatar := res.Avatar
+	id = createdUser.Id
+	createdUser.Password = "********"
 
-	responseMessage := model.User{
-		ID:          &id,
-		Name:        res.Name,
-		Email:       res.Email,
-		PhoneNumber: &phoneNumber,
-		Avatar:      &avatar,
-	}
+	// prepare output to reponse
+	_createdUser.Name = createdUser.Name
+	_createdUser.Email = createdUser.Email
+	_createdUser.Password = createdUser.Password
+	_createdUser.PhoneNumber = &phoneNumber
+	_createdUser.Avatar = &avatar
 
-	return &responseMessage, nil
+	return &_model.CreateUserResponse{
+		Code:    code,
+		Message: "success create user",
+		Data:    &_createdUser,
+	}, nil
 }
 
-func (r *mutationResolver) UpdateUser(ctx context.Context, id int, set model.UpdateUser) (*model.User, error) {
-	dataLogin := ctx.Value("EchoContextKey") // auth jwt
+func (r *mutationResolver) UpdateUser(ctx context.Context, id int, set _model.UpdateUser) (*_model.User, error) {
+	dataLogin := ctx.Value(_config.GetConfig().ContextKey) // auth jwt
 
 	if dataLogin == nil {
 		return nil, errors.New("unauthorized")
 	}
 
-	convData := ctx.Value("EchoContextKey").(*middlewares.User)
-	fmt.Println("id user", convData.Id)
+	convData := ctx.Value(_config.GetConfig().ContextKey).(*_middlewares.User)
 
 	if id != convData.Id {
 		return nil, errors.New("unauthorized")
@@ -106,7 +128,7 @@ func (r *mutationResolver) UpdateUser(ctx context.Context, id int, set model.Upd
 	if set.PhoneNumber != nil {
 		phone := *set.PhoneNumber
 
-		if err := helpers.CheckPhonePattern(phone); err != nil {
+		if err := _helpers.CheckPhonePattern(phone); err != nil {
 			return nil, err
 		}
 
@@ -123,7 +145,7 @@ func (r *mutationResolver) UpdateUser(ctx context.Context, id int, set model.Upd
 		return nil, errors.New("failed update user")
 	}
 
-	responseMessage := model.User{
+	responseMessage := _model.User{
 		ID:          &id,
 		Name:        res.Name,
 		Email:       res.Email,
@@ -134,15 +156,14 @@ func (r *mutationResolver) UpdateUser(ctx context.Context, id int, set model.Upd
 	return &responseMessage, nil
 }
 
-func (r *mutationResolver) DeleteUser(ctx context.Context, id int) (*model.SuccessResponse, error) {
-	dataLogin := ctx.Value("EchoContextKey") // auth jwt
+func (r *mutationResolver) DeleteUser(ctx context.Context, id int) (*_model.SuccessResponse, error) {
+	dataLogin := ctx.Value(_config.GetConfig().ContextKey) // auth jwt
 
 	if dataLogin == nil {
 		return nil, errors.New("unauthorized")
 	}
 
-	convData := ctx.Value("EchoContextKey").(*middlewares.User)
-	fmt.Println("id user", convData.Id)
+	convData := ctx.Value(_config.GetConfig().ContextKey).(*_middlewares.User)
 
 	if id != convData.Id {
 		return nil, errors.New("unauthorized")
@@ -172,7 +193,7 @@ func (r *mutationResolver) DeleteUser(ctx context.Context, id int) (*model.Succe
 		return nil, errors.New("failed delete user")
 	}
 
-	responseMessage := model.SuccessResponse{
+	responseMessage := _model.SuccessResponse{
 		Code:    http.StatusOK,
 		Message: "succes delete user",
 	}
@@ -180,18 +201,17 @@ func (r *mutationResolver) DeleteUser(ctx context.Context, id int) (*model.Succe
 	return &responseMessage, nil
 }
 
-func (r *mutationResolver) CreateEvent(ctx context.Context, input model.NewEvent) (*model.Event, error) {
-	dataLogin := ctx.Value("EchoContextKey")
+func (r *mutationResolver) CreateEvent(ctx context.Context, input _model.NewEvent) (*_model.Event, error) {
+	dataLogin := ctx.Value(_config.GetConfig().ContextKey)
 
 	if dataLogin == nil {
 		return nil, errors.New("unauthorized")
 	}
 
-	convData := ctx.Value("EchoContextKey").(*middlewares.User)
-	fmt.Println("id user ", convData.Id)
+	convData := ctx.Value(_config.GetConfig().ContextKey).(*_middlewares.User)
 
 	// untuk saat ini, semua field dibuat required
-	eventData := entities.Event{
+	eventData := _entities.Event{
 		Name:        input.Name,
 		Category:    input.Category,
 		Host:        input.Host,
@@ -209,7 +229,7 @@ func (r *mutationResolver) CreateEvent(ctx context.Context, input model.NewEvent
 
 	id := res.Id
 
-	responseMessage := model.Event{
+	responseMessage := _model.Event{
 		ID:          &id,
 		Name:        res.Name,
 		Username:    res.UserName,
@@ -224,16 +244,14 @@ func (r *mutationResolver) CreateEvent(ctx context.Context, input model.NewEvent
 	return &responseMessage, nil
 }
 
-func (r *mutationResolver) UpdateEvent(ctx context.Context, id int, set model.UpdateEvent) (*model.Event, error) {
-	dataLogin := ctx.Value("EchoContextKey")
+func (r *mutationResolver) UpdateEvent(ctx context.Context, id int, set _model.UpdateEvent) (*_model.Event, error) {
+	dataLogin := ctx.Value(_config.GetConfig().ContextKey)
 
 	if dataLogin == nil {
-		fmt.Println(dataLogin)
 		return nil, errors.New("unauthorized")
 	}
 
-	convData := ctx.Value("EchoContextKey").(*middlewares.User)
-	fmt.Println("id user ", convData.Id)
+	convData := ctx.Value(_config.GetConfig().ContextKey).(*_middlewares.User)
 
 	event, _ := r.eventRepo.GetEventByEventId(id)
 
@@ -242,7 +260,6 @@ func (r *mutationResolver) UpdateEvent(ctx context.Context, id int, set model.Up
 	}
 
 	if event.HostId != convData.Id {
-		fmt.Println(event.HostId, convData.Id)
 		return nil, errors.New("unauthorized")
 	}
 
@@ -276,18 +293,15 @@ func (r *mutationResolver) UpdateEvent(ctx context.Context, id int, set model.Up
 
 	event.Datetime = strings.ReplaceAll(event.Datetime, "T", " ")
 	event.Datetime = strings.ReplaceAll(event.Datetime, "Z", "")
-	fmt.Println("ini date time", event.Datetime)
 
 	event.Id = id
-	fmt.Println("ini isi event", event)
 	res, err := r.eventRepo.UpdateEvent(event)
-	fmt.Println("respon", res)
-	fmt.Println("error", err)
+
 	if err != nil {
 		return nil, errors.New("failed update event")
 	}
 
-	responseMessage := model.Event{
+	responseMessage := _model.Event{
 		Name:        res.Name,
 		Username:    res.UserName,
 		Host:        res.Host,
@@ -301,16 +315,14 @@ func (r *mutationResolver) UpdateEvent(ctx context.Context, id int, set model.Up
 	return &responseMessage, nil
 }
 
-func (r *mutationResolver) DeleteEvent(ctx context.Context, id int) (*model.SuccessResponse, error) {
-	dataLogin := ctx.Value("EchoContextKey")
+func (r *mutationResolver) DeleteEvent(ctx context.Context, id int) (*_model.SuccessResponse, error) {
+	dataLogin := ctx.Value(_config.GetConfig().ContextKey)
 
 	if dataLogin == nil {
-		fmt.Println(dataLogin)
 		return nil, errors.New("unauthorized")
 	}
 
-	convData := ctx.Value("EchoContextKey").(*middlewares.User)
-	fmt.Println("id user ", convData.Id)
+	convData := ctx.Value(_config.GetConfig().ContextKey).(*_middlewares.User)
 
 	event, _ := r.eventRepo.GetEventByEventId(id)
 
@@ -319,7 +331,6 @@ func (r *mutationResolver) DeleteEvent(ctx context.Context, id int) (*model.Succ
 	}
 
 	if event.HostId != convData.Id {
-		fmt.Println(event.HostId, convData.Id)
 		return nil, errors.New("unauthorized")
 	}
 
@@ -334,7 +345,7 @@ func (r *mutationResolver) DeleteEvent(ctx context.Context, id int) (*model.Succ
 		return nil, errors.New("failed delete event")
 	}
 
-	responseMessage := model.SuccessResponse{
+	responseMessage := _model.SuccessResponse{
 		Code:    http.StatusOK,
 		Message: "succes delete event",
 	}
@@ -342,15 +353,14 @@ func (r *mutationResolver) DeleteEvent(ctx context.Context, id int) (*model.Succ
 	return &responseMessage, nil
 }
 
-func (r *mutationResolver) CreateComment(ctx context.Context, eventID int, input string) (*model.Comment, error) {
-	dataLogin := ctx.Value("EchoContextKey")
+func (r *mutationResolver) CreateComment(ctx context.Context, eventID int, input string) (*_model.Comment, error) {
+	dataLogin := ctx.Value(_config.GetConfig().ContextKey)
 
 	if dataLogin == nil {
 		return nil, errors.New("unauthorized")
 	}
 
-	convData := ctx.Value("EchoContextKey").(*middlewares.User)
-	fmt.Println("id user ", convData.Id)
+	convData := ctx.Value(_config.GetConfig().ContextKey).(*_middlewares.User)
 
 	comment, err := r.commentRepo.CreateComment(eventID, convData.Id, input)
 
@@ -360,7 +370,7 @@ func (r *mutationResolver) CreateComment(ctx context.Context, eventID int, input
 
 	id := comment.Id
 
-	responseMessage := model.Comment{
+	responseMessage := _model.Comment{
 		ID:        &id,
 		UserID:    convData.Id,
 		Name:      comment.UserName,
@@ -372,21 +382,20 @@ func (r *mutationResolver) CreateComment(ctx context.Context, eventID int, input
 	return &responseMessage, nil
 }
 
-func (r *mutationResolver) DeleteComment(ctx context.Context, commentID int) (*model.SuccessResponse, error) {
-	dataLogin := ctx.Value("EchoContextKey")
+func (r *mutationResolver) DeleteComment(ctx context.Context, commentID int) (*_model.SuccessResponse, error) {
+	dataLogin := ctx.Value(_config.GetConfig().ContextKey)
 
 	if dataLogin == nil {
 		return nil, errors.New("unauthorized")
 	}
 
-	convData := ctx.Value("EchoContextKey").(*middlewares.User)
-	fmt.Println("id user ", convData.Id)
+	convData := ctx.Value(_config.GetConfig().ContextKey).(*_middlewares.User)
 
 	if err := r.commentRepo.DeleteComment(commentID, convData.Id); err != nil {
 		return nil, err
 	}
 
-	responseMessage := model.SuccessResponse{
+	responseMessage := _model.SuccessResponse{
 		Code:    http.StatusOK,
 		Message: "Succes delete comment",
 	}
@@ -394,15 +403,14 @@ func (r *mutationResolver) DeleteComment(ctx context.Context, commentID int) (*m
 	return &responseMessage, nil
 }
 
-func (r *mutationResolver) JoinEvent(ctx context.Context, eventID int) (*model.SuccessResponse, error) {
-	dataLogin := ctx.Value("EchoContextKey")
+func (r *mutationResolver) JoinEvent(ctx context.Context, eventID int) (*_model.SuccessResponse, error) {
+	dataLogin := ctx.Value(_config.GetConfig().ContextKey)
 
 	if dataLogin == nil {
 		return nil, errors.New("unauthorized")
 	}
 
-	convData := ctx.Value("EchoContextKey").(*middlewares.User)
-	fmt.Println("id user ", convData.Id)
+	convData := ctx.Value(_config.GetConfig().ContextKey).(*_middlewares.User)
 
 	// get event buat dapet tanggal
 	// kondisi tanggal sekarang di bandingkan dengan format rfc
@@ -412,11 +420,8 @@ func (r *mutationResolver) JoinEvent(ctx context.Context, eventID int) (*model.S
 	}
 
 	current_time := time.Now()
-	fmt.Println("ini current time", current_time)
 	eventdate, _ := time.Parse(time.RFC3339, event.Datetime)
-	fmt.Println("ini event date time", eventdate)
 	current_time.Before(eventdate)
-	fmt.Println(current_time.Before(eventdate))
 
 	if !current_time.Before(eventdate) {
 		return nil, errors.New(" Cant join, Event already past ")
@@ -426,54 +431,53 @@ func (r *mutationResolver) JoinEvent(ctx context.Context, eventID int) (*model.S
 		return nil, err
 	}
 
-	responseMessage := model.SuccessResponse{
+	responseMessage := _model.SuccessResponse{
 		Code:    http.StatusOK,
 		Message: "Succes join event",
 	}
 	return &responseMessage, nil
 }
 
-func (r *mutationResolver) UnjoinEvent(ctx context.Context, eventID int) (*model.SuccessResponse, error) {
-	dataLogin := ctx.Value("EchoContextKey")
+func (r *mutationResolver) UnjoinEvent(ctx context.Context, eventID int) (*_model.SuccessResponse, error) {
+	dataLogin := ctx.Value(_config.GetConfig().ContextKey)
 
 	if dataLogin == nil {
 		return nil, errors.New("unauthorized")
 	}
 
-	convData := ctx.Value("EchoContextKey").(*middlewares.User)
-	fmt.Println("id user ", convData.Id)
+	convData := ctx.Value(_config.GetConfig().ContextKey).(*_middlewares.User)
 
 	if err := r.participantRepo.UnjoinEvent(eventID, convData.Id); err != nil {
 		return nil, err
 	}
 
-	responseMessage := model.SuccessResponse{
+	responseMessage := _model.SuccessResponse{
 		Code:    http.StatusOK,
 		Message: "Succes unjoin event",
 	}
 	return &responseMessage, nil
 }
 
-func (r *queryResolver) Users(ctx context.Context) ([]*model.User, error) {
+func (r *queryResolver) Users(ctx context.Context) ([]*_model.User, error) {
 	responseData, err := r.userRepo.Get()
 
 	if err != nil {
 		return nil, errors.New("user not found")
 	}
 
-	userResponseData := []*model.User{}
+	userResponseData := []*_model.User{}
 
 	for _, user := range responseData {
 		id := user.Id
 		phoneNumber := user.PhoneNumber
 		avatar := user.Avatar
-		userResponseData = append(userResponseData, &model.User{ID: &id, Name: user.Name, Email: user.Email, Password: user.Password, PhoneNumber: &phoneNumber, Avatar: &avatar})
+		userResponseData = append(userResponseData, &_model.User{ID: &id, Name: user.Name, Email: user.Email, Password: user.Password, PhoneNumber: &phoneNumber, Avatar: &avatar})
 	}
 
 	return userResponseData, nil
 }
 
-func (r *queryResolver) UserByID(ctx context.Context, id int) (*model.User, error) {
+func (r *queryResolver) UserByID(ctx context.Context, id int) (*_model.User, error) {
 	responseData, err := r.userRepo.GetById(id)
 
 	if err != nil {
@@ -483,7 +487,7 @@ func (r *queryResolver) UserByID(ctx context.Context, id int) (*model.User, erro
 	phoneNumber := responseData.PhoneNumber
 	avatar := responseData.Avatar
 
-	responseUserData := model.User{
+	responseUserData := _model.User{
 		ID:          &id,
 		Name:        responseData.Name,
 		Email:       responseData.Email,
@@ -494,38 +498,28 @@ func (r *queryResolver) UserByID(ctx context.Context, id int) (*model.User, erro
 	return &responseUserData, nil
 }
 
-func (r *queryResolver) AuthLogin(ctx context.Context, email string, password string) (*model.LoginResponse, error) {
+func (r *queryResolver) AuthLogin(ctx context.Context, email string, password string) (*_model.LoginResponse, error) {
 	user, err := r.authRepo.Login(email)
 
 	if err != nil {
 		return nil, err
 	}
 
-	// match := helpers.CheckPasswordHash(password, user.Password)
-	// fmt.Println(match)
-	// if user.Email != email {
-	// 	return nil, fmt.Errorf("email or password wrong")
-	// }
-
-	// if !match {
-	// 	return nil, fmt.Errorf("email or password wrong")
-	if user == (entities.User{}) {
+	if user == (_entities.User{}) {
 		return nil, errors.New("email is wrong")
 	}
 
-	match := helpers.CheckPasswordHash(password, user.Password)
-
-	if !match {
+	if err = bcrypt.CompareHashAndPassword([]byte(user.Password), []byte(password)); err != nil {
 		return nil, errors.New("password does not match")
 	}
 
-	authToken, err := middlewares.CreateToken((user.Id))
+	authToken, err := _middlewares.CreateToken((user.Id))
 
 	if err != nil {
 		return nil, errors.New("failed create token")
 	}
 
-	response := model.LoginResponse{
+	response := _model.LoginResponse{
 		Message: "Login success",
 		ID:      user.Id,
 		Name:    user.Name,
@@ -536,25 +530,25 @@ func (r *queryResolver) AuthLogin(ctx context.Context, email string, password st
 	return &response, nil
 }
 
-func (r *queryResolver) Events(ctx context.Context, page int) (*model.EventResponse, error) {
+func (r *queryResolver) Events(ctx context.Context, page int) (*_model.EventResponse, error) {
 	responseData, totalEvent, err := r.eventRepo.GetAllEvent(page)
 
 	if err != nil {
 		return nil, err
 	}
 
-	eventResponseData := []*model.Event{}
+	eventResponseData := []*_model.Event{}
 
 	for _, v := range responseData {
 		id := v.Id
 
-		eventResponseData = append(eventResponseData, &model.Event{ID: &id, Name: v.Name, Host: v.Host, Category: v.Category, Datetime: v.Datetime, Location: v.Location, Description: v.Description, Photo: v.Photo, Username: v.UserName})
+		eventResponseData = append(eventResponseData, &_model.Event{ID: &id, Name: v.Name, Host: v.Host, Category: v.Category, Datetime: v.Datetime, Location: v.Location, Description: v.Description, Photo: v.Photo, Username: v.UserName})
 	}
 
 	limit := 5
 	totalPage := int(math.Ceil(float64(totalEvent) / float64(limit)))
 
-	eventResponse := model.EventResponse{
+	eventResponse := _model.EventResponse{
 		Event:     eventResponseData,
 		TotalPage: totalPage,
 	}
@@ -562,42 +556,42 @@ func (r *queryResolver) Events(ctx context.Context, page int) (*model.EventRespo
 	return &eventResponse, nil
 }
 
-func (r *queryResolver) EventByHostID(ctx context.Context, userID int) ([]*model.Event, error) {
+func (r *queryResolver) EventByHostID(ctx context.Context, userID int) ([]*_model.Event, error) {
 	responseData, err := r.eventRepo.GetEventByHostId(userID)
 
 	if err != nil {
 		return nil, errors.New("not found")
 	}
 
-	eventResponseData := []*model.Event{}
+	eventResponseData := []*_model.Event{}
 
 	for _, v := range responseData {
 		id := v.Id
 
-		eventResponseData = append(eventResponseData, &model.Event{ID: &id, Name: v.Name, Host: v.Host, Category: v.Category, Datetime: v.Datetime, Location: v.Location, Description: v.Description, Photo: v.Photo, Username: v.UserName})
+		eventResponseData = append(eventResponseData, &_model.Event{ID: &id, Name: v.Name, Host: v.Host, Category: v.Category, Datetime: v.Datetime, Location: v.Location, Description: v.Description, Photo: v.Photo, Username: v.UserName})
 	}
 
 	return eventResponseData, nil
 }
 
-func (r *queryResolver) EventByLocation(ctx context.Context, location string, page int) (*model.EventResponse, error) {
+func (r *queryResolver) EventByLocation(ctx context.Context, location string, page int) (*_model.EventResponse, error) {
 	responseData, totalEvent, err := r.eventRepo.GetEventByLocation(location, page)
 
 	if err != nil {
 		return nil, errors.New("not found")
 	}
 
-	eventResponseData := []*model.Event{}
+	eventResponseData := []*_model.Event{}
 
 	for _, v := range responseData {
 		id := v.Id
-		eventResponseData = append(eventResponseData, &model.Event{ID: &id, Name: v.Name, Host: v.Host, Category: v.Category, Datetime: v.Datetime, Location: v.Location, Description: v.Description, Photo: v.Photo, Username: v.UserName})
+		eventResponseData = append(eventResponseData, &_model.Event{ID: &id, Name: v.Name, Host: v.Host, Category: v.Category, Datetime: v.Datetime, Location: v.Location, Description: v.Description, Photo: v.Photo, Username: v.UserName})
 	}
 	limit := 5
 
 	totalPage := int(math.Ceil(float64(totalEvent) / float64(limit)))
 
-	eventResponse := model.EventResponse{
+	eventResponse := _model.EventResponse{
 		Event:     eventResponseData,
 		TotalPage: totalPage,
 	}
@@ -605,24 +599,24 @@ func (r *queryResolver) EventByLocation(ctx context.Context, location string, pa
 	return &eventResponse, nil
 }
 
-func (r *queryResolver) EventByKeyword(ctx context.Context, keyword string, page int) (*model.EventResponse, error) {
+func (r *queryResolver) EventByKeyword(ctx context.Context, keyword string, page int) (*_model.EventResponse, error) {
 	responseData, totalEvent, err := r.eventRepo.GetEventByKeyword(keyword, page)
 
 	if err != nil {
 		return nil, errors.New("not found")
 	}
 
-	eventResponseData := []*model.Event{}
+	eventResponseData := []*_model.Event{}
 
 	for _, v := range responseData {
 		id := v.Id
-		eventResponseData = append(eventResponseData, &model.Event{ID: &id, Name: v.Name, Host: v.Host, Category: v.Category, Datetime: v.Datetime, Location: v.Location, Description: v.Description, Photo: v.Photo, Username: v.UserName})
+		eventResponseData = append(eventResponseData, &_model.Event{ID: &id, Name: v.Name, Host: v.Host, Category: v.Category, Datetime: v.Datetime, Location: v.Location, Description: v.Description, Photo: v.Photo, Username: v.UserName})
 	}
 
 	limit := 5
 	totalPage := int(math.Ceil(float64(totalEvent) / float64(limit)))
 
-	eventResponse := model.EventResponse{
+	eventResponse := _model.EventResponse{
 		Event:     eventResponseData,
 		TotalPage: totalPage,
 	}
@@ -630,25 +624,25 @@ func (r *queryResolver) EventByKeyword(ctx context.Context, keyword string, page
 	return &eventResponse, nil
 }
 
-func (r *queryResolver) EventByCategory(ctx context.Context, category string, page int) (*model.EventResponse, error) {
+func (r *queryResolver) EventByCategory(ctx context.Context, category string, page int) (*_model.EventResponse, error) {
 	responseData, totalEvent, err := r.eventRepo.GetEventByCategory(category, page)
 
 	if err != nil {
 		return nil, errors.New("not found")
 	}
 
-	eventResponseData := []*model.Event{}
+	eventResponseData := []*_model.Event{}
 
 	for _, v := range responseData {
 		id := v.Id
 
-		eventResponseData = append(eventResponseData, &model.Event{ID: &id, Name: v.Name, Host: v.Host, Category: v.Category, Datetime: v.Datetime, Location: v.Location, Description: v.Description, Photo: v.Photo, Username: v.UserName})
+		eventResponseData = append(eventResponseData, &_model.Event{ID: &id, Name: v.Name, Host: v.Host, Category: v.Category, Datetime: v.Datetime, Location: v.Location, Description: v.Description, Photo: v.Photo, Username: v.UserName})
 	}
 
 	limit := 5
 	totalPage := int(math.Ceil(float64(totalEvent) / float64(limit)))
 
-	eventResponse := model.EventResponse{
+	eventResponse := _model.EventResponse{
 		Event:     eventResponseData,
 		TotalPage: totalPage,
 	}
@@ -656,34 +650,34 @@ func (r *queryResolver) EventByCategory(ctx context.Context, category string, pa
 	return &eventResponse, nil
 }
 
-func (r *queryResolver) EventByParticipantID(ctx context.Context, userID int) ([]*model.Event, error) {
+func (r *queryResolver) EventByParticipantID(ctx context.Context, userID int) ([]*_model.Event, error) {
 	responseData, err := r.participantRepo.GetEventsByParticipantId(userID)
 
 	if err != nil {
 		return nil, errors.New("not found")
 	}
 
-	eventResponseData := []*model.Event{}
+	eventResponseData := []*_model.Event{}
 
 	for _, v := range responseData {
 		id := v.Id
 
-		eventResponseData = append(eventResponseData, &model.Event{ID: &id, Name: v.Name, Host: v.Host, Category: v.Category, Datetime: v.Datetime, Location: v.Location, Description: v.Description, Photo: v.Photo, Username: v.UserName})
+		eventResponseData = append(eventResponseData, &_model.Event{ID: &id, Name: v.Name, Host: v.Host, Category: v.Category, Datetime: v.Datetime, Location: v.Location, Description: v.Description, Photo: v.Photo, Username: v.UserName})
 	}
 
 	return eventResponseData, nil
 }
 
-func (r *queryResolver) EventByID(ctx context.Context, id int) (*model.Event, error) {
+func (r *queryResolver) EventByID(ctx context.Context, id int) (*_model.Event, error) {
 	responseData, _ := r.eventRepo.GetEventByEventId(id)
 
-	if responseData == (entities.Event{}) {
+	if responseData == (_entities.Event{}) {
 		return nil, errors.New("not found")
 	}
 
 	eventid := responseData.Id
 
-	responseEventData := model.Event{
+	responseEventData := _model.Event{
 		ID:          &eventid,
 		Name:        responseData.Name,
 		Username:    responseData.UserName,
@@ -698,45 +692,45 @@ func (r *queryResolver) EventByID(ctx context.Context, id int) (*model.Event, er
 	return &responseEventData, nil
 }
 
-func (r *queryResolver) Participants(ctx context.Context, eventID int) ([]*model.Participant, error) {
+func (r *queryResolver) Participants(ctx context.Context, eventID int) ([]*_model.Participant, error) {
 	responseData, err := r.participantRepo.GetParticipantsByEventId(eventID)
 
 	if err != nil {
 		return nil, errors.New("not found")
 	}
 
-	participantResponseData := []*model.Participant{}
+	participantResponseData := []*_model.Participant{}
 
 	for _, v := range responseData {
-		participantResponseData = append(participantResponseData, &model.Participant{Name: v.Name, Avatar: v.Avatar})
+		participantResponseData = append(participantResponseData, &_model.Participant{Name: v.Name, Avatar: v.Avatar})
 	}
 
 	return participantResponseData, nil
 }
 
-func (r *queryResolver) Comments(ctx context.Context, eventID int) ([]*model.Comment, error) {
+func (r *queryResolver) Comments(ctx context.Context, eventID int) ([]*_model.Comment, error) {
 	responseData, err := r.commentRepo.GetCommentsByEventId(eventID)
 
 	if err != nil {
 		return nil, errors.New("not found")
 	}
 
-	commentResponseData := []*model.Comment{}
+	commentResponseData := []*_model.Comment{}
 
 	for _, v := range responseData {
 		id := v.Id
 
-		commentResponseData = append(commentResponseData, &model.Comment{ID: &id, UserID: v.UserId, Name: v.UserName, Avatar: v.Avatar, Content: v.Content, CreatedAt: v.CreatedAt})
+		commentResponseData = append(commentResponseData, &_model.Comment{ID: &id, UserID: v.UserId, Name: v.UserName, Avatar: v.Avatar, Content: v.Content, CreatedAt: v.CreatedAt})
 	}
 
 	return commentResponseData, nil
 }
 
-// Mutation returns generated.MutationResolver implementation.
-func (r *Resolver) Mutation() generated.MutationResolver { return &mutationResolver{r} }
+// Mutation returns _generated.MutationResolver implementation.
+func (r *Resolver) Mutation() _generated.MutationResolver { return &mutationResolver{r} }
 
-// Query returns generated.QueryResolver implementation.
-func (r *Resolver) Query() generated.QueryResolver { return &queryResolver{r} }
+// Query returns _generated.QueryResolver implementation.
+func (r *Resolver) Query() _generated.QueryResolver { return &queryResolver{r} }
 
 type mutationResolver struct{ *Resolver }
 type queryResolver struct{ *Resolver }

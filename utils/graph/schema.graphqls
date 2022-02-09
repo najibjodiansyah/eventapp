@@ -15,8 +15,12 @@ input NewUser {
 	name: String!
 	email: String!
 	password: String!
-	phoneNumber: String
-	avatar: String
+}
+
+type CreateUserResponse {
+	code: Int!
+	message: String!
+	data: User!
 }
 
 input UpdateUser {
@@ -111,7 +115,7 @@ type Query {
 }
 
 type Mutation {
-	createUser(input: NewUser!): User!
+	createUser(input: NewUser!): CreateUserResponse!
 	updateUser(id: Int!, set: UpdateUser!): User!
 	deleteUser(id: Int!): SuccessResponse!
 
@@ -125,9 +129,3 @@ type Mutation {
 	joinEvent(eventId: Int!): SuccessResponse!
 	unjoinEvent(eventId: Int!): SuccessResponse!
 }
-
-# membuat type schema gql (done)
-# membuat interface repo (bikin satu function)
-# membuat repo sintaks sql (bikin satu function)
-# kondisikan di schema resolver yang make pagination
-# perbaiki readme buat semua yang pake page ganti responnya

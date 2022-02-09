@@ -3,7 +3,6 @@ package main
 import (
 	_config "eventapp/config"
 	_graph "eventapp/delivery/controllers/graph"
-
 	_router "eventapp/delivery/routers"
 	_authRepo "eventapp/repository/auth"
 	_commentRepo "eventapp/repository/comment"
@@ -15,7 +14,7 @@ import (
 
 	"fmt"
 
-	echo "github.com/labstack/echo/v4"
+	"github.com/labstack/echo/v4"
 	"github.com/labstack/gommon/log"
 )
 
@@ -35,8 +34,15 @@ func main() {
 
 	//create echo http
 	e := echo.New()
-	client := _graph.NewResolver(authRepo, userRepo, eventRepo, participantRepo, commentRepo)
+	client := _graph.NewResolver(
+		authRepo,
+		commentRepo,
+		eventRepo,
+		participantRepo,
+		userRepo,
+	)
 	srv := _router.NewGraphQLServer(client)
+
 	//register API path and controller
 	_router.RegisterPath(e, srv)
 
