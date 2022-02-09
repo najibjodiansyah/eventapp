@@ -7,7 +7,7 @@ type User {
 	name: String!
 	email: String!
 	password: String!
-	phoneNumber: String
+	phone: String
 	avatar: String
 }
 
@@ -39,8 +39,14 @@ input UpdateUser {
 	name: String
 	email: String
 	password: String
-	phoneNumber: String
+	phone: String
 	avatar: String
+}
+
+type UpdateUserResponse {
+	code: Int!
+	message: String!
+	data: User!
 }
 
 type Event {
@@ -120,7 +126,7 @@ type Query {
 
 type Mutation {
 	createUser(input: NewUser!): CreateUserResponse!
-	updateUser(id: Int!, set: UpdateUser!): User!
+	updateUser(id: Int!, set: UpdateUser!): UpdateUserResponse!
 	deleteUser(id: Int!): SuccessResponse!
 
 	createEvent(input: NewEvent!): Event!

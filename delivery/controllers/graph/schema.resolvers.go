@@ -22,14 +22,14 @@ import (
 
 func (r *mutationResolver) CreateUser(ctx context.Context, input _model.NewUser) (*_model.CreateUserResponse, error) {
 	// set default value
-	id, phoneNumber, avatar := -1, "", ""
+	id, phone, avatar := -1, "", ""
 	_createdUser := _model.User{
-		ID:          &id,
-		Name:        "",
-		Email:       "",
-		Password:    "",
-		PhoneNumber: &phoneNumber,
-		Avatar:      &avatar,
+		ID:       &id,
+		Name:     "",
+		Email:    "",
+		Password: "",
+		Phone:    &phone,
+		Avatar:   &avatar,
 	}
 
 	// check malicious character in input
@@ -73,8 +73,8 @@ func (r *mutationResolver) CreateUser(ctx context.Context, input _model.NewUser)
 		Email:    input.Email,
 	}
 
-	// query via repository
-	createdUser, code, err := r.userRepo.Create(createUserData)
+	// query via repository to create new user
+	createdUser, code, err := r.userRepo.CreateUser(createUserData)
 
 	// detect failure in repository
 	if err != nil {
@@ -86,13 +86,12 @@ func (r *mutationResolver) CreateUser(ctx context.Context, input _model.NewUser)
 	}
 
 	id = createdUser.Id
-	createdUser.Password = "********"
 
 	// prepare output to reponse
 	_createdUser.Name = createdUser.Name
 	_createdUser.Email = createdUser.Email
-	_createdUser.Password = createdUser.Password
-	_createdUser.PhoneNumber = &phoneNumber
+	_createdUser.Password = "********"
+	_createdUser.Phone = &phone
 	_createdUser.Avatar = &avatar
 
 	return &_model.CreateUserResponse{
@@ -102,67 +101,188 @@ func (r *mutationResolver) CreateUser(ctx context.Context, input _model.NewUser)
 	}, nil
 }
 
-func (r *mutationResolver) UpdateUser(ctx context.Context, id int, set _model.UpdateUser) (*_model.User, error) {
-	dataLogin := ctx.Value(_config.GetConfig().ContextKey) // auth jwt
+func (r *mutationResolver) UpdateUser(ctx context.Context, id int, set _model.UpdateUser) (*_model.UpdateUserResponse, error) {
+	// set default return value
+	id, phone, avatar := -1, "", ""
+	_updatedUser := _model.User{
+		ID:       &id,
+		Name:     "",
+		Email:    "",
+		Password: "",
+		Phone:    &phone,
+		Avatar:   &avatar,
+	}
+
+	// only registered user can update his/her own profile
+	dataLogin := ctx.Value(_config.GetConfig().ContextKey)
 
 	if dataLogin == nil {
-		return nil, errors.New("unauthorized")
+		return &_model.UpdateUserResponse{
+			Code:    http.StatusUnauthorized,
+			Message: "unauthorized",
+			Data:    &_updatedUser,
+		}, nil
 	}
 
 	convData := ctx.Value(_config.GetConfig().ContextKey).(*_middlewares.User)
 
+	// detect unautorized update
 	if id != convData.Id {
-		return nil, errors.New("unauthorized")
+		return &_model.UpdateUserResponse{
+			Code:    http.StatusUnauthorized,
+			Message: "unauthorized",
+			Data:    &_updatedUser,
+		}, nil
 	}
 
-	user, err := r.userRepo.GetById(id)
+	// query via repository to get existing user profile
+	updateUserData, code, err := r.userRepo.GetUserById(id)
 
+	// detect failure in repository
 	if err != nil {
-		return nil, err
+		return &_model.UpdateUserResponse{
+			Code:    code,
+			Message: err.Error(),
+			Data:    &_updatedUser,
+		}, nil
 	}
 
-	if set.Name != nil {
-		user.Name = *set.Name
-	}
+	// detect change in user name
+	if set.Name != nil && *set.Name != "" {
+		name := *set.Name
 
-	if set.Email != nil {
-		user.Email = *set.Email
-	}
-
-	if set.Password != nil {
-		passwordHash, _ := bcrypt.GenerateFromPassword([]byte(*set.Password), bcrypt.MinCost)
-		user.Password = string(passwordHash)
-	}
-
-	if set.PhoneNumber != nil {
-		phone := *set.PhoneNumber
-
-		if err := _helpers.CheckPhonePattern(phone); err != nil {
-			return nil, err
+		// check malicious character in input
+		if err := _helpers.CheckStringInput(name); err != nil {
+			return &_model.UpdateUserResponse{
+				Code:    http.StatusBadRequest,
+				Message: name + ": " + err.Error(),
+				Data:    &_updatedUser,
+			}, nil
 		}
 
-		user.PhoneNumber = phone
+		updateUserData.Name = name
 	}
 
-	if set.Avatar != nil {
-		user.Avatar = *set.Avatar
+	// detect change in user email
+	if set.Email != nil && *set.Email != "" {
+		email := *set.Email
+
+		// check malicious character in input
+		if err := _helpers.CheckStringInput(email); err != nil {
+			return &_model.UpdateUserResponse{
+				Code:    http.StatusBadRequest,
+				Message: email + ": " + err.Error(),
+				Data:    &_updatedUser,
+			}, nil
+		}
+
+		updateUserData.Email = email
 	}
 
-	res, err := r.userRepo.Update(id, user)
+	// detect change in user password
+	if set.Password != nil && *set.Password != "" {
+		password := *set.Password
+
+		// check malicious character in input
+		if err := _helpers.CheckStringInput(password); err != nil {
+			return &_model.UpdateUserResponse{
+				Code:    http.StatusBadRequest,
+				Message: password + ": " + err.Error(),
+				Data:    &_updatedUser,
+			}, nil
+		}
+
+		// check email pattern
+		if err := _helpers.CheckEmailPattern(password); err != nil {
+			return &_model.UpdateUserResponse{
+				Code:    http.StatusBadRequest,
+				Message: password + ": " + err.Error(),
+				Data:    &_updatedUser,
+			}, nil
+		}
+
+		// hashing password
+		passwordHash, err := bcrypt.GenerateFromPassword([]byte(password), bcrypt.MinCost)
+
+		// detect failure in hashing password
+		if err != nil {
+			return &_model.UpdateUserResponse{
+				Code:    http.StatusInternalServerError,
+				Message: "internal server error",
+				Data:    &_updatedUser,
+			}, nil
+		}
+
+		updateUserData.Password = string(passwordHash)
+	}
+
+	// detect change in user phone
+	if set.Phone != nil && *set.Phone != "" {
+		phone = *set.Phone
+
+		// check malicious character in input
+		if err := _helpers.CheckStringInput(phone); err != nil {
+			return &_model.UpdateUserResponse{
+				Code:    http.StatusBadRequest,
+				Message: phone + ": " + err.Error(),
+				Data:    &_updatedUser,
+			}, nil
+		}
+
+		// check phone pattern
+		if err := _helpers.CheckPhonePattern(phone); err != nil {
+			return &_model.UpdateUserResponse{
+				Code:    http.StatusBadRequest,
+				Message: phone + ": " + err.Error(),
+				Data:    &_updatedUser,
+			}, nil
+		}
+
+		updateUserData.Phone = phone
+	}
+
+	// detect change in user avatar
+	if set.Avatar != nil && *set.Avatar != "" {
+		avatar = *set.Avatar
+
+		// check malicious character in input
+		if err := _helpers.CheckStringInput(avatar); err != nil {
+			return &_model.UpdateUserResponse{
+				Code:    http.StatusBadRequest,
+				Message: phone + ": " + err.Error(),
+				Data:    &_updatedUser,
+			}, nil
+		}
+
+		updateUserData.Avatar = avatar
+	}
+
+	updateUserData.Id = id
+
+	updatedUser, code, err := r.userRepo.Update(updateUserData)
 
 	if err != nil {
-		return nil, errors.New("failed update user")
+		return &_model.UpdateUserResponse{
+			Code:    code,
+			Message: err.Error(),
+			Data:    &_updatedUser,
+		}, nil
 	}
 
-	responseMessage := _model.User{
-		ID:          &id,
-		Name:        res.Name,
-		Email:       res.Email,
-		PhoneNumber: &res.PhoneNumber,
-		Avatar:      &res.Avatar,
-	}
+	phone, avatar = updatedUser.Phone, updatedUser.Avatar
 
-	return &responseMessage, nil
+	// prepare output to response
+	_updatedUser.Name = updatedUser.Name
+	_updatedUser.Email = updatedUser.Email
+	_updatedUser.Password = "********"
+	_updatedUser.Phone = &phone
+	_updatedUser.Avatar = &avatar
+
+	return &_model.UpdateUserResponse{
+		Code:    http.StatusOK,
+		Message: "success update user",
+		Data:    &_updatedUser,
+	}, nil
 }
 
 func (r *mutationResolver) DeleteUser(ctx context.Context, id int) (*_model.SuccessResponse, error) {
@@ -478,30 +598,30 @@ func (r *queryResolver) Users(ctx context.Context) ([]*_model.User, error) {
 
 	for _, user := range responseData {
 		id := user.Id
-		phoneNumber := user.PhoneNumber
+		phoneNumber := user.Phone
 		avatar := user.Avatar
-		userResponseData = append(userResponseData, &_model.User{ID: &id, Name: user.Name, Email: user.Email, Password: user.Password, PhoneNumber: &phoneNumber, Avatar: &avatar})
+		userResponseData = append(userResponseData, &_model.User{ID: &id, Name: user.Name, Email: user.Email, Password: user.Password, Phone: &phoneNumber, Avatar: &avatar})
 	}
 
 	return userResponseData, nil
 }
 
 func (r *queryResolver) UserByID(ctx context.Context, id int) (*_model.User, error) {
-	responseData, err := r.userRepo.GetById(id)
+	responseData, _, err := r.userRepo.GetUserById(id)
 
 	if err != nil {
 		return nil, errors.New("not found")
 	}
 
-	phoneNumber := responseData.PhoneNumber
+	phoneNumber := responseData.Phone
 	avatar := responseData.Avatar
 
 	responseUserData := _model.User{
-		ID:          &id,
-		Name:        responseData.Name,
-		Email:       responseData.Email,
-		PhoneNumber: &phoneNumber,
-		Avatar:      &avatar,
+		ID:     &id,
+		Name:   responseData.Name,
+		Email:  responseData.Email,
+		Phone:  &phoneNumber,
+		Avatar: &avatar,
 	}
 
 	return &responseUserData, nil

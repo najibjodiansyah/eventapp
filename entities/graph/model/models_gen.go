@@ -73,20 +73,26 @@ type UpdateEvent struct {
 }
 
 type UpdateUser struct {
-	Name        *string `json:"name"`
-	Email       *string `json:"email"`
-	Password    *string `json:"password"`
-	PhoneNumber *string `json:"phoneNumber"`
-	Avatar      *string `json:"avatar"`
+	Name     *string `json:"name"`
+	Email    *string `json:"email"`
+	Password *string `json:"password"`
+	Phone    *string `json:"phone"`
+	Avatar   *string `json:"avatar"`
+}
+
+type UpdateUserResponse struct {
+	Code    int    `json:"code"`
+	Message string `json:"message"`
+	Data    *User  `json:"data"`
 }
 
 type User struct {
-	ID          *int    `json:"id"`
-	Name        string  `json:"name"`
-	Email       string  `json:"email"`
-	Password    string  `json:"password"`
-	PhoneNumber *string `json:"phoneNumber"`
-	Avatar      *string `json:"avatar"`
+	ID       *int    `json:"id"`
+	Name     string  `json:"name"`
+	Email    string  `json:"email"`
+	Password string  `json:"password"`
+	Phone    *string `json:"phone"`
+	Avatar   *string `json:"avatar"`
 }
 
 type AuthLoginResponse struct {

@@ -6,8 +6,8 @@ import (
 
 type User interface {
 	Get() ([]entities.User, error)
-	GetById(id int) (entities.User, error)
-	Create(entities.User) (entities.User, int, error)
-	Update(id int, user entities.User) (entities.User, error)
+	GetUserById(id int) (entities.User, int, error)
+	CreateUser(entities.User) (entities.User, int, error)
+	Update(entities.User) (entities.User, int, error)
 	Delete(id int) error
 }
