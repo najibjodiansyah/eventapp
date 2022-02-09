@@ -1,7 +1,9 @@
 package middlewares
 
 import (
+	"errors"
 	_config "eventapp/config"
+	"log"
 
 	"time"
 
@@ -58,7 +60,14 @@ func CreateToken(id int) (string, error) {
 	claims["id"] = id
 	claims["exp"] = time.Now().Add(time.Hour * 1).Unix()
 
-	token := jwt.NewWithClaims(jwt.SigningMethodHS256, claims)
+	_token := jwt.NewWithClaims(jwt.SigningMethodHS256, claims)
 
-	return token.SignedString([]byte(_config.GetConfig().SecretJWT))
+	token, err := _token.SignedString([]byte(_config.GetConfig().SecretJWT))
+
+	if err != nil {
+		log.Println(err)
+		return "", errors.New("failed create token")
+	}
+
+	return token, nil
 }

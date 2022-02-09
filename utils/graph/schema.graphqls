@@ -23,20 +23,24 @@ type CreateUserResponse {
 	data: User!
 }
 
+type Login {
+	id: Int
+	name: String
+	token: String!
+}
+
+type authLoginResponse {
+	code: Int!
+	message: String!
+	data: Login!
+}
+
 input UpdateUser {
 	name: String
 	email: String
 	password: String
 	phoneNumber: String
 	avatar: String
-}
-
-type LoginResponse {
-	message: String!
-	id: Int!
-	name: String!
-	email: String!
-	token: String!
 }
 
 type Event {
@@ -99,7 +103,7 @@ type eventResponse {
 type Query {
 	users: [User!]
 	userById(id: Int!): User
-	authLogin(email: String!, password: String!): LoginResponse!
+	authLogin(email: String!, password: String!): authLoginResponse!
 
 	events(page: Int!): eventResponse!
 	eventByHostId(userId: Int!): [Event!]

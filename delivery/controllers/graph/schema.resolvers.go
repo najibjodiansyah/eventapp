@@ -32,7 +32,7 @@ func (r *mutationResolver) CreateUser(ctx context.Context, input _model.NewUser)
 		Avatar:      &avatar,
 	}
 
-	// check mallicious character in input
+	// check malicious character in input
 	strings_to_check := []string{input.Name, input.Email, input.Password}
 
 	for _, s := range strings_to_check {
@@ -55,17 +55,26 @@ func (r *mutationResolver) CreateUser(ctx context.Context, input _model.NewUser)
 	}
 
 	// hashing password
-	passwordHash, _ := bcrypt.GenerateFromPassword([]byte(input.Password), bcrypt.MinCost)
+	passwordHash, err := bcrypt.GenerateFromPassword([]byte(input.Password), bcrypt.MinCost)
+
+	// detect failure in hashing password
+	if err != nil {
+		return &_model.CreateUserResponse{
+			Code:    http.StatusInternalServerError,
+			Message: "internal server error",
+			Data:    &_createdUser,
+		}, nil
+	}
 
 	// prepare input to repository
-	userData := _entities.User{
+	createUserData := _entities.User{
 		Name:     input.Name,
 		Password: string(passwordHash),
 		Email:    input.Email,
 	}
 
-	// input to repository
-	createdUser, code, err := r.userRepo.Create(userData)
+	// query via repository
+	createdUser, code, err := r.userRepo.Create(createUserData)
 
 	// detect failure in repository
 	if err != nil {
@@ -87,7 +96,7 @@ func (r *mutationResolver) CreateUser(ctx context.Context, input _model.NewUser)
 	_createdUser.Avatar = &avatar
 
 	return &_model.CreateUserResponse{
-		Code:    code,
+		Code:    http.StatusOK,
 		Message: "success create user",
 		Data:    &_createdUser,
 	}, nil
@@ -498,36 +507,90 @@ func (r *queryResolver) UserByID(ctx context.Context, id int) (*_model.User, err
 	return &responseUserData, nil
 }
 
-func (r *queryResolver) AuthLogin(ctx context.Context, email string, password string) (*_model.LoginResponse, error) {
-	user, err := r.authRepo.Login(email)
+func (r *queryResolver) AuthLogin(ctx context.Context, email string, password string) (*_model.AuthLoginResponse, error) {
+	// set default value
+	id, name, token := -1, "", ""
+	_loginUser := _model.Login{
+		ID:    &id,
+		Name:  &name,
+		Token: token,
+	}
 
+	// check malicious character in input
+	strings_to_check := []string{email, password}
+
+	for _, s := range strings_to_check {
+		if err := _helpers.CheckStringInput(s); err != nil {
+			return &_model.AuthLoginResponse{
+				Code:    http.StatusBadRequest,
+				Message: s + ": " + err.Error(),
+				Data:    &_loginUser,
+			}, nil
+		}
+	}
+
+	// check email pattern
+	if err := _helpers.CheckEmailPattern(email); err != nil {
+		return &_model.AuthLoginResponse{
+			Code:    http.StatusBadRequest,
+			Message: email + ": " + err.Error(),
+			Data:    &_loginUser,
+		}, nil
+	}
+
+	// query via repository
+	loginData, err := r.authRepo.Login(email)
+
+	// detect failure in repository
 	if err != nil {
-		return nil, err
+		return &_model.AuthLoginResponse{
+			Code:    http.StatusInternalServerError,
+			Message: err.Error(),
+			Data:    &_loginUser,
+		}, nil
 	}
 
-	if user == (_entities.User{}) {
-		return nil, errors.New("email is wrong")
+	// detect unauthorized login (email unknown)
+	if loginData == (_entities.User{}) {
+		return &_model.AuthLoginResponse{
+			Code:    http.StatusUnauthorized,
+			Message: "email is unknown",
+			Data:    &_loginUser,
+		}, nil
 	}
 
-	if err = bcrypt.CompareHashAndPassword([]byte(user.Password), []byte(password)); err != nil {
-		return nil, errors.New("password does not match")
+	// detect unauhorized login (password mismatch)
+	if err = bcrypt.CompareHashAndPassword([]byte(loginData.Password), []byte(password)); err != nil {
+		return &_model.AuthLoginResponse{
+			Code:    http.StatusUnauthorized,
+			Message: "password does not match",
+			Data:    &_loginUser,
+		}, nil
 	}
 
-	authToken, err := _middlewares.CreateToken((user.Id))
+	token, err = _middlewares.CreateToken(loginData.Id)
 
+	// detect failure in creating token
 	if err != nil {
-		return nil, errors.New("failed create token")
+		return &_model.AuthLoginResponse{
+			Code:    http.StatusInternalServerError,
+			Message: err.Error(),
+			Data:    &_loginUser,
+		}, nil
 	}
 
-	response := _model.LoginResponse{
-		Message: "Login success",
-		ID:      user.Id,
-		Name:    user.Name,
-		Email:   user.Email,
-		Token:   authToken,
-	}
+	id = loginData.Id
 
-	return &response, nil
+	// prepare output to reponse
+	_loginUser.ID = &id
+	_loginUser.Name = &loginData.Name
+	_loginUser.Token = token
+
+	return &_model.AuthLoginResponse{
+		Code:    http.StatusOK,
+		Message: "success login",
+		Data:    &_loginUser,
+	}, nil
 }
 
 func (r *queryResolver) Events(ctx context.Context, page int) (*_model.EventResponse, error) {

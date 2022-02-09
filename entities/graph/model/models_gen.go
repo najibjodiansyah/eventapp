@@ -29,12 +29,10 @@ type Event struct {
 	Photo       string `json:"photo"`
 }
 
-type LoginResponse struct {
-	Message string `json:"message"`
-	ID      int    `json:"id"`
-	Name    string `json:"name"`
-	Email   string `json:"email"`
-	Token   string `json:"token"`
+type Login struct {
+	ID    *int    `json:"id"`
+	Name  *string `json:"name"`
+	Token string  `json:"token"`
 }
 
 type NewEvent struct {
@@ -89,6 +87,12 @@ type User struct {
 	Password    string  `json:"password"`
 	PhoneNumber *string `json:"phoneNumber"`
 	Avatar      *string `json:"avatar"`
+}
+
+type AuthLoginResponse struct {
+	Code    int    `json:"code"`
+	Message string `json:"message"`
+	Data    *Login `json:"data"`
 }
 
 type EventResponse struct {
