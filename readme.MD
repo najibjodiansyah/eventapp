@@ -91,10 +91,10 @@ query {
         password: String!
     ) {
         message: String!
-	    id: Int!
-	    name: String!
-	    email: String!
-	    token: String!
+	id: Int!
+	name: String!
+	email: String!
+	token: String!
     }
 }
 ```
@@ -130,9 +130,9 @@ query {
 query {
     users {
         id: Int
-	    name: String!
-	    email: String!
-	    password: String!
+	name: String!
+	email: String!
+	password: String!
         phoneNumber: String
         avatar: String
     }
@@ -144,7 +144,7 @@ query {
 query {
     users {
         id
-	    name
+	name
     }
 }
 
@@ -177,9 +177,9 @@ query {
         id: Int!
     ) {
         id: Int
-	    name: String!
-	    email: String!
-	    password: String!
+	name: String!
+	email: String!
+	password: String!
         phoneNumber: String
         avatar: String
     }
@@ -192,7 +192,7 @@ query {
     user (
         id: 1
     ) {
-	    name
+	name
         email
     }
 }
@@ -216,16 +216,16 @@ mutation {
         id: Int!
         set: {
             name: String
-	        email: String
-	        password: String
-	        phoneNumber: String
-	        avatar: String
+	    email: String
+	    password: String
+	    phoneNumber: String
+	    avatar: String
         }
     ) {
         id: Int
-	    name: String!
-	    email: String!
-	    password: String!
+	name: String!
+	email: String!
+	password: String!
         phoneNumber: String
         avatar: String
     }
@@ -238,16 +238,16 @@ mutation {
     updateUser (
         id: 1
         set: {
-	        email: "bagusbrahmantya@gmail.com"
-	        password: "yametkudasi"
+	    email: "bagusbrahmantya@gmail.com"
+	    password: "yametkudasi"
             phoneNumber: "+6281234567890"
             avatar: "http://imgur.com/afywt07sav"
         }
     ) {
-	    id
-	    name
-	    email
-	    password
+	id
+	name
+	email
+	password
         phoneNumber
         avatar
     }
@@ -276,7 +276,7 @@ mutation {
         id: Int!
     ) {
         code: Int!
-	    message: String!
+	message: String!
     }
 }
 ```
@@ -287,7 +287,7 @@ mutation {
     deleteUser (
         id: 1
     ) {
-	    code
+	code
         message
     }
 }
@@ -378,14 +378,14 @@ query {
         userId: Int!
     ) {
         id: Int
-	    name: String!
-	    username: String!
-	    host: String!
-	    description: String!
-	    datetime: String!
-	    location: String!
-	    category: String!
-	    photo: String!
+	name: String!
+	username: String!
+	host: String!
+	description: String!
+	datetime: String!
+	location: String!
+	category: String!
+	photo: String!
     }
 }
 ```
@@ -397,7 +397,7 @@ query {
         userId: 1
     ) {
         id
-	    name
+	name
         username
     }
 }
@@ -600,14 +600,14 @@ query {
         userId: Int!
     ) {
         id: Int
-	    name: String!
-	    username: String!
-	    host: String!
-	    description: String!
-	    datetime: String!
-	    location: String!
-	    category: String!
-	    photo: String!
+	name: String!
+	username: String!
+	host: String!
+	description: String!
+	datetime: String!
+	location: String!
+	category: String!
+	photo: String!
     }
 }
 ```
@@ -618,7 +618,7 @@ query {
     eventByParticipantId (
         userId: 1
     ) {
-	    name
+	name
         username
         host
         location
@@ -648,14 +648,14 @@ query {
         id: Int!
     ) {
         id: Int
-	    name: String!
-	    username: String!
-	    host: String!
-	    description: String!
-	    datetime: String!
-	    location: String!
-	    category: String!
-	    photo: String!
+	name: String!
+	username: String!
+	host: String!
+	description: String!
+	datetime: String!
+	location: String!
+	category: String!
+	photo: String!
     }
 }
 ```
@@ -696,24 +696,24 @@ mutation {
     createEvent (
         input: {
             name: String!
-	        userid: Int
-	        host: String!
-	        description: String!
-	        datetime: String!
-	        location: String!
-	        category: String!
-	        photo: String!
-        }
-    ) {
-        id: Int
-	    name: String!
-	    username: String!
+	    userid: Int
 	    host: String!
 	    description: String!
 	    datetime: String!
 	    location: String!
 	    category: String!
 	    photo: String!
+        }
+    ) {
+        id: Int
+	name: String!
+	username: String!
+	host: String!
+	description: String!
+	datetime: String!
+	location: String!
+	category: String!
+	photo: String!
     }
 }
 ```
@@ -724,12 +724,12 @@ mutation {
     createEvent (
         input: {
             name: "Arabica Coffee Speciality"
-	        host: "Starbucks"
-	        description: "Apa dan bagaimana"
-	        datetime: "2022-02-04 15:00:00"
-	        location: "IKN"
-	        category: "Hobby"
-	        photo: "http://imgur.com/t70asvafhde"
+	    host: "Starbucks"
+	    description: "Apa dan bagaimana"
+	    datetime: "2022-02-04 15:00:00"
+	    location: "IKN"
+	    category: "Hobby"
+	    photo: "http://imgur.com/t70asvafhde"
         }
     ) {
 	    id
@@ -760,23 +760,23 @@ mutation {
         id: Int!
         input: {
             name: String
-	        host: String
-	        description: String
-	        datetime: String
-	        location: String
-	        category: String
-	        photo: String
+	    host: String
+	    description: String
+	    datetime: String
+	    location: String
+	    category: String
+	    photo: String
         }
     ) {
         id: Int
-	    name: String!
-	    username: String!
-	    host: String!
-	    description: String!
-	    datetime: String!
-	    location: String!
-	    category: String!
-	    photo: String!
+	name: String!
+	username: String!
+	host: String!
+	description: String!
+	datetime: String!
+	location: String!
+	category: String!
+	photo: String!
     }
 }
 ```
@@ -823,7 +823,7 @@ mutation {
     deleteEvent (
         id: 18
     ) {
-	    code
+	code
         message
     }
 }
@@ -860,7 +860,7 @@ query {
     participants (
         eventId: 1
     ) {
-	    name
+	name
         avatar
     }
 }
@@ -905,7 +905,7 @@ mutation {
     joinEvent (
         eventid: 1
     ) {
-	    code
+	code
         message
     }
 }
@@ -940,7 +940,7 @@ mutation {
     unjoinEvent (
         eventid: 1
     ) {
-	    code
+	code
         message
     }
 }
@@ -966,11 +966,11 @@ query {
         eventId: Int!
     ) {
         id: Int
-	    userId: Int!
-	    name: String!
-	    avatar: String!
-	    content: String!
-	    createdAt: String!
+	userId: Int!
+	name: String!
+	avatar: String!
+	content: String!
+	createdAt: String!
     }
 }
 ```
@@ -981,7 +981,7 @@ query {
     comments (
         eventId: 1
     ) {
-	    name
+	name
         content
     }
 }
@@ -1016,11 +1016,11 @@ mutation {
         input: String!
     ) {
         id: Int
-	    userId: Int!
-	    name: String!
-	    avatar: String!
-	    content: String!
-	    createdAt: String!
+	userId: Int!
+	name: String!
+	avatar: String!
+	content: String!
+	createdAt: String!
     }
 }
 ```
@@ -1032,12 +1032,12 @@ mutation {
         eventid: 1
         input: "Ini wajib on camera ya pas webinarnya? kameraku rusak bos"
     ) {
-	    id
-	    userId
-	    name
-	    avatar
-	    content
-	    createdAt
+	id
+	userId
+	name
+	avatar
+	content
+	createdAt
     }
 }
 
@@ -1046,11 +1046,11 @@ mutation {
     "data": {
         "createComment": {
             "id": 1
-	        "userId": 1
-	        "name": "Bagus Brahmantya"
-	        "avatar": "http://imgur.com/afywt07sav"
-	        "content": "Ini wajib on camera ya pas webinarnya? kameraku rusak bos"
-	        "createdAt": "2022-02-04 06:35:40"
+	    "userId": 1
+	    "name": "Bagus Brahmantya"
+	    "avatar": "http://imgur.com/afywt07sav"
+	    "content": "Ini wajib on camera ya pas webinarnya? kameraku rusak bos"
+	    "createdAt": "2022-02-04 06:35:40"
         }
     }
 }
@@ -1075,7 +1075,7 @@ mutation {
     deleteComment (
         commentid: 1
     ) {
-	    code
+	code
         message
     }
 }
