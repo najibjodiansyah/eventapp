@@ -13,10 +13,14 @@ import (
 	_util "eventapp/utils"
 
 	"fmt"
+	"log"
 
 	"github.com/labstack/echo/v4"
-	"github.com/labstack/gommon/log"
 )
+
+func init() {
+	log.SetFlags(log.Lshortfile | log.LstdFlags)
+}
 
 func main() {
 	//load config if available or set to default
@@ -50,7 +54,7 @@ func main() {
 	address := fmt.Sprintf(":%d", config.Port)
 
 	if err := e.Start(address); err != nil {
-		log.Info(err)
-		log.Info("shutting down the server")
+		log.Println(err)
+		log.Println("shutting down the server")
 	}
 }

@@ -80,13 +80,16 @@ type Event {
 
 input NewEvent {
 	name: String!
-	userid: Int
 	host: String!
-	description: String!
 	datetime: String!
 	location: String!
 	category: String!
-	photo: String!
+}
+
+type CreateEventResponse {
+	code: Int!
+	message: String!
+	data: Event!
 }
 
 input UpdateEvent {
@@ -146,7 +149,7 @@ type Mutation {
 	updateUser(id: Int!, set: UpdateUser!): UpdateUserResponse!
 	deleteUser(id: Int!): DeleteUserResponse!
 
-	createEvent(input: NewEvent!): Event!
+	createEvent(input: NewEvent!): CreateEventResponse!
 	updateEvent(id: Int!, set: UpdateEvent!): Event!
 	deleteEvent(id: Int!): SuccessResponse!
 

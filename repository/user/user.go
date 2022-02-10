@@ -96,7 +96,7 @@ func (r *UserRepository) CreateUser(user _entities.User) (createdUser _entities.
 		return createdUser, code, err
 	}
 
-	stmt, err := r.db.Prepare("insert into users(name, email, password, phone, avatar, created_at) values(?,?,?,'','',CURRENT_TIMESTAMP)")
+	stmt, err := r.db.Prepare("insert into users(name, email, password, phone, avatar, created_at) values(?,?,?,?,?,CURRENT_TIMESTAMP)")
 
 	if err != nil {
 		log.Println(err)
@@ -104,7 +104,7 @@ func (r *UserRepository) CreateUser(user _entities.User) (createdUser _entities.
 		return createdUser, code, err
 	}
 
-	res, err := stmt.Exec(user.Name, user.Email, user.Password)
+	res, err := stmt.Exec(user.Name, user.Email, user.Password, user.Phone, user.Avatar)
 
 	if err != nil {
 		log.Println(err)

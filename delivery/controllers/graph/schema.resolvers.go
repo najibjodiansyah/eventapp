@@ -25,18 +25,25 @@ func (r *mutationResolver) CreateUser(ctx context.Context, input _model.NewUser)
 	// set default value
 	id, phone, avatar := -1, "", ""
 	_createdUser := _model.User{
-		ID:       &id,
-		Name:     "",
-		Email:    "",
-		Password: "",
-		Phone:    &phone,
-		Avatar:   &avatar,
+		ID:     &id,
+		Phone:  &phone,
+		Avatar: &avatar,
 	}
 
-	// check malicious character in input
+	// check input string
 	strings_to_check := []string{input.Name, input.Email, input.Password}
 
 	for _, s := range strings_to_check {
+		// check empty string in mandatory input
+		if s == "" {
+			return &_model.CreateUserResponse{
+				Code:    http.StatusBadRequest,
+				Message: "mandatory input cannot be empty string",
+				Data:    &_createdUser,
+			}, nil
+		}
+
+		// check malicious character in input
 		if err := _helpers.CheckStringInput(s); err != nil {
 			return &_model.CreateUserResponse{
 				Code:    http.StatusBadRequest,
@@ -69,7 +76,7 @@ func (r *mutationResolver) CreateUser(ctx context.Context, input _model.NewUser)
 
 	// prepare input to repository
 	createUserData := _entities.User{
-		Name:     input.Name,
+		Name:     strings.Title(strings.ToLower(input.Name)),
 		Password: string(passwordHash),
 		Email:    input.Email,
 	}
@@ -103,12 +110,9 @@ func (r *mutationResolver) UpdateUser(ctx context.Context, id int, set _model.Up
 	// set default return value
 	_id, phone, avatar := -1, "", ""
 	_updatedUser := _model.User{
-		ID:       &_id,
-		Name:     "",
-		Email:    "",
-		Password: "",
-		Phone:    &phone,
-		Avatar:   &avatar,
+		ID:     &_id,
+		Phone:  &phone,
+		Avatar: &avatar,
 	}
 
 	// only registered user can update his/her own profile
@@ -159,7 +163,7 @@ func (r *mutationResolver) UpdateUser(ctx context.Context, id int, set _model.Up
 			}, nil
 		}
 
-		updateUserData.Name = name
+		updateUserData.Name = strings.Title(strings.ToLower(name))
 	}
 
 	// detect change in user email
@@ -339,47 +343,94 @@ func (r *mutationResolver) DeleteUser(ctx context.Context, id int) (*_model.Dele
 	}, nil
 }
 
-func (r *mutationResolver) CreateEvent(ctx context.Context, input _model.NewEvent) (*_model.Event, error) {
+func (r *mutationResolver) CreateEvent(ctx context.Context, input _model.NewEvent) (*_model.CreateEventResponse, error) {
+	// set default return value
+	id := -1
+	_createdEvent := _model.Event{
+		ID: &id,
+	}
+
+	// only registered user can create/host an event
 	dataLogin := ctx.Value(_config.GetConfig().ContextKey)
 
 	if dataLogin == nil {
-		return nil, errors.New("unauthorized")
+		return &_model.CreateEventResponse{
+			Code:    http.StatusUnauthorized,
+			Message: "unauthorized",
+			Data:    &_createdEvent,
+		}, nil
 	}
 
 	convData := ctx.Value(_config.GetConfig().ContextKey).(*_middlewares.User)
 
-	// untuk saat ini, semua field dibuat required
-	eventData := _entities.Event{
-		Name:        input.Name,
-		Category:    input.Category,
-		Host:        input.Host,
-		Description: input.Description,
-		Datetime:    input.Datetime,
-		Location:    input.Location,
-		Photo:       input.Photo,
+	// check input string
+	strings_to_check := []string{input.Name, input.Host, input.Datetime, input.Location, input.Category}
+
+	for _, s := range strings_to_check {
+		// check empty string in mandatory input
+		if s == "" {
+			return &_model.CreateEventResponse{
+				Code:    http.StatusBadRequest,
+				Message: "mandatory input cannot be empty string",
+				Data:    &_createdEvent,
+			}, nil
+		}
+
+		// check malicious character in input
+		if err := _helpers.CheckStringInput(s); err != nil {
+			return &_model.CreateEventResponse{
+				Code:    http.StatusBadRequest,
+				Message: s + ": " + err.Error(),
+				Data:    &_createdEvent,
+			}, nil
+		}
 	}
 
-	res, err := r.eventRepo.CreateEvent(convData.Id, eventData)
+	// check email pattern
+	if err := _helpers.CheckDatetimePattern(input.Datetime); err != nil {
+		return &_model.CreateEventResponse{
+			Code:    http.StatusBadRequest,
+			Message: input.Datetime + ": " + err.Error(),
+			Data:    &_createdEvent,
+		}, nil
+	}
+
+	// prepare input to repository
+	createEventData := _entities.Event{
+		Name:     strings.Title(strings.ToLower(input.Name)),
+		Host:     input.Host,
+		Datetime: input.Datetime,
+		Location: input.Location,
+		Category: input.Category,
+		HostId:   convData.Id,
+	}
+
+	createdEvent, code, err := r.eventRepo.CreateEvent(createEventData)
 
 	if err != nil {
-		return nil, errors.New("failed create event")
+		return &_model.CreateEventResponse{
+			Code:    code,
+			Message: err.Error(),
+			Data:    &_createdEvent,
+		}, nil
 	}
 
-	id := res.Id
+	// prepare output to reponse
+	id = createdEvent.Id
+	_createdEvent.Name = createdEvent.Name
+	_createdEvent.Username = createdEvent.UserName
+	_createdEvent.Host = createdEvent.Host
+	_createdEvent.Description = createdEvent.Description
+	_createdEvent.Datetime = createdEvent.Datetime
+	_createdEvent.Location = createdEvent.Location
+	_createdEvent.Category = createdEvent.Category
+	_createdEvent.Photo = createdEvent.Photo
 
-	responseMessage := _model.Event{
-		ID:          &id,
-		Name:        res.Name,
-		Username:    res.UserName,
-		Host:        res.Host,
-		Description: res.Description,
-		Datetime:    res.Datetime,
-		Location:    res.Location,
-		Category:    res.Category,
-		Photo:       res.Photo,
-	}
-
-	return &responseMessage, nil
+	return &_model.CreateEventResponse{
+		Code:    http.StatusOK,
+		Message: "success create event",
+		Data:    &_createdEvent,
+	}, nil
 }
 
 func (r *mutationResolver) UpdateEvent(ctx context.Context, id int, set _model.UpdateEvent) (*_model.Event, error) {
