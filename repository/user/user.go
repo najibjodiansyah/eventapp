@@ -1,9 +1,10 @@
 package user
 
 import (
+	_entities "eventapp/entities"
+
 	"database/sql"
 	"errors"
-	"eventapp/entities"
 	"log"
 	"net/http"
 )
@@ -16,32 +17,33 @@ func New(db *sql.DB) *UserRepository {
 	return &UserRepository{db: db}
 }
 
-func (r *UserRepository) Get() ([]entities.User, error) {
+func (r *UserRepository) GetAllUsers() ([]_entities.User, error) {
 	stmt, err := r.db.Prepare("select id, name, email, phone, avatar from users where deleted_at is NULL")
 
 	if err != nil {
 		log.Println(err)
-		return nil, err
+		return nil, errors.New("internal server error")
 	}
 
-	var users []entities.User
+	var users []_entities.User
 
 	result, err := stmt.Query()
 
 	if err != nil {
-		return nil, err
+		log.Println(err)
+		return nil, errors.New("internal server error")
 	}
 
 	defer result.Close()
 
 	for result.Next() {
-		var user entities.User
+		var user _entities.User
 
 		err := result.Scan(&user.Id, &user.Name, &user.Email, &user.Phone, &user.Avatar)
 
 		if err != nil {
 			log.Println(err)
-			return nil, err
+			return nil, errors.New("internal server error")
 		}
 
 		users = append(users, user)
@@ -50,45 +52,36 @@ func (r *UserRepository) Get() ([]entities.User, error) {
 	return users, nil
 }
 
-func (r *UserRepository) GetUserById(id int) (user entities.User, code int, err error) {
-	stmt, err := r.db.Prepare("select name, email, password, phone, avatar from users where id = ? and deleted_at is NULL")
+func (r *UserRepository) GetUserById(id int) (user _entities.User, err error) {
+	stmt, err := r.db.Prepare("select id, name, email, password, phone, avatar from users where id = ? and deleted_at is NULL")
 
 	if err != nil {
 		log.Println(err)
-		code, err = http.StatusInternalServerError, errors.New("internal server error")
-		return user, code, err
+		return user, errors.New("internal server error")
 	}
 
 	res, err := stmt.Query(id)
 
 	if err != nil {
 		log.Println(err)
-		code, err = http.StatusInternalServerError, errors.New("internal server error")
-		return user, code, err
+		return user, errors.New("internal server error")
 	}
 
 	defer res.Close()
 
 	if res.Next() {
-		err := res.Scan(&user.Name, &user.Email, &user.Password, &user.Phone, &user.Avatar)
+		err := res.Scan(&user.Id, &user.Name, &user.Email, &user.Password, &user.Phone, &user.Avatar)
 
 		if err != nil {
 			log.Println(err)
-			code, err = http.StatusInternalServerError, errors.New("internal server error")
-			return user, code, err
+			return user, errors.New("internal server error")
 		}
 	}
 
-	if user == (entities.User{}) {
-		log.Println("user unknown while get user by id")
-		code, err := http.StatusBadRequest, errors.New("user unknown")
-		return user, code, err
-	}
-
-	return user, http.StatusOK, nil
+	return user, nil
 }
 
-func (r *UserRepository) CreateUser(user entities.User) (createdUser entities.User, code int, err error) {
+func (r *UserRepository) CreateUser(user _entities.User) (createdUser _entities.User, code int, err error) {
 	id, err := r.checkEmailExistence(user.Email)
 
 	if err != nil {
@@ -133,7 +126,7 @@ func (r *UserRepository) CreateUser(user entities.User) (createdUser entities.Us
 	return createdUser, http.StatusOK, nil
 }
 
-func (r *UserRepository) UpdateUser(user entities.User) (updatedUser entities.User, code int, err error) {
+func (r *UserRepository) UpdateUser(user _entities.User) (updatedUser _entities.User, code int, err error) {
 	id, err := r.checkEmailExistence(user.Email)
 
 	if err != nil {
@@ -143,7 +136,7 @@ func (r *UserRepository) UpdateUser(user entities.User) (updatedUser entities.Us
 	}
 
 	if id != 0 && id != int64(user.Id) {
-		log.Println(id, user.Id, "email already exist while create user")
+		log.Println("email already exist while create user")
 		code, err = http.StatusBadRequest, errors.New("email already exist")
 		return updatedUser, code, err
 	}

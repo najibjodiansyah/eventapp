@@ -86,14 +86,11 @@ func (r *mutationResolver) CreateUser(ctx context.Context, input _model.NewUser)
 		}, nil
 	}
 
-	id = createdUser.Id
-
 	// prepare output to reponse
+	id = createdUser.Id
 	_createdUser.Name = createdUser.Name
 	_createdUser.Email = createdUser.Email
 	_createdUser.Password = "********"
-	_createdUser.Phone = &phone
-	_createdUser.Avatar = &avatar
 
 	return &_model.CreateUserResponse{
 		Code:    http.StatusOK,
@@ -138,12 +135,12 @@ func (r *mutationResolver) UpdateUser(ctx context.Context, id int, set _model.Up
 	}
 
 	// query via repository to get existing user profile
-	updateUserData, code, err := r.userRepo.GetUserById(id)
+	updateUserData, err := r.userRepo.GetUserById(id)
 
 	// detect failure in repository
 	if err != nil {
 		return &_model.UpdateUserResponse{
-			Code:    code,
+			Code:    http.StatusInternalServerError,
 			Message: err.Error(),
 			Data:    &_updatedUser,
 		}, nil
@@ -273,14 +270,11 @@ func (r *mutationResolver) UpdateUser(ctx context.Context, id int, set _model.Up
 		}, nil
 	}
 
-	_id, phone, avatar = updatedUser.Id, updatedUser.Phone, updatedUser.Avatar
-
 	// prepare output to response
+	_id, phone, avatar = updatedUser.Id, updatedUser.Phone, updatedUser.Avatar
 	_updatedUser.Name = updatedUser.Name
 	_updatedUser.Email = updatedUser.Email
 	_updatedUser.Password = "********"
-	_updatedUser.Phone = &phone
-	_updatedUser.Avatar = &avatar
 
 	return &_model.UpdateUserResponse{
 		Code:    http.StatusOK,
@@ -602,44 +596,97 @@ func (r *mutationResolver) UnjoinEvent(ctx context.Context, eventID int) (*_mode
 	return &responseMessage, nil
 }
 
-func (r *queryResolver) Users(ctx context.Context) ([]*_model.User, error) {
-	responseData, err := r.userRepo.Get()
+func (r *queryResolver) GetUsers(ctx context.Context) (*_model.GetUsersResponse, error) {
+	// set default return value
+	_allUsers := []*_model.User{}
 
+	// query via repository to get all users
+	allUsers, err := r.userRepo.GetAllUsers()
+
+	// detect failure in repository
 	if err != nil {
-		return nil, errors.New("user not found")
+		return &_model.GetUsersResponse{
+			Code:    http.StatusBadRequest,
+			Message: err.Error(),
+			Data:    _allUsers,
+		}, nil
 	}
 
-	userResponseData := []*_model.User{}
-
-	for _, user := range responseData {
-		id := user.Id
-		phoneNumber := user.Phone
-		avatar := user.Avatar
-		userResponseData = append(userResponseData, &_model.User{ID: &id, Name: user.Name, Email: user.Email, Password: user.Password, Phone: &phoneNumber, Avatar: &avatar})
+	// detect empty user directory
+	if len(allUsers) == 0 {
+		return &_model.GetUsersResponse{
+			Code:    http.StatusBadRequest,
+			Message: "users directory is empty",
+			Data:    _allUsers,
+		}, nil
 	}
 
-	return userResponseData, nil
+	for _, user := range allUsers {
+		id, phone, avatar := user.Id, user.Phone, user.Avatar
+		_allUsers = append(_allUsers,
+			&_model.User{
+				ID:       &id,
+				Name:     user.Name,
+				Email:    user.Email,
+				Password: "********",
+				Phone:    &phone,
+				Avatar:   &avatar,
+			})
+	}
+
+	return &_model.GetUsersResponse{
+		Code:    http.StatusBadRequest,
+		Message: "success get all users",
+		Data:    _allUsers,
+	}, nil
 }
 
-func (r *queryResolver) UserByID(ctx context.Context, id int) (*_model.User, error) {
-	responseData, _, err := r.userRepo.GetUserById(id)
+func (r *queryResolver) GetUserByID(ctx context.Context, id int) (*_model.GetUserResponse, error) {
+	// set default value
+	_id, phone, avatar := -1, "", ""
+	_getUser := _model.User{
+		ID:       &_id,
+		Name:     "",
+		Email:    "",
+		Password: "",
+		Phone:    &phone,
+		Avatar:   &avatar,
+	}
 
+	// query via repository to get user by id
+	getUser, err := r.userRepo.GetUserById(id)
+
+	// detect failure in repository
 	if err != nil {
-		return nil, errors.New("not found")
+		return &_model.GetUserResponse{
+			Code:    http.StatusOK,
+			Message: err.Error(),
+			Data:    &_getUser,
+		}, nil
 	}
 
-	phoneNumber := responseData.Phone
-	avatar := responseData.Avatar
-
-	responseUserData := _model.User{
-		ID:     &id,
-		Name:   responseData.Name,
-		Email:  responseData.Email,
-		Phone:  &phoneNumber,
-		Avatar: &avatar,
+	// detect unknown user
+	if getUser == (_entities.User{}) {
+		return &_model.GetUserResponse{
+			Code:    http.StatusOK,
+			Message: "user not found",
+			Data:    &_getUser,
+		}, nil
 	}
 
-	return &responseUserData, nil
+	// prepare output to response
+	_id, phone, avatar = getUser.Id, getUser.Phone, getUser.Avatar
+
+	// prepare output to response
+	_getUser.Name = getUser.Name
+	_getUser.Email = getUser.Email
+	_getUser.Password = "********"
+
+	return &_model.GetUserResponse{
+		Code:    http.StatusOK,
+		Message: "success get user",
+		Data:    &_getUser,
+	}, nil
 }
 
 func (r *queryResolver) AuthLogin(ctx context.Context, email string, password string) (*_model.AuthLoginResponse, error) {

@@ -54,6 +54,18 @@ type DeleteUserResponse {
 	message: String!
 }
 
+type GetUsersResponse {
+	code: Int!
+	message: String!
+	data: [User!]
+}
+
+type GetUserResponse {
+	code: Int!
+	message: String!
+	data: User!
+}
+
 type Event {
 	id: Int
 	name: String!
@@ -112,8 +124,8 @@ type eventResponse {
 }
 
 type Query {
-	users: [User!]
-	userById(id: Int!): User
+	getUsers: GetUsersResponse!
+	getUserById(id: Int!): GetUserResponse!
 	authLogin(email: String!, password: String!): authLoginResponse!
 
 	events(page: Int!): eventResponse!

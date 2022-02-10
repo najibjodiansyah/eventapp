@@ -34,6 +34,18 @@ type Event struct {
 	Photo       string `json:"photo"`
 }
 
+type GetUserResponse struct {
+	Code    int    `json:"code"`
+	Message string `json:"message"`
+	Data    *User  `json:"data"`
+}
+
+type GetUsersResponse struct {
+	Code    int     `json:"code"`
+	Message string  `json:"message"`
+	Data    []*User `json:"data"`
+}
+
 type Login struct {
 	ID    *int    `json:"id"`
 	Name  *string `json:"name"`
