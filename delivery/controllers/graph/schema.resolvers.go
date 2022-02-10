@@ -12,7 +12,6 @@ import (
 	_entities "eventapp/entities"
 	_model "eventapp/entities/graph/model"
 	_generated "eventapp/utils/graph/generated"
-	"fmt"
 	"math"
 	"net/http"
 	"strings"
@@ -30,8 +29,13 @@ func (r *mutationResolver) CreateUser(ctx context.Context, input _model.NewUser)
 		Avatar: &avatar,
 	}
 
+	// preprocessing input string
+	name := strings.Title(strings.ToLower(strings.TrimSpace(input.Name)))
+	email := strings.TrimSpace(input.Email)
+	password := strings.TrimSpace(input.Password)
+
 	// check input string
-	strings_to_check := []string{input.Name, input.Email, input.Password}
+	strings_to_check := []string{name, email, password}
 
 	for _, s := range strings_to_check {
 		// check empty string in mandatory input
@@ -54,16 +58,25 @@ func (r *mutationResolver) CreateUser(ctx context.Context, input _model.NewUser)
 	}
 
 	// check email pattern
-	if err := _helpers.CheckEmailPattern(input.Email); err != nil {
+	if err := _helpers.CheckEmailPattern(email); err != nil {
 		return &_model.CreateUserResponse{
 			Code:    http.StatusBadRequest,
-			Message: input.Email + ": " + err.Error(),
+			Message: email + ": " + err.Error(),
+			Data:    &_createdUser,
+		}, nil
+	}
+
+	// check password pattern
+	if err := _helpers.CheckPasswordPattern(password); err != nil {
+		return &_model.CreateUserResponse{
+			Code:    http.StatusBadRequest,
+			Message: password + ": " + err.Error(),
 			Data:    &_createdUser,
 		}, nil
 	}
 
 	// hashing password
-	passwordHash, err := bcrypt.GenerateFromPassword([]byte(input.Password), bcrypt.MinCost)
+	passwordHash, err := bcrypt.GenerateFromPassword([]byte(password), bcrypt.MinCost)
 
 	// detect failure in hashing password
 	if err != nil {
@@ -76,9 +89,9 @@ func (r *mutationResolver) CreateUser(ctx context.Context, input _model.NewUser)
 
 	// prepare input to repository
 	createUserData := _entities.User{
-		Name:     strings.Title(strings.ToLower(input.Name)),
+		Name:     name,
 		Password: string(passwordHash),
-		Email:    input.Email,
+		Email:    email,
 	}
 
 	// query via repository to create new user
@@ -130,7 +143,6 @@ func (r *mutationResolver) UpdateUser(ctx context.Context, id int, set _model.Up
 
 	// detect unautorized update
 	if id != convData.Id {
-		fmt.Println(id, convData.Id)
 		return &_model.UpdateUserResponse{
 			Code:    http.StatusUnauthorized,
 			Message: "unauthorized",
@@ -152,7 +164,8 @@ func (r *mutationResolver) UpdateUser(ctx context.Context, id int, set _model.Up
 
 	// detect change in user name
 	if set.Name != nil && *set.Name != "" {
-		name := *set.Name
+		// preprocessing input string
+		name := strings.Title(strings.ToLower(strings.TrimSpace(*set.Name)))
 
 		// check malicious character in input
 		if err := _helpers.CheckStringInput(name); err != nil {
@@ -163,15 +176,25 @@ func (r *mutationResolver) UpdateUser(ctx context.Context, id int, set _model.Up
 			}, nil
 		}
 
-		updateUserData.Name = strings.Title(strings.ToLower(name))
+		updateUserData.Name = name
 	}
 
 	// detect change in user email
 	if set.Email != nil && *set.Email != "" {
-		email := *set.Email
+		// preprocessing input string
+		email := strings.TrimSpace(*set.Email)
 
 		// check malicious character in input
 		if err := _helpers.CheckStringInput(email); err != nil {
+			return &_model.UpdateUserResponse{
+				Code:    http.StatusBadRequest,
+				Message: email + ": " + err.Error(),
+				Data:    &_updatedUser,
+			}, nil
+		}
+
+		// check email pattern
+		if err := _helpers.CheckEmailPattern(email); err != nil {
 			return &_model.UpdateUserResponse{
 				Code:    http.StatusBadRequest,
 				Message: email + ": " + err.Error(),
@@ -184,7 +207,8 @@ func (r *mutationResolver) UpdateUser(ctx context.Context, id int, set _model.Up
 
 	// detect change in user password
 	if set.Password != nil && *set.Password != "" {
-		password := *set.Password
+		// preprocessing input string
+		password := strings.TrimSpace(*set.Password)
 
 		// check malicious character in input
 		if err := _helpers.CheckStringInput(password); err != nil {
@@ -195,8 +219,8 @@ func (r *mutationResolver) UpdateUser(ctx context.Context, id int, set _model.Up
 			}, nil
 		}
 
-		// check email pattern
-		if err := _helpers.CheckEmailPattern(password); err != nil {
+		// check password pattern
+		if err := _helpers.CheckPasswordPattern(password); err != nil {
 			return &_model.UpdateUserResponse{
 				Code:    http.StatusBadRequest,
 				Message: password + ": " + err.Error(),
@@ -221,7 +245,8 @@ func (r *mutationResolver) UpdateUser(ctx context.Context, id int, set _model.Up
 
 	// detect change in user phone
 	if set.Phone != nil && *set.Phone != "" {
-		phone = *set.Phone
+		// preprocessing input string
+		phone = strings.ReplaceAll(*set.Phone, " ", "")
 
 		// check malicious character in input
 		if err := _helpers.CheckStringInput(phone); err != nil {
@@ -246,7 +271,8 @@ func (r *mutationResolver) UpdateUser(ctx context.Context, id int, set _model.Up
 
 	// detect change in user avatar
 	if set.Avatar != nil && *set.Avatar != "" {
-		avatar = *set.Avatar
+		// preprocessing input string
+		avatar := strings.TrimSpace(*set.Avatar)
 
 		// check malicious character in input
 		if err := _helpers.CheckStringInput(avatar); err != nil {
