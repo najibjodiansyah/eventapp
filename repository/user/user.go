@@ -17,15 +17,13 @@ func New(db *sql.DB) *UserRepository {
 	return &UserRepository{db: db}
 }
 
-func (r *UserRepository) GetAllUsers() ([]_entities.User, error) {
+func (r *UserRepository) GetAllUsers() (users []_entities.User, err error) {
 	stmt, err := r.db.Prepare("select id, name, email, phone, avatar from users where deleted_at is NULL")
 
 	if err != nil {
 		log.Println(err)
 		return nil, errors.New("internal server error")
 	}
-
-	var users []_entities.User
 
 	result, err := stmt.Query()
 

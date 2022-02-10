@@ -137,6 +137,12 @@ type ComplexityRoot struct {
 		Message func(childComplexity int) int
 	}
 
+	UpdateEventResponse struct {
+		Code    func(childComplexity int) int
+		Data    func(childComplexity int) int
+		Message func(childComplexity int) int
+	}
+
 	UpdateUserResponse struct {
 		Code    func(childComplexity int) int
 		Data    func(childComplexity int) int
@@ -169,7 +175,7 @@ type MutationResolver interface {
 	UpdateUser(ctx context.Context, id int, set model.UpdateUser) (*model.UpdateUserResponse, error)
 	DeleteUser(ctx context.Context, id int) (*model.DeleteUserResponse, error)
 	CreateEvent(ctx context.Context, input model.NewEvent) (*model.CreateEventResponse, error)
-	UpdateEvent(ctx context.Context, id int, set model.UpdateEvent) (*model.Event, error)
+	UpdateEvent(ctx context.Context, id int, set model.UpdateEvent) (*model.UpdateEventResponse, error)
 	DeleteEvent(ctx context.Context, id int) (*model.SuccessResponse, error)
 	CreateComment(ctx context.Context, eventID int, input string) (*model.Comment, error)
 	DeleteComment(ctx context.Context, commentID int) (*model.SuccessResponse, error)
@@ -717,6 +723,27 @@ func (e *executableSchema) Complexity(typeName, field string, childComplexity in
 
 		return e.complexity.SuccessResponse.Message(childComplexity), true
 
+	case "UpdateEventResponse.code":
+		if e.complexity.UpdateEventResponse.Code == nil {
+			break
+		}
+
+		return e.complexity.UpdateEventResponse.Code(childComplexity), true
+
+	case "UpdateEventResponse.data":
+		if e.complexity.UpdateEventResponse.Data == nil {
+			break
+		}
+
+		return e.complexity.UpdateEventResponse.Data(childComplexity), true
+
+	case "UpdateEventResponse.message":
+		if e.complexity.UpdateEventResponse.Message == nil {
+			break
+		}
+
+		return e.complexity.UpdateEventResponse.Message(childComplexity), true
+
 	case "UpdateUserResponse.code":
 		if e.complexity.UpdateUserResponse.Code == nil {
 			break
@@ -983,6 +1010,12 @@ input UpdateEvent {
 	photo: String
 }
 
+type UpdateEventResponse {
+	code: Int!
+	message: String!
+	data: Event!
+}
+
 type SuccessResponse {
 	code: Int!
 	message: String!
@@ -1031,7 +1064,7 @@ type Mutation {
 	deleteUser(id: Int!): DeleteUserResponse!
 
 	createEvent(input: NewEvent!): CreateEventResponse!
-	updateEvent(id: Int!, set: UpdateEvent!): Event!
+	updateEvent(id: Int!, set: UpdateEvent!): UpdateEventResponse!
 	deleteEvent(id: Int!): SuccessResponse!
 
 	createComment(eventId: Int!, input: String!): Comment!
@@ -2789,9 +2822,9 @@ func (ec *executionContext) _Mutation_updateEvent(ctx context.Context, field gra
 		}
 		return graphql.Null
 	}
-	res := resTmp.(*model.Event)
+	res := resTmp.(*model.UpdateEventResponse)
 	fc.Result = res
-	return ec.marshalNEvent2ᚖeventappᚋentitiesᚋgraphᚋmodelᚐEvent(ctx, field.Selections, res)
+	return ec.marshalNUpdateEventResponse2ᚖeventappᚋentitiesᚋgraphᚋmodelᚐUpdateEventResponse(ctx, field.Selections, res)
 }
 
 func (ec *executionContext) _Mutation_deleteEvent(ctx context.Context, field graphql.CollectedField) (ret graphql.Marshaler) {
@@ -3695,6 +3728,111 @@ func (ec *executionContext) _SuccessResponse_message(ctx context.Context, field 
 	res := resTmp.(string)
 	fc.Result = res
 	return ec.marshalNString2string(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) _UpdateEventResponse_code(ctx context.Context, field graphql.CollectedField, obj *model.UpdateEventResponse) (ret graphql.Marshaler) {
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	fc := &graphql.FieldContext{
+		Object:     "UpdateEventResponse",
+		Field:      field,
+		Args:       nil,
+		IsMethod:   false,
+		IsResolver: false,
+	}
+
+	ctx = graphql.WithFieldContext(ctx, fc)
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return obj.Code, nil
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		if !graphql.HasFieldError(ctx, fc) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.(int)
+	fc.Result = res
+	return ec.marshalNInt2int(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) _UpdateEventResponse_message(ctx context.Context, field graphql.CollectedField, obj *model.UpdateEventResponse) (ret graphql.Marshaler) {
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	fc := &graphql.FieldContext{
+		Object:     "UpdateEventResponse",
+		Field:      field,
+		Args:       nil,
+		IsMethod:   false,
+		IsResolver: false,
+	}
+
+	ctx = graphql.WithFieldContext(ctx, fc)
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return obj.Message, nil
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		if !graphql.HasFieldError(ctx, fc) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.(string)
+	fc.Result = res
+	return ec.marshalNString2string(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) _UpdateEventResponse_data(ctx context.Context, field graphql.CollectedField, obj *model.UpdateEventResponse) (ret graphql.Marshaler) {
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	fc := &graphql.FieldContext{
+		Object:     "UpdateEventResponse",
+		Field:      field,
+		Args:       nil,
+		IsMethod:   false,
+		IsResolver: false,
+	}
+
+	ctx = graphql.WithFieldContext(ctx, fc)
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return obj.Data, nil
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		if !graphql.HasFieldError(ctx, fc) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.(*model.Event)
+	fc.Result = res
+	return ec.marshalNEvent2ᚖeventappᚋentitiesᚋgraphᚋmodelᚐEvent(ctx, field.Selections, res)
 }
 
 func (ec *executionContext) _UpdateUserResponse_code(ctx context.Context, field graphql.CollectedField, obj *model.UpdateUserResponse) (ret graphql.Marshaler) {
@@ -6518,6 +6656,57 @@ func (ec *executionContext) _SuccessResponse(ctx context.Context, sel ast.Select
 	return out
 }
 
+var updateEventResponseImplementors = []string{"UpdateEventResponse"}
+
+func (ec *executionContext) _UpdateEventResponse(ctx context.Context, sel ast.SelectionSet, obj *model.UpdateEventResponse) graphql.Marshaler {
+	fields := graphql.CollectFields(ec.OperationContext, sel, updateEventResponseImplementors)
+	out := graphql.NewFieldSet(fields)
+	var invalids uint32
+	for i, field := range fields {
+		switch field.Name {
+		case "__typename":
+			out.Values[i] = graphql.MarshalString("UpdateEventResponse")
+		case "code":
+			innerFunc := func(ctx context.Context) (res graphql.Marshaler) {
+				return ec._UpdateEventResponse_code(ctx, field, obj)
+			}
+
+			out.Values[i] = innerFunc(ctx)
+
+			if out.Values[i] == graphql.Null {
+				invalids++
+			}
+		case "message":
+			innerFunc := func(ctx context.Context) (res graphql.Marshaler) {
+				return ec._UpdateEventResponse_message(ctx, field, obj)
+			}
+
+			out.Values[i] = innerFunc(ctx)
+
+			if out.Values[i] == graphql.Null {
+				invalids++
+			}
+		case "data":
+			innerFunc := func(ctx context.Context) (res graphql.Marshaler) {
+				return ec._UpdateEventResponse_data(ctx, field, obj)
+			}
+
+			out.Values[i] = innerFunc(ctx)
+
+			if out.Values[i] == graphql.Null {
+				invalids++
+			}
+		default:
+			panic("unknown field " + strconv.Quote(field.Name))
+		}
+	}
+	out.Dispatch()
+	if invalids > 0 {
+		return graphql.Null
+	}
+	return out
+}
+
 var updateUserResponseImplementors = []string{"UpdateUserResponse"}
 
 func (ec *executionContext) _UpdateUserResponse(ctx context.Context, sel ast.SelectionSet, obj *model.UpdateUserResponse) graphql.Marshaler {
@@ -7213,10 +7402,6 @@ func (ec *executionContext) marshalNDeleteUserResponse2ᚖeventappᚋentitiesᚋ
 	return ec._DeleteUserResponse(ctx, sel, v)
 }
 
-func (ec *executionContext) marshalNEvent2eventappᚋentitiesᚋgraphᚋmodelᚐEvent(ctx context.Context, sel ast.SelectionSet, v model.Event) graphql.Marshaler {
-	return ec._Event(ctx, sel, &v)
-}
-
 func (ec *executionContext) marshalNEvent2ᚕᚖeventappᚋentitiesᚋgraphᚋmodelᚐEventᚄ(ctx context.Context, sel ast.SelectionSet, v []*model.Event) graphql.Marshaler {
 	ret := make(graphql.Array, len(v))
 	var wg sync.WaitGroup
@@ -7366,6 +7551,20 @@ func (ec *executionContext) marshalNSuccessResponse2ᚖeventappᚋentitiesᚋgra
 func (ec *executionContext) unmarshalNUpdateEvent2eventappᚋentitiesᚋgraphᚋmodelᚐUpdateEvent(ctx context.Context, v interface{}) (model.UpdateEvent, error) {
 	res, err := ec.unmarshalInputUpdateEvent(ctx, v)
 	return res, graphql.ErrorOnPath(ctx, err)
+}
+
+func (ec *executionContext) marshalNUpdateEventResponse2eventappᚋentitiesᚋgraphᚋmodelᚐUpdateEventResponse(ctx context.Context, sel ast.SelectionSet, v model.UpdateEventResponse) graphql.Marshaler {
+	return ec._UpdateEventResponse(ctx, sel, &v)
+}
+
+func (ec *executionContext) marshalNUpdateEventResponse2ᚖeventappᚋentitiesᚋgraphᚋmodelᚐUpdateEventResponse(ctx context.Context, sel ast.SelectionSet, v *model.UpdateEventResponse) graphql.Marshaler {
+	if v == nil {
+		if !graphql.HasFieldError(ctx, graphql.GetFieldContext(ctx)) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	return ec._UpdateEventResponse(ctx, sel, v)
 }
 
 func (ec *executionContext) unmarshalNUpdateUser2eventappᚋentitiesᚋgraphᚋmodelᚐUpdateUser(ctx context.Context, v interface{}) (model.UpdateUser, error) {

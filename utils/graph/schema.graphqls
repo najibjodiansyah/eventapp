@@ -102,6 +102,12 @@ input UpdateEvent {
 	photo: String
 }
 
+type UpdateEventResponse {
+	code: Int!
+	message: String!
+	data: Event!
+}
+
 type SuccessResponse {
 	code: Int!
 	message: String!
@@ -150,7 +156,7 @@ type Mutation {
 	deleteUser(id: Int!): DeleteUserResponse!
 
 	createEvent(input: NewEvent!): CreateEventResponse!
-	updateEvent(id: Int!, set: UpdateEvent!): Event!
+	updateEvent(id: Int!, set: UpdateEvent!): UpdateEventResponse!
 	deleteEvent(id: Int!): SuccessResponse!
 
 	createComment(eventId: Int!, input: String!): Comment!

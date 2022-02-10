@@ -92,6 +92,12 @@ type UpdateEvent struct {
 	Photo       *string `json:"photo"`
 }
 
+type UpdateEventResponse struct {
+	Code    int    `json:"code"`
+	Message string `json:"message"`
+	Data    *Event `json:"data"`
+}
+
 type UpdateUser struct {
 	Name     *string `json:"name"`
 	Email    *string `json:"email"`

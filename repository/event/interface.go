@@ -10,6 +10,6 @@ type Event interface {
 	GetEventByCategory(category string, page int) ([]entities.Event, int, error)
 	GetEventByHostId(hostid int) ([]entities.Event, error)
 	CreateEvent(event entities.Event) (entities.Event, int, error)
-	UpdateEvent(event entities.Event) (entities.Event, error)
+	UpdateEvent(event entities.Event) (entities.Event, int, error)
 	DeleteEvent(eventid int) error
 }

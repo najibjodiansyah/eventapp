@@ -162,8 +162,17 @@ func (r *mutationResolver) UpdateUser(ctx context.Context, id int, set _model.Up
 		}, nil
 	}
 
+	// detect user unknown
+	if updateUserData == (_entities.User{}) {
+		return &_model.UpdateUserResponse{
+			Code:    http.StatusBadRequest,
+			Message: "user not found",
+			Data:    &_updatedUser,
+		}, nil
+	}
+
 	// detect change in user name
-	if set.Name != nil && *set.Name != "" {
+	if set.Name != nil && strings.TrimSpace(*set.Name) != "" {
 		// preprocessing input string
 		name := strings.Title(strings.ToLower(strings.TrimSpace(*set.Name)))
 
@@ -180,7 +189,7 @@ func (r *mutationResolver) UpdateUser(ctx context.Context, id int, set _model.Up
 	}
 
 	// detect change in user email
-	if set.Email != nil && *set.Email != "" {
+	if set.Email != nil && strings.TrimSpace(*set.Email) != "" {
 		// preprocessing input string
 		email := strings.TrimSpace(*set.Email)
 
@@ -206,7 +215,7 @@ func (r *mutationResolver) UpdateUser(ctx context.Context, id int, set _model.Up
 	}
 
 	// detect change in user password
-	if set.Password != nil && *set.Password != "" {
+	if set.Password != nil && strings.TrimSpace(*set.Password) != "" {
 		// preprocessing input string
 		password := strings.TrimSpace(*set.Password)
 
@@ -244,7 +253,7 @@ func (r *mutationResolver) UpdateUser(ctx context.Context, id int, set _model.Up
 	}
 
 	// detect change in user phone
-	if set.Phone != nil && *set.Phone != "" {
+	if set.Phone != nil && strings.TrimSpace(*set.Phone) != "" {
 		// preprocessing input string
 		phone = strings.ReplaceAll(*set.Phone, " ", "")
 
@@ -270,7 +279,7 @@ func (r *mutationResolver) UpdateUser(ctx context.Context, id int, set _model.Up
 	}
 
 	// detect change in user avatar
-	if set.Avatar != nil && *set.Avatar != "" {
+	if set.Avatar != nil && strings.TrimSpace(*set.Avatar) != "" {
 		// preprocessing input string
 		avatar := strings.TrimSpace(*set.Avatar)
 
@@ -389,8 +398,15 @@ func (r *mutationResolver) CreateEvent(ctx context.Context, input _model.NewEven
 
 	convData := ctx.Value(_config.GetConfig().ContextKey).(*_middlewares.User)
 
+	// preprocessing input string
+	name := strings.TrimSpace(input.Name)
+	host := strings.TrimSpace(input.Host)
+	datetime := strings.TrimSpace(input.Datetime)
+	location := strings.TrimSpace(input.Location)
+	category := strings.TrimSpace(input.Category)
+
 	// check input string
-	strings_to_check := []string{input.Name, input.Host, input.Datetime, input.Location, input.Category}
+	strings_to_check := []string{name, host, datetime, location, category}
 
 	for _, s := range strings_to_check {
 		// check empty string in mandatory input
@@ -412,22 +428,22 @@ func (r *mutationResolver) CreateEvent(ctx context.Context, input _model.NewEven
 		}
 	}
 
-	// check email pattern
-	if err := _helpers.CheckDatetimePattern(input.Datetime); err != nil {
+	// check datetime pattern
+	if err := _helpers.CheckDatetimePattern(datetime); err != nil {
 		return &_model.CreateEventResponse{
 			Code:    http.StatusBadRequest,
-			Message: input.Datetime + ": " + err.Error(),
+			Message: datetime + ": " + err.Error(),
 			Data:    &_createdEvent,
 		}, nil
 	}
 
 	// prepare input to repository
 	createEventData := _entities.Event{
-		Name:     strings.Title(strings.ToLower(input.Name)),
-		Host:     input.Host,
-		Datetime: input.Datetime,
-		Location: input.Location,
-		Category: input.Category,
+		Name:     name,
+		Host:     host,
+		Datetime: datetime,
+		Location: location,
+		Category: category,
 		HostId:   convData.Id,
 	}
 
@@ -459,75 +475,217 @@ func (r *mutationResolver) CreateEvent(ctx context.Context, input _model.NewEven
 	}, nil
 }
 
-func (r *mutationResolver) UpdateEvent(ctx context.Context, id int, set _model.UpdateEvent) (*_model.Event, error) {
+func (r *mutationResolver) UpdateEvent(ctx context.Context, id int, set _model.UpdateEvent) (*_model.UpdateEventResponse, error) {
+	// set default return value
+	_id := -1
+	_updatedEvent := _model.Event{
+		ID: &_id,
+	}
+
+	// only registered user can update his/her own hosted event
 	dataLogin := ctx.Value(_config.GetConfig().ContextKey)
 
 	if dataLogin == nil {
-		return nil, errors.New("unauthorized")
+		return &_model.UpdateEventResponse{
+			Code:    http.StatusUnauthorized,
+			Message: "unauthorized",
+			Data:    &_updatedEvent,
+		}, nil
 	}
 
 	convData := ctx.Value(_config.GetConfig().ContextKey).(*_middlewares.User)
 
-	event, _ := r.eventRepo.GetEventByEventId(id)
+	// query via repository to get existing user profile
+	updateEventData, err := r.eventRepo.GetEventByEventId(id)
 
-	if event.HostId == 0 {
-		return nil, errors.New("not found")
-	}
-
-	if event.HostId != convData.Id {
-		return nil, errors.New("unauthorized")
-	}
-
-	if set.Name != nil {
-		event.Name = *set.Name
-	}
-
-	if set.Host != nil {
-		event.Host = *set.Host
-	}
-
-	if set.Category != nil {
-		event.Category = *set.Category
-	}
-
-	if set.Datetime != nil {
-		event.Datetime = *set.Datetime
-	}
-
-	if set.Location != nil {
-		event.Location = *set.Location
-	}
-
-	if set.Description != nil {
-		event.Description = *set.Description
-	}
-
-	if set.Photo != nil {
-		event.Photo = *set.Photo
-	}
-
-	event.Datetime = strings.ReplaceAll(event.Datetime, "T", " ")
-	event.Datetime = strings.ReplaceAll(event.Datetime, "Z", "")
-
-	event.Id = id
-	res, err := r.eventRepo.UpdateEvent(event)
-
+	// detect failure in repository
 	if err != nil {
-		return nil, errors.New("failed update event")
+		return &_model.UpdateEventResponse{
+			Code:    http.StatusInternalServerError,
+			Message: "internal server error",
+			Data:    &_updatedEvent,
+		}, nil
 	}
 
-	responseMessage := _model.Event{
-		Name:        res.Name,
-		Username:    res.UserName,
-		Host:        res.Host,
-		Description: res.Description,
-		Datetime:    res.Datetime,
-		Location:    res.Location,
-		Category:    res.Category,
-		Photo:       res.Photo,
+	// detect unknown event
+	if updateEventData.HostId == 0 {
+		return &_model.UpdateEventResponse{
+			Code:    http.StatusBadRequest,
+			Message: "event not found",
+			Data:    &_updatedEvent,
+		}, nil
 	}
 
-	return &responseMessage, nil
+	// detect unauthorized update
+	if updateEventData.HostId != convData.Id {
+		return &_model.UpdateEventResponse{
+			Code:    http.StatusUnauthorized,
+			Message: "unauthorized",
+			Data:    &_updatedEvent,
+		}, nil
+	}
+
+	// detect change in event name
+	if set.Name != nil && strings.TrimSpace(*set.Name) != "" {
+		// preprocessing input string
+		name := strings.TrimSpace(*set.Name)
+
+		// check malicious character in input
+		if err := _helpers.CheckStringInput(name); err != nil {
+			return &_model.UpdateEventResponse{
+				Code:    http.StatusBadRequest,
+				Message: name + ": " + err.Error(),
+				Data:    &_updatedEvent,
+			}, nil
+		}
+
+		updateEventData.Name = name
+	}
+
+	// detect change in event host name
+	if set.Host != nil && strings.TrimSpace(*set.Host) != "" {
+		// preprocessing input string
+		host := strings.TrimSpace(*set.Host)
+
+		// check malicious character in input
+		if err := _helpers.CheckStringInput(host); err != nil {
+			return &_model.UpdateEventResponse{
+				Code:    http.StatusBadRequest,
+				Message: host + ": " + err.Error(),
+				Data:    &_updatedEvent,
+			}, nil
+		}
+
+		updateEventData.Host = host
+	}
+
+	// detect change in event category
+	if set.Category != nil && strings.TrimSpace(*set.Category) != "" {
+		// preprocessing input string
+		category := strings.TrimSpace(*set.Category)
+
+		// check malicious character in input
+		if err := _helpers.CheckStringInput(category); err != nil {
+			return &_model.UpdateEventResponse{
+				Code:    http.StatusBadRequest,
+				Message: category + ": " + err.Error(),
+				Data:    &_updatedEvent,
+			}, nil
+		}
+
+		updateEventData.Category = category
+	}
+
+	// detect change in event date and time
+	if set.Datetime != nil && strings.TrimSpace(*set.Datetime) != "" {
+		// preprocessing input string
+		datetime := strings.TrimSpace(*set.Datetime)
+
+		// check malicious character in input
+		if err := _helpers.CheckStringInput(datetime); err != nil {
+			return &_model.UpdateEventResponse{
+				Code:    http.StatusBadRequest,
+				Message: datetime + ": " + err.Error(),
+				Data:    &_updatedEvent,
+			}, nil
+		}
+
+		// check datetime pattern
+		if err := _helpers.CheckDatetimePattern(datetime); err != nil {
+			return &_model.UpdateEventResponse{
+				Code:    http.StatusBadRequest,
+				Message: datetime + ": " + err.Error(),
+				Data:    &_updatedEvent,
+			}, nil
+		}
+
+		updateEventData.Datetime = datetime
+	} else {
+		// in case no update in event date and time
+		updateEventData.Datetime = strings.ReplaceAll(updateEventData.Datetime, "T", " ")
+		updateEventData.Datetime = strings.ReplaceAll(updateEventData.Datetime, "Z", "")
+	}
+
+	// detect change in event location
+	if set.Location != nil && strings.TrimSpace(*set.Location) != "" {
+		// preprocessing input string
+		location := strings.TrimSpace(*set.Location)
+
+		// check malicious character in input
+		if err := _helpers.CheckStringInput(location); err != nil {
+			return &_model.UpdateEventResponse{
+				Code:    http.StatusBadRequest,
+				Message: location + ": " + err.Error(),
+				Data:    &_updatedEvent,
+			}, nil
+		}
+
+		updateEventData.Location = location
+	}
+
+	// detect change in event description
+	if set.Description != nil && strings.TrimSpace(*set.Description) != "" {
+		// preprocessing input string
+		description := strings.TrimSpace(*set.Description)
+
+		// check malicious character in input
+		if err := _helpers.CheckStringInput(description); err != nil {
+			return &_model.UpdateEventResponse{
+				Code:    http.StatusBadRequest,
+				Message: description + ": " + err.Error(),
+				Data:    &_updatedEvent,
+			}, nil
+		}
+
+		updateEventData.Description = description
+	}
+
+	// detect change in event photo
+	if set.Photo != nil && strings.TrimSpace(*set.Photo) != "" {
+		// preprocessing input string
+		photo := strings.TrimSpace(*set.Photo)
+
+		// check malicious character in input
+		if err := _helpers.CheckStringInput(photo); err != nil {
+			return &_model.UpdateEventResponse{
+				Code:    http.StatusBadRequest,
+				Message: photo + ": " + err.Error(),
+				Data:    &_updatedEvent,
+			}, nil
+		}
+
+		updateEventData.Photo = photo
+	}
+
+	updateEventData.Id = id
+
+	// query via repository to update event
+	updatedEvent, code, err := r.eventRepo.UpdateEvent(updateEventData)
+
+	// detect failure in repository
+	if err != nil {
+		return &_model.UpdateEventResponse{
+			Code:    code,
+			Message: err.Error(),
+			Data:    &_updatedEvent,
+		}, nil
+	}
+
+	// prepare output to response
+	_id = updatedEvent.Id
+	_updatedEvent.Name = updatedEvent.Name
+	_updatedEvent.Host = updatedEvent.Host
+	_updatedEvent.Description = updatedEvent.Description
+	_updatedEvent.Datetime = updatedEvent.Datetime
+	_updatedEvent.Location = updatedEvent.Location
+	_updatedEvent.Category = updatedEvent.Category
+	_updatedEvent.Photo = updatedEvent.Photo
+
+	return &_model.UpdateEventResponse{
+		Code:    http.StatusOK,
+		Message: "success update event",
+		Data:    &_updatedEvent,
+	}, nil
 }
 
 func (r *mutationResolver) DeleteEvent(ctx context.Context, id int) (*_model.SuccessResponse, error) {
