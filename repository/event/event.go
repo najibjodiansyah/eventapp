@@ -231,18 +231,38 @@ func (r *EventRepository) CreateEvent(event entities.Event) (createdEvent entiti
 	return event, http.StatusOK, nil
 }
 
-func (r *EventRepository) DeleteEvent(eventid int) error {
+func (r *EventRepository) DeleteEvent(eventid int) (code int, err error) {
 	stmt, err := r.db.Prepare("update events set deleted_at = CURRENT_TIMESTAMP where id = ?")
+
 	if err != nil {
 		log.Println(err)
+		code, err = http.StatusInternalServerError, errors.New("internal server error")
+		return code, err
 	}
 
-	_, err = stmt.Exec(eventid)
+	res, err := stmt.Exec(eventid)
+
 	if err != nil {
-		return err
+		log.Println(err)
+		code, err = http.StatusInternalServerError, errors.New("internal server error")
+		return code, err
 	}
 
-	return nil
+	rowsAffected, err := res.RowsAffected()
+
+	if err != nil {
+		log.Println(err)
+		code, err = http.StatusInternalServerError, errors.New("internal server error")
+		return code, err
+	}
+
+	if rowsAffected == 0 {
+		log.Println("rows affected is 0 while delete event")
+		code, err = http.StatusBadRequest, errors.New("event not deleted")
+		return code, err
+	}
+
+	return http.StatusOK, nil
 }
 
 // sudah diceck, return ditambah user name

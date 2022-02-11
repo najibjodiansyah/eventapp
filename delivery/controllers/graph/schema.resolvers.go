@@ -365,6 +365,7 @@ func (r *mutationResolver) DeleteUser(ctx context.Context, id int) (*_model.Dele
 	// terakhir, delete user
 	code, err := r.userRepo.DeleteUser(id)
 
+	// detect failure in repository
 	if err != nil {
 		return &_model.DeleteUserResponse{
 			Code:    code,
@@ -495,7 +496,7 @@ func (r *mutationResolver) UpdateEvent(ctx context.Context, id int, set _model.U
 
 	convData := ctx.Value(_config.GetConfig().ContextKey).(*_middlewares.User)
 
-	// query via repository to get existing user profile
+	// query via repository to get existing event detail
 	updateEventData, err := r.eventRepo.GetEventByEventId(id)
 
 	// detect failure in repository
@@ -688,42 +689,67 @@ func (r *mutationResolver) UpdateEvent(ctx context.Context, id int, set _model.U
 	}, nil
 }
 
-func (r *mutationResolver) DeleteEvent(ctx context.Context, id int) (*_model.SuccessResponse, error) {
+func (r *mutationResolver) DeleteEvent(ctx context.Context, id int) (*_model.DeleteEventResponse, error) {
+	// only registered user can delete his/her own hosted event
 	dataLogin := ctx.Value(_config.GetConfig().ContextKey)
 
 	if dataLogin == nil {
-		return nil, errors.New("unauthorized")
+		return &_model.DeleteEventResponse{
+			Code:    http.StatusUnauthorized,
+			Message: "unauthorized",
+		}, nil
 	}
 
 	convData := ctx.Value(_config.GetConfig().ContextKey).(*_middlewares.User)
 
-	event, _ := r.eventRepo.GetEventByEventId(id)
+	// query via repository to get existing event detail
+	deleteEventData, err := r.eventRepo.GetEventByEventId(id)
 
-	if event.HostId == 0 {
-		return nil, errors.New("not found")
+	// detect failure in repository
+	if err != nil {
+		return &_model.DeleteEventResponse{
+			Code:    http.StatusInternalServerError,
+			Message: "internal server error",
+		}, nil
 	}
 
-	if event.HostId != convData.Id {
-		return nil, errors.New("unauthorized")
+	// detect unknown event
+	if deleteEventData.HostId == 0 {
+		return &_model.DeleteEventResponse{
+			Code:    http.StatusBadRequest,
+			Message: "event not found",
+		}, nil
 	}
 
-	// pertama, delete all comments, jika ada
-	r.commentRepo.DeleteAllCommentByEventId(id)
-
-	// kedua, delete all participants, jika ada
-	r.participantRepo.DeleteAllParticipantByEventId(id)
-
-	// terakhir, delete event
-	if err := r.eventRepo.DeleteEvent(id); err != nil {
-		return nil, errors.New("failed delete event")
+	// detect unauthorized delete
+	if deleteEventData.HostId != convData.Id {
+		return &_model.DeleteEventResponse{
+			Code:    http.StatusUnauthorized,
+			Message: "unauthorized",
+		}, nil
 	}
 
-	responseMessage := _model.SuccessResponse{
+	// // pertama, delete all comments, jika ada
+	// r.commentRepo.DeleteAllCommentByEventId(id)
+
+	// // kedua, delete all participants, jika ada
+	// r.participantRepo.DeleteAllParticipantByEventId(id)
+
+	// // terakhir, delete event
+	code, err := r.eventRepo.DeleteEvent(id)
+
+	// detect failure in repository
+	if err != nil {
+		return &_model.DeleteEventResponse{
+			Code:    code,
+			Message: err.Error(),
+		}, nil
+	}
+
+	return &_model.DeleteEventResponse{
 		Code:    http.StatusOK,
-		Message: "succes delete event",
-	}
-
-	return &responseMessage, nil
+		Message: "success delete event",
+	}, nil
 }
 
 func (r *mutationResolver) CreateComment(ctx context.Context, eventID int, input string) (*_model.Comment, error) {

@@ -108,6 +108,11 @@ type UpdateEventResponse {
 	data: Event!
 }
 
+type DeleteEventResponse {
+	code: Int!
+	message: String!
+}
+
 type SuccessResponse {
 	code: Int!
 	message: String!
@@ -157,7 +162,7 @@ type Mutation {
 
 	createEvent(input: NewEvent!): CreateEventResponse!
 	updateEvent(id: Int!, set: UpdateEvent!): UpdateEventResponse!
-	deleteEvent(id: Int!): SuccessResponse!
+	deleteEvent(id: Int!): DeleteEventResponse!
 
 	createComment(eventId: Int!, input: String!): Comment!
 	deleteComment(commentId: Int!): SuccessResponse!

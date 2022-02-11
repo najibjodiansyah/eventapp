@@ -11,5 +11,5 @@ type Event interface {
 	GetEventByHostId(hostid int) ([]entities.Event, error)
 	CreateEvent(event entities.Event) (entities.Event, int, error)
 	UpdateEvent(event entities.Event) (entities.Event, int, error)
-	DeleteEvent(eventid int) error
+	DeleteEvent(eventid int) (int, error)
 }
