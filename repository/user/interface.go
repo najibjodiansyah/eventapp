@@ -1,13 +1,13 @@
 package user
 
 import (
-	"eventapp/entities"
+	_entities "eventapp/entities"
 )
 
 type User interface {
-	Get() ([]entities.User, error)
-	GetById(id int) (entities.User, error)
-	Create(entities.User) (entities.User, error)
-	Update(id int, user entities.User) (entities.User, error)
-	Delete(id int) error
+	GetAllUsers() ([]_entities.User, error)
+	GetUserById(id int) (_entities.User, error)
+	CreateUser(_entities.User) (_entities.User, int, error)
+	UpdateUser(_entities.User) (_entities.User, int, error)
+	DeleteUser(id int) (int, error)
 }

@@ -11,6 +11,28 @@ type Comment struct {
 	CreatedAt string `json:"createdAt"`
 }
 
+type CreateEventResponse struct {
+	Code    int    `json:"code"`
+	Message string `json:"message"`
+	Data    *Event `json:"data"`
+}
+
+type CreateUserResponse struct {
+	Code    int    `json:"code"`
+	Message string `json:"message"`
+	Data    *User  `json:"data"`
+}
+
+type DeleteEventResponse struct {
+	Code    int    `json:"code"`
+	Message string `json:"message"`
+}
+
+type DeleteUserResponse struct {
+	Code    int    `json:"code"`
+	Message string `json:"message"`
+}
+
 type Event struct {
 	ID          *int   `json:"id"`
 	Name        string `json:"name"`
@@ -23,31 +45,36 @@ type Event struct {
 	Photo       string `json:"photo"`
 }
 
-type LoginResponse struct {
+type GetUserResponse struct {
+	Code    int    `json:"code"`
 	Message string `json:"message"`
-	ID      int    `json:"id"`
-	Name    string `json:"name"`
-	Email   string `json:"email"`
-	Token   string `json:"token"`
+	Data    *User  `json:"data"`
+}
+
+type GetUsersResponse struct {
+	Code    int     `json:"code"`
+	Message string  `json:"message"`
+	Data    []*User `json:"data"`
+}
+
+type Login struct {
+	ID    *int    `json:"id"`
+	Name  *string `json:"name"`
+	Token string  `json:"token"`
 }
 
 type NewEvent struct {
-	Name        string `json:"name"`
-	Userid      *int   `json:"userid"`
-	Host        string `json:"host"`
-	Description string `json:"description"`
-	Datetime    string `json:"datetime"`
-	Location    string `json:"location"`
-	Category    string `json:"category"`
-	Photo       string `json:"photo"`
+	Name     string `json:"name"`
+	Host     string `json:"host"`
+	Datetime string `json:"datetime"`
+	Location string `json:"location"`
+	Category string `json:"category"`
 }
 
 type NewUser struct {
-	Name        string  `json:"name"`
-	Email       string  `json:"email"`
-	Password    string  `json:"password"`
-	PhoneNumber *string `json:"phoneNumber"`
-	Avatar      *string `json:"avatar"`
+	Name     string `json:"name"`
+	Email    string `json:"email"`
+	Password string `json:"password"`
 }
 
 type Participant struct {
@@ -70,21 +97,39 @@ type UpdateEvent struct {
 	Photo       *string `json:"photo"`
 }
 
+type UpdateEventResponse struct {
+	Code    int    `json:"code"`
+	Message string `json:"message"`
+	Data    *Event `json:"data"`
+}
+
 type UpdateUser struct {
-	Name        *string `json:"name"`
-	Email       *string `json:"email"`
-	Password    *string `json:"password"`
-	PhoneNumber *string `json:"phoneNumber"`
-	Avatar      *string `json:"avatar"`
+	Name     *string `json:"name"`
+	Email    *string `json:"email"`
+	Password *string `json:"password"`
+	Phone    *string `json:"phone"`
+	Avatar   *string `json:"avatar"`
+}
+
+type UpdateUserResponse struct {
+	Code    int    `json:"code"`
+	Message string `json:"message"`
+	Data    *User  `json:"data"`
 }
 
 type User struct {
-	ID          *int    `json:"id"`
-	Name        string  `json:"name"`
-	Email       string  `json:"email"`
-	Password    string  `json:"password"`
-	PhoneNumber *string `json:"phoneNumber"`
-	Avatar      *string `json:"avatar"`
+	ID       *int    `json:"id"`
+	Name     string  `json:"name"`
+	Email    string  `json:"email"`
+	Password string  `json:"password"`
+	Phone    *string `json:"phone"`
+	Avatar   *string `json:"avatar"`
+}
+
+type AuthLoginResponse struct {
+	Code    int    `json:"code"`
+	Message string `json:"message"`
+	Data    *Login `json:"data"`
 }
 
 type EventResponse struct {

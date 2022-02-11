@@ -2,6 +2,7 @@ package auth
 
 import (
 	"database/sql"
+	"errors"
 	"eventapp/entities"
 	"log"
 )
@@ -16,18 +17,18 @@ func New(db *sql.DB) *AuthRepository {
 
 // return repository berbentuk entity saja
 func (r *AuthRepository) Login(email string) (entities.User, error) {
-	stmt, err := r.db.Prepare(`select id, name, email, password from users where email = ?`)
+	stmt, err := r.db.Prepare(`select id, name, password from users where email = ?`)
 
 	if err != nil {
 		log.Println(err)
-		return entities.User{}, err
+		return entities.User{}, errors.New("internal server error")
 	}
 
 	res, err := stmt.Query(email)
 
 	if err != nil {
 		log.Println(err)
-		return entities.User{}, err
+		return entities.User{}, errors.New("internal server error")
 	}
 
 	defer res.Close()
@@ -35,11 +36,11 @@ func (r *AuthRepository) Login(email string) (entities.User, error) {
 	var user entities.User
 
 	if res.Next() {
-		err := res.Scan(&user.Id, &user.Name, &user.Email, &user.Password)
+		err := res.Scan(&user.Id, &user.Name, &user.Password)
 
 		if err != nil {
 			log.Println(err)
-			return entities.User{}, err
+			return entities.User{}, errors.New("internal server error")
 		}
 	}
 

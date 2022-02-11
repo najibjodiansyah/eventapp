@@ -3,7 +3,6 @@ package main
 import (
 	_config "eventapp/config"
 	_graph "eventapp/delivery/controllers/graph"
-
 	_router "eventapp/delivery/routers"
 	_authRepo "eventapp/repository/auth"
 	_commentRepo "eventapp/repository/comment"
@@ -14,10 +13,14 @@ import (
 	_util "eventapp/utils"
 
 	"fmt"
+	"log"
 
-	echo "github.com/labstack/echo/v4"
-	"github.com/labstack/gommon/log"
+	"github.com/labstack/echo/v4"
 )
+
+func init() {
+	log.SetFlags(log.Lshortfile | log.LstdFlags)
+}
 
 func main() {
 	//load config if available or set to default
@@ -35,8 +38,15 @@ func main() {
 
 	//create echo http
 	e := echo.New()
-	client := _graph.NewResolver(authRepo, userRepo, eventRepo, participantRepo, commentRepo)
+	client := _graph.NewResolver(
+		authRepo,
+		commentRepo,
+		eventRepo,
+		participantRepo,
+		userRepo,
+	)
 	srv := _router.NewGraphQLServer(client)
+
 	//register API path and controller
 	_router.RegisterPath(e, srv)
 
@@ -44,7 +54,7 @@ func main() {
 	address := fmt.Sprintf(":%d", config.Port)
 
 	if err := e.Start(address); err != nil {
-		log.Info(err)
-		log.Info("shutting down the server")
+		log.Println(err)
+		log.Println("shutting down the server")
 	}
 }

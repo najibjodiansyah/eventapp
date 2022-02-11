@@ -7,7 +7,7 @@ type User {
 	name: String!
 	email: String!
 	password: String!
-	phoneNumber: String
+	phone: String
 	avatar: String
 }
 
@@ -15,24 +15,55 @@ input NewUser {
 	name: String!
 	email: String!
 	password: String!
-	phoneNumber: String
-	avatar: String
+}
+
+type CreateUserResponse {
+	code: Int!
+	message: String!
+	data: User!
+}
+
+type Login {
+	id: Int
+	name: String
+	token: String!
+}
+
+type authLoginResponse {
+	code: Int!
+	message: String!
+	data: Login!
 }
 
 input UpdateUser {
 	name: String
 	email: String
 	password: String
-	phoneNumber: String
+	phone: String
 	avatar: String
 }
 
-type LoginResponse {
+type UpdateUserResponse {
+	code: Int!
 	message: String!
-	id: Int!
-	name: String!
-	email: String!
-	token: String!
+	data: User!
+}
+
+type DeleteUserResponse {
+	code: Int!
+	message: String!
+}
+
+type GetUsersResponse {
+	code: Int!
+	message: String!
+	data: [User!]
+}
+
+type GetUserResponse {
+	code: Int!
+	message: String!
+	data: User!
 }
 
 type Event {
@@ -49,13 +80,16 @@ type Event {
 
 input NewEvent {
 	name: String!
-	userid: Int
 	host: String!
-	description: String!
 	datetime: String!
 	location: String!
 	category: String!
-	photo: String!
+}
+
+type CreateEventResponse {
+	code: Int!
+	message: String!
+	data: Event!
 }
 
 input UpdateEvent {
@@ -66,6 +100,17 @@ input UpdateEvent {
 	location: String
 	category: String
 	photo: String
+}
+
+type UpdateEventResponse {
+	code: Int!
+	message: String!
+	data: Event!
+}
+
+type DeleteEventResponse {
+	code: Int!
+	message: String!
 }
 
 type SuccessResponse {
@@ -93,9 +138,9 @@ type eventResponse {
 }
 
 type Query {
-	users: [User!]
-	userById(id: Int!): User
-	authLogin(email: String!, password: String!): LoginResponse!
+	getUsers: GetUsersResponse!
+	getUserById(id: Int!): GetUserResponse!
+	authLogin(email: String!, password: String!): authLoginResponse!
 
 	events(page: Int!): eventResponse!
 	eventByHostId(userId: Int!): [Event!]
@@ -111,13 +156,13 @@ type Query {
 }
 
 type Mutation {
-	createUser(input: NewUser!): User!
-	updateUser(id: Int!, set: UpdateUser!): User!
-	deleteUser(id: Int!): SuccessResponse!
+	createUser(input: NewUser!): CreateUserResponse!
+	updateUser(id: Int!, set: UpdateUser!): UpdateUserResponse!
+	deleteUser(id: Int!): DeleteUserResponse!
 
-	createEvent(input: NewEvent!): Event!
-	updateEvent(id: Int!, set: UpdateEvent!): Event!
-	deleteEvent(id: Int!): SuccessResponse!
+	createEvent(input: NewEvent!): CreateEventResponse!
+	updateEvent(id: Int!, set: UpdateEvent!): UpdateEventResponse!
+	deleteEvent(id: Int!): DeleteEventResponse!
 
 	createComment(eventId: Int!, input: String!): Comment!
 	deleteComment(commentId: Int!): SuccessResponse!
@@ -125,9 +170,3 @@ type Mutation {
 	joinEvent(eventId: Int!): SuccessResponse!
 	unjoinEvent(eventId: Int!): SuccessResponse!
 }
-
-# membuat type schema gql (done)
-# membuat interface repo (bikin satu function)
-# membuat repo sintaks sql (bikin satu function)
-# kondisikan di schema resolver yang make pagination
-# perbaiki readme buat semua yang pake page ganti responnya
